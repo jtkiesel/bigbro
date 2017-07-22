@@ -26,7 +26,7 @@ const upsertMessageInDb = (message, deleted) => {
 			{upsert: true}
 		).then(result => {
 			if (result.upsertedCount) {
-				console.log(`insert to messages: ${JSON.stringify(insert)}`);
+				//console.log(`insert to messages: ${JSON.stringify(insert)}`);
 			} else {
 				const edits = insert.e;
 				const update = JSON.parse(JSON.stringify(insert));
@@ -38,7 +38,7 @@ const upsertMessageInDb = (message, deleted) => {
 					{$set: update, $addToSet: {e: {$each: edits}}}
 				).then(result => {
 					if (result.modifiedCount) {
-						console.log(`update to messages: ${JSON.stringify(insert)}`);
+						//console.log(`update to messages: ${JSON.stringify(insert)}`);
 					}
 				}).catch(console.error);
 			}
