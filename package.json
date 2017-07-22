@@ -1,0 +1,15 @@
+{
+  "name": "bigbro",
+  "version": "1.0.0",
+  "description": "He's always watching.",
+  "main": "app.js",
+  "author": "Jordan Kiesel",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^11.1.0",
+    "mongodb": "^2.2.30"
+  },
+  "engines": {
+    "node": "^8.1.4"
+  }
+}
