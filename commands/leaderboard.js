@@ -17,7 +17,6 @@ module.exports = (message, args) => {
 			.setDescription('**Users with no lives:**\n');
 		message.channel.send({embed}).then(reply => {
 			embed.setDescription(embed.description + users.map(user => `<@${user._id}>: \`${user.count} messages\``).join('\n'));
-			console.log('editing');
 			reply.edit({embed});
 		}).catch(console.error);
 	}).catch(console.error);
