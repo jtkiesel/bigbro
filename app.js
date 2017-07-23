@@ -14,12 +14,24 @@ const commandInfo = {
 	uptime: 'Time since bot last restarted.',
 	leaderboard: 'Get users with the most messages on the server.'
 };
+const commands = {};
+
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
-Object.entries(commandInfo).forEach(([name, desc]) => {
-	helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
-});
-let commands = {};
-Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
+
+const handleCommand = message => {
+	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
+	const author = message.member ? message.member.displayName : message.author.username;
+	const embed = new Discord.RichEmbed()
+		.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL)
+		.setTimestamp(message.createdAt);
+
+	if (commands.hasOwnProperty(cmd)) {
+		commands[cmd](message, args, embed);
+	} else if (cmd == 'help') {
+		embed.setColor('RANDOM').setTitle('Commands').setDescription(helpDescription);
+		message.channel.send({embed});
+	}
+}
 
 client.on('ready', () => {
 	console.log('Ready!');
@@ -49,22 +61,13 @@ client.on('messageDeleteBulk', messageCollection => {
 
 db.open()
 	.then(db => db.authenticate(username, password))
-	.then(db => client.login(token))
-	.catch(console.error);
-
-const handleCommand = message => {
-	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
-
-	if (commands.hasOwnProperty(cmd)) {
-		commands[cmd](message, args);
-	} else if (cmd == 'help') {
-		const embed = new Discord.RichEmbed()
-			.setColor('RANDOM')
-			.setTitle('Commands')
-			.setDescription(helpDescription);
-		message.channel.send({embed});
-	}
-}
+	.then(db => {
+		Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
+		Object.entries(commandInfo).forEach(([name, desc]) => {
+			helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
+		});
+		client.login(token).catch(console.error);
+	}).catch(console.error);
 
 module.exports.client = client;
 module.exports.db = db;

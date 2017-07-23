@@ -2,21 +2,6 @@ const Discord = require('discord.js');
 
 const app = require('./app');
 
-const messageEnums = {
-	attachments: 'a',
-		filename: 'f',
-		url: 'u',
-	author: 'u',
-	channel: 'c',
-	deleted: 'd',
-	editedTimestamp: 't',
-	edits: 'e',
-		content: 'c',
-		timestamp: 't',
-	guild: 'g',
-	id: 'i'
-};
-
 const upsertMessageInDb = (message, deleted) => {
 	if (message.guild) {
 		const insert = formatMessage(message, deleted);
