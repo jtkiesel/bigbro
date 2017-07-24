@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 
 const app = require('./app');
 
-const upsertMessageInDb = (message, deleted) => new Promise((resolve, reject) => {
+const upsertMessageInDb = (message, deleted) => {
 	if (message.guild) {
 		const insert = formatMessage(message, deleted);
 		app.db.collection('messages').updateOne(
@@ -11,7 +11,6 @@ const upsertMessageInDb = (message, deleted) => new Promise((resolve, reject) =>
 			{upsert: true}
 		).then(result => {
 			if (result.upsertedCount) {
-				resolve(result);
 				//console.log(`insert to messages: ${JSON.stringify(insert)}`);
 			} else {
 				const edits = insert.e;
@@ -23,15 +22,14 @@ const upsertMessageInDb = (message, deleted) => new Promise((resolve, reject) =>
 							{d: {$ne: update.d}, d: false}]},
 					{$set: update, $addToSet: {e: {$each: edits}}}
 				).then(result => {
-					resolve(result);
 					if (result.modifiedCount) {
 						//console.log(`update to messages: ${JSON.stringify(insert)}`);
 					}
-				}).catch(reject);
+				}).catch(console.error);
 			}
-		}).catch(reject);
+		}).catch(console.error);
 	}
-});
+};
 
 const formatMessage = (message, deleted) => {
 	const document = {_id: `${message.channel.id}-${message.id}`};
@@ -44,9 +42,7 @@ const formatMessage = (message, deleted) => {
 	document.u = message.author.id;
 	document.c = message.channel.id;
 	document.d = deleted;
-	if (message.editedTimestamp) {
-		document.t = message.editedTimestamp;
-	}
+	document.t = message.editedTimestamp || message.createdTimestamp;
 	document.e = message.edits.map(edit => ({
 		c: edit.content,
 		t: edit.editedTimestamp || edit.createdTimestamp
@@ -56,37 +52,36 @@ const formatMessage = (message, deleted) => {
 	return document;
 };
 
-const upsertMessagesInDb = (messages, deleted) => new Promise((resolve, reject) => {
-	if (messages.length) {
-		upsertMessageInDb(messages.pop(), deleted)
-			.then(result => upsertMessagesInDb(messages, deleted))
-			.catch(reject);
-	} else {
-		resolve();
-	}
-});
-
 const update = () => {
 	app.client.guilds.forEach(guild => guild.channels.forEach(channel => {
 		if (channel.type == 'text' && channel.permissionsFor(app.client.user).has('READ_MESSAGES')) {
 			updateFromChannel(channel);
 		}
 	}));
-};
+}
 
 const updateFromChannel = channel => {
-	updateFromChannelBatch(channel, '');
+	app.db.collection('messages').aggregate([
+		{$match: {c: channel.id}},
+		{$sort: {_id: -1}},
+		{$limit: 1}
+	]).toArray().then(messages => {
+		const lastUpdatedTimestamp = messages.length ? messages[0].t : 0;
+		updateFromChannelBatch(channel, lastUpdatedTimestamp, '');
+	}).catch(console.error);
 };
 
-const updateFromChannelBatch = (channel, lastMessageId) => {
+const updateFromChannelBatch = (channel, lastUpdatedTimestamp, lastMessageId) => {
 	let options = {limit: 100};
 	if (lastMessageId) {
 		options.before = lastMessageId;
 	}
 	channel.fetchMessages(options).then(messages => {
-		upsertMessagesInDb(messages, false)
-			.then(() => updateFromChannelBatch(channel, messages.lastKey()))
-			.catch(console.error);
+		if (messages.size && (lastUpdatedTimestamp - messages.first().createdTimestamp) < 604800000) {
+			console.log('.');
+			messages.forEach(message => upsertMessageInDb(message, false));
+			updateFromChannelBatch(channel, lastUpdatedTimestamp, messages.lastKey());
+		}
 	}).catch(error => {
 		console.error(error);
 		updateFromChannelBatch(channel, lastMessageId);
@@ -95,7 +90,6 @@ const updateFromChannelBatch = (channel, lastMessageId) => {
 
 module.exports = {
 	upsertMessageInDb: upsertMessageInDb,
-	upsertMessagesInDb: upsertMessagesInDb,
 	updateFromChannel: updateFromChannel,
 	update: update
 };

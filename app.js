@@ -56,7 +56,7 @@ client.on('messageDelete', message => {
 });
 
 client.on('messageDeleteBulk', messageCollection => {
-	messages.upsertMessageInDb(Array.from(messageCollection.values()), true);
+	messageCollection.forEach(message => messages.upsertMessageInDb(message, true));
 });
 
 db.open()
