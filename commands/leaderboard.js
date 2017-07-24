@@ -12,10 +12,14 @@ module.exports = (message, args, embed) => {
 		{$sort: {count: -1}},
 		{$limit: 20}
 	]).toArray().then(users => {
-		embed.setColor('RANDOM').setDescription('**Users with no lives:**\n');
+		const embed = new Discord.RichEmbed()
+			.setColor('RANDOM')
+			.setDescription('**Users with no lives:**\n');
 		message.channel.send({embed}).then(reply => {
 			embed.setDescription(embed.description + users.map(user => `<@${user._id}>: \`${user.count} messages\``).join('\n'));
-			reply.edit({embed});
+			reply.edit({embed})
+				.then(reply => app.addFooter(message, embed, reply))
+				.catch(console.error);
 		}).catch(console.error);
 	}).catch(console.error);
 };
