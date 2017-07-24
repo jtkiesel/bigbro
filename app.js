@@ -35,7 +35,7 @@ const handleCommand = message => {
 
 client.on('ready', () => {
 	console.log('Ready!');
-	messages.update();
+	//messages.update();
 });
 
 client.on('error', console.error);
