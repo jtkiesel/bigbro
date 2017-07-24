@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 
 const app = require('./app');
 
-const upsertMessageInDb = (message, deleted) => {
+const upsertMessageInDb = (message, deleted) => new Promise((resolve, reject) => {
 	if (message.guild) {
 		const insert = formatMessage(message, deleted);
 		app.db.collection('messages').updateOne(
@@ -11,6 +11,7 @@ const upsertMessageInDb = (message, deleted) => {
 			{upsert: true}
 		).then(result => {
 			if (result.upsertedCount) {
+				resolve(result);
 				//console.log(`insert to messages: ${JSON.stringify(insert)}`);
 			} else {
 				const edits = insert.e;
@@ -22,14 +23,15 @@ const upsertMessageInDb = (message, deleted) => {
 							{d: {$ne: update.d}, d: false}]},
 					{$set: update, $addToSet: {e: {$each: edits}}}
 				).then(result => {
+					resolve(result);
 					if (result.modifiedCount) {
 						//console.log(`update to messages: ${JSON.stringify(insert)}`);
 					}
-				}).catch(console.error);
+				}).catch(reject);
 			}
-		}).catch(console.error);
+		}).catch(reject);
 	}
-};
+});
 
 const formatMessage = (message, deleted) => {
 	const document = {_id: `${message.channel.id}-${message.id}`};
@@ -54,6 +56,16 @@ const formatMessage = (message, deleted) => {
 	return document;
 };
 
+const upsertMessagesInDb = (messages, deleted) => new Promise((resolve, reject) => {
+	if (messages.length) {
+		upsertMessageInDb(messages.pop(), deleted)
+			.then(result => upsertMessagesInDb(messages, deleted))
+			.catch(reject);
+	} else {
+		resolve();
+	}
+});
+
 const update = () => {
 	app.client.guilds.forEach(guild => guild.channels.forEach(channel => {
 		if (channel.type == 'text' && channel.permissionsFor(app.client.user).has('READ_MESSAGES')) {
@@ -72,10 +84,9 @@ const updateFromChannelBatch = (channel, lastMessageId) => {
 		options.before = lastMessageId;
 	}
 	channel.fetchMessages(options).then(messages => {
-		if (messages.size) {
-			messages.forEach(message => upsertMessageInDb(message, false));
-			updateFromChannelBatch(channel, messages.lastKey());
-		}
+		upsertMessagesInDb(messages, false)
+			.then(() => updateFromChannelBatch(channel, messages.lastKey()))
+			.catch(console.error);
 	}).catch(error => {
 		console.error(error);
 		updateFromChannelBatch(channel, lastMessageId);
@@ -84,6 +95,7 @@ const updateFromChannelBatch = (channel, lastMessageId) => {
 
 module.exports = {
 	upsertMessageInDb: upsertMessageInDb,
+	upsertMessagesInDb: upsertMessagesInDb,
 	updateFromChannel: updateFromChannel,
 	update: update
 };
