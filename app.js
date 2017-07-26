@@ -12,7 +12,7 @@ const prefix = '%';
 const commandInfo = {
 	ping: 'Pong!',
 	uptime: 'Time since bot last restarted.',
-	leaderboard: 'Get users with the most messages on the server.'
+	leaderboard: 'Users with the most messages on the server.'
 };
 const commands = {};
 
