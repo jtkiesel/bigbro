@@ -68,7 +68,7 @@ const updateFromChannel = channel => {
 		{$sort: {_id: -1}},
 		{$limit: 1}
 	]).toArray().then(messages => {
-		const lastUpdatedTimestamp = messages.length ? messages[0].t : 0;
+		const lastUpdatedTimestamp = /*messages.length ? messages[0].t : */0;
 		updateFromChannelBatch(channel, lastUpdatedTimestamp, '');
 	}).catch(console.error);
 };
