@@ -2,16 +2,19 @@ const Discord = require('discord.js');
 
 const app = require('../app');
 
-const leaderboardChannels = ['198658074876182538', '260546095082504202', '198658294007463936', '198658294007463936', '272921946352648192', '198658419945635840', '197818075796471808', '260546551255007232',
+const db = app.db;
+
+const leaderboardChannels = ['198658074876182538', '260546095082504202', '342822239076483074', '198658294007463936', '198658294007463936', '272921946352648192', '198658419945635840', '197818075796471808', '260546551255007232',
 	'329477820076130306'];  // Dev server.
 
 module.exports = (message, args, embed) => {
-	app.db.collection('messages').aggregate([
-		{$match: {g: message.guild.id, c: {$in: leaderboardChannels}, d: false}},
-		{$group: {_id: '$u', count: {$sum: 1}}},
-		{$sort: {count: -1}},
-		{$limit: 20}
-	]).toArray().then(users => {
+	db.collection('messages').aggregate()
+		.match({g: message.guild.id, '_id.c': {$in: leaderboardChannels}, d: false})
+		.group({_id: '$u', count: {$sum: 1}})
+		.sort({count: -1})
+		.limit(20)
+		//.explain().then(result => console.log(result.executionStats.totalDocsExamined)).catch(console.error);
+		.toArray().then(users => {
 		const embed = new Discord.RichEmbed()
 			.setColor('RANDOM')
 			.setDescription('**Users with no lives:**\n');

@@ -11,19 +11,20 @@ const upsertMessageInDb = (message, deleted) => {
 			{upsert: true}
 		).then(result => {
 			if (result.upsertedCount) {
-				//console.log(`insert to messages: ${JSON.stringify(insert)}`);
+				console.log(`Insert to messages: ${JSON.stringify(insert)}`);
 			} else {
 				const edits = insert.e;
 				const update = JSON.parse(JSON.stringify(insert));
 				delete update.e;
-				app.db.collection('messages').updateOne(
+				app.db.collection('messages').findOneAndUpdate(
 					{_id: update._id,
 						$or: [{t: {$lt: update.t}},
 							{d: {$ne: update.d}, d: false}]},
 					{$set: update, $addToSet: {e: {$each: edits}}}
 				).then(result => {
-					if (result.modifiedCount) {
-						//console.log(`update to messages: ${JSON.stringify(insert)}`);
+					const old = result.value;
+					if (JSON.stringify(insert) != JSON.stringify(old)) {
+						console.log(`Update to messages: ${JSON.stringify(insert)}`);
 					}
 				}).catch(console.error);
 			}
@@ -32,7 +33,10 @@ const upsertMessageInDb = (message, deleted) => {
 };
 
 const formatMessage = (message, deleted) => {
-	const document = {_id: `${message.channel.id}-${message.id}`};
+	const document = {_id: {
+		c: message.channel.id,
+		i: message.id
+	}};
 	if (message.attachments.size) {
 		document.a = Array.from(message.attachments.values()).map(attachment => ({
 			f: attachment.filename,
@@ -40,7 +44,6 @@ const formatMessage = (message, deleted) => {
 		}));
 	}
 	document.u = message.author.id;
-	document.c = message.channel.id;
 	document.d = deleted;
 	document.t = message.editedTimestamp || message.createdTimestamp;
 	document.e = message.edits.map(edit => ({
@@ -48,7 +51,6 @@ const formatMessage = (message, deleted) => {
 		t: edit.editedTimestamp || edit.createdTimestamp
 	}));
 	document.g = message.guild.id;
-	document.i = message.id;
 	return document;
 };
 
