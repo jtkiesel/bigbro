@@ -1,9 +1,23 @@
 const Discord = require('discord.js');
+const cron = require('cron');
 
 const app = require('./app');
 
+const CronJob = cron.CronJob;
 const client = app.client;
 const db = app.db;
+
+const timezone = 'America/New_York';
+
+const update = () => {
+	client.guilds.forEach(guild => guild.channels.forEach(channel => {
+		if (channel.type == 'text' && channel.permissionsFor(client.user).has('READ_MESSAGES')) {
+			updateFromChannel(channel);
+		}
+	}));
+}
+
+const messagesJob = new CronJob('00 00 08 * * *', update, null, true, timezone);
 
 const upsertMessageInDb = (message, deleted) => {
 	if (message.guild) {
@@ -56,14 +70,6 @@ const formatMessage = (message, deleted) => {
 	document.g = message.guild.id;
 	return document;
 };
-
-const update = () => {
-	client.guilds.forEach(guild => guild.channels.forEach(channel => {
-		if (channel.type == 'text' && channel.permissionsFor(client.user).has('READ_MESSAGES')) {
-			updateFromChannel(channel);
-		}
-	}));
-}
 
 const updateFromChannel = channel => {
 	db.collection('messages').aggregate([

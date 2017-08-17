@@ -6,8 +6,9 @@
   "author": "Jordan Kiesel",
   "license": "MIT",
   "dependencies": {
+    "cron": "^1.2.1",
     "discord.js": "^11.1.0",
-    "mongodb": "^2.2.30"
+    "mongodb": "^2.2.31"
   },
   "engines": {
     "node": "^8.1.4"

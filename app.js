@@ -45,7 +45,6 @@ const addFooter = (message, embed, reply) => {
 client.on('ready', () => {
 	console.log('Ready!');
 	db.collection('messages').createIndex({g: 1, c: 1, d: 1});
-	messages.update();
 });
 
 client.on('error', console.error);
