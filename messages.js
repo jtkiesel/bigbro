@@ -1,9 +1,9 @@
 const Discord = require('discord.js');
-const cron = require('cron');
+//const cron = require('cron');
 
 const app = require('./app');
 
-const CronJob = cron.CronJob;
+//const CronJob = cron.CronJob;
 const client = app.client;
 const db = app.db;
 
@@ -17,7 +17,7 @@ const update = () => {
 	}));
 }
 
-const messagesJob = new CronJob('00 00 08 * * *', update, null, true, timezone);
+//const messagesJob = new CronJob('00 00 08 * * *', update, null, true, timezone);
 
 const upsertMessageInDb = (message, deleted) => {
 	if (message.guild) {
