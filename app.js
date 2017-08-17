@@ -1,8 +1,6 @@
 const Discord = require('discord.js');
 const mongodb = require('mongodb');
 
-const messages = require('./messages');
-
 const client = new Discord.Client();
 const MongoClient = new mongodb.MongoClient();
 const token = process.env.BIGBRO_TOKEN;
@@ -17,6 +15,8 @@ const commandInfo = {
 const commands = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
+
+let messages;
 
 const handleCommand = message => {
 	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
@@ -76,6 +76,7 @@ db.open()
 		Object.entries(commandInfo).forEach(([name, desc]) => {
 			helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
 		});
+		messages = require('./messages');
 		client.login(token).catch(console.error);
 	}).catch(console.error);
 

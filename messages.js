@@ -2,10 +2,13 @@ const Discord = require('discord.js');
 
 const app = require('./app');
 
+const client = app.client;
+const db = app.db;
+
 const upsertMessageInDb = (message, deleted) => {
 	if (message.guild) {
 		const insert = formatMessage(message, deleted);
-		app.db.collection('messages').updateOne(
+		db.collection('messages').updateOne(
 			{_id: insert._id},
 			{$setOnInsert: insert},
 			{upsert: true}
@@ -16,7 +19,7 @@ const upsertMessageInDb = (message, deleted) => {
 				const edits = insert.e;
 				const update = JSON.parse(JSON.stringify(insert));
 				delete update.e;
-				app.db.collection('messages').findOneAndUpdate(
+				db.collection('messages').findOneAndUpdate(
 					{_id: update._id,
 						$or: [{t: {$lt: update.t}},
 							{d: {$ne: update.d}, d: false}]},
@@ -55,20 +58,20 @@ const formatMessage = (message, deleted) => {
 };
 
 const update = () => {
-	app.client.guilds.forEach(guild => guild.channels.forEach(channel => {
-		if (channel.type == 'text' && channel.permissionsFor(app.client.user).has('READ_MESSAGES')) {
+	client.guilds.forEach(guild => guild.channels.forEach(channel => {
+		if (channel.type == 'text' && channel.permissionsFor(client.user).has('READ_MESSAGES')) {
 			updateFromChannel(channel);
 		}
 	}));
 }
 
 const updateFromChannel = channel => {
-	app.db.collection('messages').aggregate([
+	db.collection('messages').aggregate([
 		{$match: {c: channel.id}},
 		{$sort: {_id: -1}},
 		{$limit: 1}
 	]).toArray().then(messages => {
-		const lastUpdatedTimestamp = /*messages.length ? messages[0].t : */0;
+		const lastUpdatedTimestamp = messages.length ? messages[0].t : 0;
 		updateFromChannelBatch(channel, lastUpdatedTimestamp, '');
 	}).catch(console.error);
 };
