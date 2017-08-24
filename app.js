@@ -42,6 +42,41 @@ const addFooter = (message, embed, reply) => {
 	reply.edit({embed});
 }
 
+const log = (message, type) => {
+	if (message.guild && message.author.id != client.user.id) {
+		const author = message.member ? message.member.displayName : message.author.username;
+		const attachment = message.attachments.first();
+
+		let color;
+		switch (type) {
+			case 'updated':
+				color = 'GREEN';
+				break;
+			case 'deleted':
+				color = 'RED';
+				break;
+			default:
+				color = 'BLUE';
+				break;
+		}
+
+		const embed = new Discord.RichEmbed()
+			.setAuthor(author, message.author.displayAvatarURL)
+			.setColor(color)
+			.setTimestamp(message.createdAt);
+
+		if (message.content) {
+			embed.setDescription(message.content);
+		}
+		if (attachment) {
+			embed.setImage(attachment.url || attachment.proxyUrl);
+		}
+		message.guild.channels.get('329477820076130306').send({embed}).then(reply => {
+			reply.edit(`Message by ${message.author} ${type} in ${message.channel}:`, {embed});
+		}).catch(console.error);
+	}
+};
+
 client.on('ready', () => {
 	console.log('Ready!');
 	db.collection('messages').createIndex({g: 1, c: 1, d: 1});
@@ -54,19 +89,29 @@ client.on('message', message => {
 	if (message.content.startsWith(prefix)) {
 		handleCommand(message);
 	}
-	messages.upsertMessageInDb(message, false);
+	if (message.guild) {
+		messages.upsertMessageInDb(message);
+	}
 });
 
 client.on('messageUpdate', message => {
-	messages.upsertMessageInDb(message, false);
+	log(message, 'updated');
 });
 
 client.on('messageDelete', message => {
-	messages.upsertMessageInDb(message, true);
+	log(message, 'deleted');
+	if (message.guild) {
+		messages.upsertMessageInDb(message, -1);
+	}
 });
 
 client.on('messageDeleteBulk', messageCollection => {
-	messageCollection.forEach(message => messages.upsertMessageInDb(message, true));
+	messageCollection.forEach(message => {
+		log(message, 'bulk deleted')
+		if (message.guild) {
+			messages.upsertMessageInDb(message, -1);
+		}
+	});
 });
 
 db.open()
