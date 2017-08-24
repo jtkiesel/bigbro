@@ -43,7 +43,7 @@ const addFooter = (message, embed, reply) => {
 }
 
 const log = (message, type) => {
-	if (message.guild && message.author.id != client.user.id) {
+	if (message.guild && !message.author.bot) {
 		const author = message.member ? message.member.displayName : message.author.username;
 		const attachment = message.attachments.first();
 
