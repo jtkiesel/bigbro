@@ -71,7 +71,7 @@ const log = (message, type) => {
 		if (attachment) {
 			embed.setImage(attachment.url || attachment.proxyUrl);
 		}
-		message.guild.channels.get('329477820076130306').send({embed}).then(reply => {
+		message.guild.channels.get('263385335105323015').send({embed}).then(reply => {
 			reply.edit(`Message by ${message.author} ${type} in ${message.channel}:`, {embed});
 		}).catch(console.error);
 	}
