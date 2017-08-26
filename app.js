@@ -95,7 +95,9 @@ client.on('message', message => {
 });
 
 client.on('messageUpdate', message => {
-	log(message, 'updated');
+	if (message.edits.length > 1) {
+		log(message, 'updated');
+	}
 });
 
 client.on('messageDelete', message => {
