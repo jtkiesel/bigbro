@@ -94,23 +94,23 @@ client.on('message', message => {
 	}
 });
 
-client.on('messageUpdate', message => {
-	if (message.edits.length > 1) {
-		log(message, 'updated');
+client.on('messageUpdate', (oldMessage, newMessage) => {
+	if (oldMessage.guild && oldMessage.content != newMessage.content) {
+		log(oldMessage, 'updated');
 	}
 });
 
 client.on('messageDelete', message => {
-	log(message, 'deleted');
 	if (message.guild) {
+		log(message, 'deleted');
 		messages.upsertMessageInDb(message, -1);
 	}
 });
 
 client.on('messageDeleteBulk', messageCollection => {
 	messageCollection.forEach(message => {
-		log(message, 'bulk deleted')
 		if (message.guild) {
+			log(message, 'bulk deleted');
 			messages.upsertMessageInDb(message, -1);
 		}
 	});
