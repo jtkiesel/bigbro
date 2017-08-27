@@ -16,16 +16,11 @@ module.exports = (message, args, embed) => {
 		.group({_id: '$_id.user', count: {$sum: '$count'}})
 		.sort({count: -1})
 		.limit(20)
-		//.explain().then(result => console.log(result.executionStats.totalDocsExamined)).catch(console.error);
 		.toArray().then(users => {
 		const embed = new Discord.RichEmbed()
 			.setColor('RANDOM')
-			.setDescription('**Users with no lives:**\n');
-		message.channel.send({embed}).then(reply => {
-			embed.setDescription(embed.description + users.map(user => `<@${user._id}>: \`${user.count} messages\``).join('\n'));
-			reply.edit({embed})
-				.then(reply => app.addFooter(message, embed, reply))
-				.catch(console.error);
-		}).catch(console.error);
+			.setTitle('Users with no lives:')
+			.setDescription(users.map(user => `<@${user._id}>: \`${user.count} messages\``).join('\n'));
+		message.channel.send({embed}).then(reply => app.addFooter(message, embed, reply)).catch(console.error);
 	}).catch(console.error);
 };
