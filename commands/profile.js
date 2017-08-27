@@ -25,7 +25,7 @@ module.exports = (message, args, embed) => {
 			const game = member.user.presence.game;
 			const joinedDiscord = `${Math.floor((Date.now() - member.user.createdAt) / 86400000)} days ago`;
 			const joinedServer = `${Math.floor((Date.now() - member.joinedAt) / 86400000)} days ago`;
-			const roles = member.roles.size ? member.roles.filterArray(role => role.id != message.guild.id).reverse().join(', ') : '';
+			const roles = member.roles.size ? member.roles.filterArray(role => role.id != message.guild.id).sort((a, b) => b.calculatedPosition - a.calculatedPosition).join(', ') : '';
 
 			let status = member.user.presence.status;
 			switch (status) {
