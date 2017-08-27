@@ -25,6 +25,7 @@ module.exports = (message, args, embed) => {
 			const game = member.user.presence.game;
 			const joinedDiscord = `${Math.floor((Date.now() - member.user.createdAt) / 86400000)} days ago`;
 			const joinedServer = `${Math.floor((Date.now() - member.joinedAt) / 86400000)} days ago`;
+			const messages = user ? user.count : 0;
 			const roles = member.roles.size ? member.roles.filterArray(role => role.id != message.guild.id).sort((a, b) => b.calculatedPosition - a.calculatedPosition).join(', ') : '';
 
 			let status = member.user.presence.status;
@@ -42,7 +43,7 @@ module.exports = (message, args, embed) => {
 				.addField('Status', status, true)
 				.addField('Joined Discord', joinedDiscord, true)
 				.addField('Joined Server', joinedServer, true)
-				.addField('Messages', user.count, true)
+				.addField('Messages', messages, true)
 				.addField('Roles', roles, true)
 				.setImage(member.user.displayAvatarURL);
 
