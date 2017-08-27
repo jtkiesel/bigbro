@@ -48,7 +48,7 @@ module.exports = (message, args, embed) => {
 
 			if (game) {
 				const action = game.streaming ? 'Streaming' : 'Playing';
-				embed.addTitle(`${action} ${game.name}`);
+				embed.setTitle(`${action} ${game.name}`);
 				if (game.url) {
 					embed.setURL(game.url);
 				}
