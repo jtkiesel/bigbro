@@ -47,7 +47,11 @@ module.exports = (message, args, embed) => {
 				.setImage(member.user.displayAvatarURL);
 
 			if (game) {
-				embed.addField('Playing', game, true);
+				const action = game.streaming ? 'Streaming' : 'Playing';
+				embed.addTitle(`${action} ${game.name}`);
+				if (game.url) {
+					embed.setURL(game.url);
+				}
 			}
 
 			message.channel.send({embed}).then(reply => {
