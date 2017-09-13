@@ -6,6 +6,17 @@ const db = app.db;
 
 module.exports = async (message, args) => {
 	if (message.guild) {
+		let count = 20;
+		let min = 0;
+		if (args) {
+			args = args.trim().split(' ');
+			if (Number.parseInt(args[0])) {
+				count = Number.parseInt(args[0]);
+			}
+			if (Number.parseInt(args[1])) {
+				min = Number.parseInt(args[1]);
+			}
+		}
 		try {
 			const guild = await message.guild.fetchMembers();
 			let members = guild.members.filter(member => member.roles.size > 1);
@@ -17,13 +28,14 @@ module.exports = async (message, args) => {
 				const user = users.find(user => user._id === member.id);
 				member.messages = user ? user.count : 0;
 			});
-			members = members.sort((a, b) => {
+			console.log(min);
+			members = members.filter(member => member.messages >= min).sort((a, b) => {
 				const sort = a.messages - b.messages;
 				if (sort) {
 					return sort;
 				}
 				return a.joinedAt - b.joinedAt;
-			}).array().slice(0, isNaN(args) ? 20 : args).map(member => `${member}, ${Math.floor((Date.now() - member.joinedAt) / 86400000)} days, ${member.messages || 0} messages`).join('\n');
+			}).array().slice(0, count).map(member => `${member}, ${Math.floor((Date.now() - member.joinedAt) / 86400000)} days, ${member.messages || 0} messages`).join('\n');
 			message.channel.send(members).catch(console.error);
 		} catch (err) {
 			console.error(err);

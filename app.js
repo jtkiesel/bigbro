@@ -20,7 +20,9 @@ let helpDescription = `\`${prefix}help\`: Provides information about all command
 let messages;
 
 const handleCommand = message => {
-	const [cmd, args] = message.content.substring(prefix.length).split(' ', 2);
+	const slice = message.content.indexOf(' ');
+	const cmd = message.content.slice(prefix.length, (slice < 0) ? message.content.length : slice);
+	const args = (slice < 0) ? '' : message.content.slice(slice);
 
 	if (commands.hasOwnProperty(cmd)) {
 		commands[cmd](message, args);
