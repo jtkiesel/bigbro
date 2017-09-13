@@ -23,7 +23,7 @@ module.exports = async (message, args) => {
 				if (sort) {
 					return sort;
 				}
-				return b.joinedAt - a.joinedAt;
+				return a.joinedAt - b.joinedAt;
 			}).array().slice(0, isNaN(args) ? 20 : args).map(member => `${member}, ${Math.floor((Date.now() - member.joinedAt) / 86400000)} days, ${member.messages || 0} messages`).join('\n');
 			message.channel.send(members).catch(console.error);
 		} catch (err) {
