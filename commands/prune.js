@@ -18,7 +18,13 @@ module.exports = async (message, args) => {
 				const user = users.find(user => user._id === member.id);
 				member.messages = user ? user.count : 0;
 			});
-			members = members.sort((a, b) => a.messages - b.messages).array().slice(0, isNaN(args) ? 20 : args).map(member => `${member}, ${Math.floor((Date.now() - member.joinedAt) / 86400000)} days, ${member.messages || 0} messages`).join('\n');
+			members = members.sort((a, b) => {
+				const sort = a.messages - b.messages;
+				if (sort) {
+					return sort;
+				}
+				return b.joinedAt - a.joinedAt;
+			}).array().slice(0, isNaN(args) ? 20 : args).map(member => `${member}, ${Math.floor((Date.now() - member.joinedAt) / 86400000)} days, ${member.messages || 0} messages`).join('\n');
 			message.channel.send(members).catch(console.error);
 		} catch (err) {
 			console.error(err);
