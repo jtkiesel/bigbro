@@ -4,13 +4,18 @@ const app = require('../app');
 
 const db = app.db;
 
-const messageChannels = ['198658074876182538', '260546095082504202',
-	'342822239076483074', '198658294007463936', '198658294007463936',
-	'272921946352648192', '198658419945635840', '197818075796471808',
-	'260546551255007232',
+const messageChannels =
+['198658074876182538',  // #lounge
+	'260546095082504202',  // #vexchat
+	'342822239076483074',  // #vexforum
+	'198658294007463936',  // #coding
+	'272921946352648192',  // #suggestionbox
+	'198658419945635840',  // #voicechat
+	'260546551255007232',  // #memes
+	'197818075796471808',  // #admins
 	'329477820076130306'];  // Dev server.
 
-module.exports = (message, args, embed) => {
+module.exports = (message, args) => {
 	let member;
 	if (!args) {
 		member = message.member;

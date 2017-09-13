@@ -4,14 +4,14 @@ const mongodb = require('mongodb');
 const client = new Discord.Client();
 const MongoClient = new mongodb.MongoClient();
 const token = process.env.BIGBRO_TOKEN;
-const [mongodbUri, username, password, host, port, database] = process.env.BIGBRO_DB.match(/^(?:mongodb:\/\/)(.+):(.+)@(.+):(.+)\/(.+)$/);
-const db = new mongodb.Db(database, new mongodb.Server(host, Number(port)));
+const mongodbUri = process.env.BIGBRO_DB;
 const prefix = '%';
 const commandInfo = {
 	ping: 'Pong!',
 	uptime: 'Time since bot last restarted.',
 	leaderboard: 'Users with the most messages on the server.',
-	profile: 'Information about a user.'
+	profile: 'Information about a user.',
+	prune: 'Get users with the fewest messages on the server'
 };
 const commands = {};
 
@@ -60,7 +60,6 @@ const log = (message, type) => {
 				color = 'BLUE';
 				break;
 		}
-
 		const embed = new Discord.RichEmbed()
 			.setAuthor(author, message.author.displayAvatarURL)
 			.setColor(color)
@@ -80,7 +79,6 @@ const log = (message, type) => {
 
 client.on('ready', () => {
 	console.log('Ready!');
-	db.collection('messages').createIndex({g: 1, c: 1, d: 1});
 	messages.update();
 });
 
@@ -117,17 +115,15 @@ client.on('messageDeleteBulk', messageCollection => {
 	});
 });
 
-db.open()
-	.then(db => db.authenticate(username, password))
-	.then(db => {
-		Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
-		Object.entries(commandInfo).forEach(([name, desc]) => {
-			helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
-		});
-		messages = require('./messages');
-		client.login(token).catch(console.error);
-	}).catch(console.error);
+MongoClient.connect(mongodbUri).then(db => {
+	module.exports.db = db;
+
+	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
+	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
+
+	messages = require('./messages');
+	client.login(token).catch(console.error);
+}).catch(console.error);
 
 module.exports.client = client;
-module.exports.db = db;
 module.exports.addFooter = addFooter;

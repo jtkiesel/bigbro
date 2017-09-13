@@ -1,13 +1,9 @@
 const Discord = require('discord.js');
-//const cron = require('cron');
 
 const app = require('./app');
 
-//const CronJob = cron.CronJob;
 const client = app.client;
 const db = app.db;
-
-//const timezone = 'America/New_York';
 
 const update = () => {
 	client.guilds.forEach(guild => guild.channels.forEach(channel => {
@@ -16,8 +12,6 @@ const update = () => {
 		}
 	}));
 }
-
-//const messagesJob = new CronJob('00 00 08 * * *', update, null, true, timezone);
 
 const upsertMessageInDb = (message, inc = 1, upsertCounts = true) => {
 	db.collection('temp').updateOne(
