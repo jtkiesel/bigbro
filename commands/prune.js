@@ -8,11 +8,10 @@ module.exports = async (message, args) => {
 	if (message.guild) {
 		try {
 			const guild = await message.guild.fetchMembers();
-			let members = guild.members;
+			let members = guild.members.filter(member => member.roles.size > 1);
 			const users = await db.collection('counts').aggregate()
 				.match({'_id.guild': message.guild.id, '_id.user': {$in: members.map(member => member.id)}})
 				.group({_id: '$_id.user', count: {$sum: '$count'}})
-				//.sort({count: -1})
 				.toArray();
 			members.forEach(member => {
 				const user = users.find(user => user._id === member.id);
