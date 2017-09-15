@@ -48,7 +48,7 @@ module.exports = async (message, args) => {
 			const embed = new Discord.RichEmbed()
 				.setColor(member ? member.displayColor : 0xffffff)
 				.setAuthor(member ? member.displayName : user.username, user.displayAvatarURL)
-				.setThumbnail(user.displayAvatarURL)
+				.setImage(user.displayAvatarURL)
 				.addField('Status', status, true)
 				.addField('Joined Discord', joinedDiscord, true);
 			if (member) {
