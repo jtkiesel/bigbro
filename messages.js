@@ -42,15 +42,14 @@ const updateFromChannelBatch = (channel, lastUpdatedTimestamp, lastMessageId) =>
 	}
 	channel.fetchMessages(options).then(messages => {
 		if (messages.size) {
-			console.log('.');
 			messages.forEach(message => upsertMessageInDb(message, 1, false));
 			updateFromChannelBatch(channel, lastUpdatedTimestamp, messages.lastKey());
 		} else {
 			console.log(`Done with ${channel.name}.`);
-			db.collection('temp').find({'_id.guild': channel.guild.id, '_id.channel': channel.id}).toArray().then(array => array.forEach(entry => {
+			db.collection('temp').find({'_id.guild': channel.guild.id, '_id.channel': channel.id}).toArray().then(array => array.forEach(document => {
 				db.collection('counts').updateOne(
-					{_id: entry._id},
-					entry,
+					{_id: document._id},
+					document,
 					{upsert: true}
 				).catch(console.error);
 			}));
