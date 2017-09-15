@@ -21,7 +21,6 @@ module.exports = async (message, args) => {
 		user = message.author;
 		member = message.member;
 	} else {
-		console.log(message.mentions);
 		user = message.mentions.users.first();
 		member = message.mentions.members ? message.mentions.members.first() : null;
 	}
