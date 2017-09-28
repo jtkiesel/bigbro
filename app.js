@@ -5,13 +5,19 @@ const client = new Discord.Client();
 const MongoClient = new mongodb.MongoClient();
 const token = process.env.BIGBRO_TOKEN;
 const mongodbUri = process.env.BIGBRO_DB;
+const mongodbOptions = {
+	keepAlive: 1,
+	connectTimeoutMS: 30000,
+	reconnectTries: 30,
+	reconnectInterval: 5000
+};
 const prefix = '%';
 const commandInfo = {
 	ping: 'Pong!',
 	uptime: 'Time since bot last restarted.',
 	leaderboard: 'Users with the most messages on the server.',
-	profile: 'Information about a user.',
-	prune: 'Get users with the fewest messages on the server'
+	profile: 'Information about a user.'/*,
+	prune: 'Get users with the fewest messages on the server.'*/
 };
 const commands = {};
 
@@ -26,7 +32,7 @@ const handleCommand = message => {
 
 	if (commands.hasOwnProperty(cmd)) {
 		commands[cmd](message, args);
-	} else if (cmd == 'help') {
+	} else if (cmd === 'help') {
 		const embed = new Discord.RichEmbed()
 			.setColor('RANDOM')
 			.setTitle('Commands')
@@ -96,7 +102,7 @@ client.on('message', message => {
 });
 
 client.on('messageUpdate', (oldMessage, newMessage) => {
-	if (oldMessage.guild && oldMessage.content != newMessage.content) {
+	if (oldMessage.guild && oldMessage.content !== newMessage.content) {
 		log(oldMessage, 'updated');
 	}
 });
@@ -117,7 +123,7 @@ client.on('messageDeleteBulk', messageCollection => {
 	});
 });
 
-MongoClient.connect(mongodbUri).then(db => {
+MongoClient.connect(mongodbUri, mongodbOptions).then(db => {
 	module.exports.db = db;
 
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
