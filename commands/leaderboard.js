@@ -5,14 +5,14 @@ const app = require('../app');
 const db = app.db;
 
 const leaderboardChannels =
-['198658074876182538',  // #lounge
-	'260546095082504202',  // #vexchat
+['260546095082504202',  // #vex
+	'360136094500519946',  // #vexu
 	'342822239076483074',  // #vexforum
 	'198658294007463936',  // #coding
-	'272921946352648192',  // #suggestionbox
-	'198658419945635840',  // #voicechat
+	'198658074876182538',  // #lounge
 	'260546551255007232',  // #memes
 	'197818075796471808',  // #admins
+	'198658419945635840',  // #voicechat
 	'329477820076130306'];  // Dev server.
 
 module.exports = async (message, args) => {
