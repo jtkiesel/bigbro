@@ -1,19 +1,10 @@
 const Discord = require('discord.js');
 
 const app = require('../app');
+const messages = require('../messages');
 
 const db = app.db;
-
-const messageChannels =
-['198658074876182538',  // #lounge
-	'260546095082504202',  // #vexchat
-	'342822239076483074',  // #vexforum
-	'198658294007463936',  // #coding
-	'272921946352648192',  // #suggestionbox
-	'198658419945635840',  // #voicechat
-	'260546551255007232',  // #memes
-	'197818075796471808',  // #admins
-	'329477820076130306'];  // Dev server.
+const leaderboardChannels = messages.leaderboardChannels;
 
 module.exports = async (message, args) => {
 	let user, member;
@@ -27,7 +18,7 @@ module.exports = async (message, args) => {
 	if (user) {
 		try {
 			const document = message.guild ? await db.collection('counts').aggregate()
-				.match({'_id.guild': message.guild.id, '_id.channel': {$in: messageChannels}, '_id.user': user.id})
+				.match({'_id.guild': message.guild.id, '_id.channel': {$in: leaderboardChannels}, '_id.user': user.id})
 				.group({_id: '$_id.user', count: {$sum: '$count'}})
 				.next() : null;
 			const game = user.presence.game;

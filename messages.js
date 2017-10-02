@@ -5,6 +5,17 @@ const app = require('./app');
 const client = app.client;
 const db = app.db;
 
+const leaderboardChannels =
+['260546095082504202',  // #vex
+	'360136094500519946',  // #vexu
+	'342822239076483074',  // #vexforum
+	'198658294007463936',  // #coding
+	'198658074876182538',  // #lounge
+	'260546551255007232',  // #memes
+	'197818075796471808',  // #admins
+	'198658419945635840',  // #voicechat
+	'329477820076130306'];  // Dev server.
+
 const update = () => {
 	client.guilds.forEach(guild => guild.channels.forEach(channel => {
 		if (channel.type == 'text' && channel.permissionsFor(client.user).has('READ_MESSAGES')) {
@@ -63,5 +74,6 @@ const updateFromChannelBatch = (channel, lastUpdatedTimestamp, lastMessageId) =>
 module.exports = {
 	upsertMessageInDb: upsertMessageInDb,
 	updateFromChannel: updateFromChannel,
-	update: update
+	update: update,
+	leaderboardChannels: leaderboardChannels
 };
