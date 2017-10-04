@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const mongodb = require('mongodb');
+const util = require('util');
 
 const client = new Discord.Client();
 const MongoClient = new mongodb.MongoClient();
@@ -16,14 +17,20 @@ const commandInfo = {
 	ping: 'Pong!',
 	uptime: 'Time since bot last restarted.',
 	leaderboard: 'Users with the most messages on the server.',
-	profile: 'Information about a user.'/*,
-	prune: 'Get users with the fewest messages on the server.'*/
+	profile: 'Information about a user.'
 };
 const commands = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 
 let messages;
+
+const clean = text => {
+	if (typeof(text) === 'string') {
+		return text.replace(/`/g, '`' + String.fromCharCode(8203)).replace(/@/g, '@' + String.fromCharCode(8203)).slice(0, 1990);
+	}
+	return text;
+};
 
 const handleCommand = message => {
 	const slice = message.content.indexOf(' ');
@@ -40,8 +47,22 @@ const handleCommand = message => {
 		message.channel.send({embed})
 			.then(reply => addFooter(message, embed, reply))
 			.catch(console.error);
+	} else if (cmd === 'eval') {
+		if (message.author.id === '197781934116569088') {
+			try {
+				let evaled = eval(args);
+				if (typeof evaled !== 'string') {
+					evaled = util.inspect(evaled);
+				}
+				message.channel.send(clean(evaled), {code: 'xl'});
+			} catch (error) {
+				message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(error)}\`\`\``);
+			}
+		} else {
+			message.reply('you don\'t have permission to run that command.');
+		}
 	}
-}
+};
 
 const addFooter = (message, embed, reply) => {
 	const author = message.member ? message.member.displayName : message.author.username;
@@ -49,7 +70,7 @@ const addFooter = (message, embed, reply) => {
 	embed.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL)
 		.setTimestamp(message.createdAt);
 	reply.edit({embed});
-}
+};
 
 const log = (message, type) => {
 	if (message.guild && !message.author.bot) {
@@ -91,6 +112,10 @@ client.on('ready', () => {
 });
 
 client.on('error', console.error);
+
+client.on('guildMemberAdd', member => {
+	member.guild.systemChannel.send(`Welcome, ${member}! To access this server, an Admin must verify you. Please take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS") to access the rest of the server. If you have any questions, please send a message here! An admin will assist you shortly.`);
+});
 
 client.on('message', message => {
 	if (message.content.startsWith(prefix)) {
