@@ -32,7 +32,7 @@ const update = async () => {
 
 const upsertMessageInDb = async (message, inc = 1, upsertCounts = true) => {
 	try {
-		db.collection('temp').updateOne(
+		await db.collection('temp').updateOne(
 			{_id: {guild: message.guild.id, channel: message.channel.id, user: message.author.id}},
 			{$inc: {count: inc}},
 			{upsert: true});
@@ -41,7 +41,7 @@ const upsertMessageInDb = async (message, inc = 1, upsertCounts = true) => {
 	}
 	if (upsertCounts) {
 		try {
-			db.collection('counts').updateOne(
+			await db.collection('counts').updateOne(
 				{_id: {guild: message.guild.id, channel: message.channel.id, user: message.author.id}},
 				{$inc: {count: inc}},
 				{upsert: true});
@@ -77,7 +77,7 @@ const updateFromChannelBatch = async (channel, lastUpdatedTimestamp, lastMessage
 			const documents = await db.collection('temp').find({'_id.guild': channel.guild.id, '_id.channel': channel.id}).toArray();
 
 			for (let document of documents) {
-				db.collection('counts').updateOne({_id: document._id}, document, {upsert: true});
+				await db.collection('counts').updateOne({_id: document._id}, document, {upsert: true});
 			}
 		}
 	} catch (err) {
