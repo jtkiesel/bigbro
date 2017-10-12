@@ -106,9 +106,14 @@ const log = (message, type) => {
 	}
 };
 
-client.on('ready', () => {
+client.on('ready', async () => {
 	console.log('Ready!');
-	messages.update();
+	try {
+		await messages.update();
+	} catch (err) {
+		console.error(err);
+	}
+	console.log('Done updating messages.');
 });
 
 client.on('error', console.error);
