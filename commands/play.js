@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const ytdl = require('ytdl-core');
 
 const app = require('../app');
-// Welp.
+
 const queue = [];
 const voiceChannelId = {'197777408198180864': '197818048147750912', '329477820076130306': '329477820076130307'};
 const textChannelId = {'197777408198180864': '370062723326803969', '329477820076130306': '329477820076130306'};
@@ -93,7 +93,7 @@ const playNext = async guild => {
 				connection.disconnect();
 			}
 		});
-		const skipSize = Math.ceil((connection.channel.members.size - 1) / 2) + 1;
+		const skipSize = Math.ceil((connection.channel.members.size - 1) / 2);
 		const message = await textChannel.send('Now playing:', {embed});
 
 		await message.react(skip);
@@ -103,7 +103,7 @@ const playNext = async guild => {
 				reaction.remove(user);
 				return false;
 			}
-			return reaction.emoji.name === skip;
+			return !user.bot && reaction.emoji.name === skip;
 		}, {max: skipSize, time: video.info.length_seconds * 1000}).then(reactions => {
 			if (reactions.get(skip).count >= skipSize) {
 				dispatcher.end();
