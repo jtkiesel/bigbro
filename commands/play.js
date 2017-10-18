@@ -49,13 +49,14 @@ const playNext = async guild => {
 		const textChannel = guild.channels.get(textChannelId[guildId]);
 		const voiceId = voiceChannelId[guildId];
 		const author = video.info.author;
+		const image = video.info.iurlmaxres ? video.info.iurlmaxres : video.info.iurlsd;
 		const requester = video.message.member ? video.message.member.displayName : video.message.author.username;
 		const embed = new Discord.RichEmbed()
 			.setColor('BLUE')
 			.setAuthor(author.name, author.avatar, author.user_url)
 			.setTitle(getTitle(video))
 			.setURL(getUrl(video))
-			.setImage(video.info.iurlmaxres)
+			.setImage(image)
 			.setFooter(`Requested by ${requester}`, video.message.author.displayAvatarURL)
 			.setTimestamp(video.message.createdAt);
 		let connection = guild.voiceConnection;
@@ -105,7 +106,8 @@ const playNext = async guild => {
 			}
 			return reaction.emoji.name === skip;
 		}, {max: skipSize, time: video.info.length_seconds * 1000}).then(reactions => {
-			if (reactions.get(skip).count >= skipSize) {
+			const skips = reactions.get(skip);
+			if (skips && skips.count >= skipSize) {
 				dispatcher.end();
 			}
 			message.clearReactions();
