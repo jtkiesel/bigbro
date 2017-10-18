@@ -108,7 +108,6 @@ const playNext = async guild => {
 			if (reactions.get(skip).count >= skipSize) {
 				dispatcher.end();
 			}
-			console.log('CLEARING REACTIONS.');
 			message.clearReactions();
 		}).catch(console.error);
 	}
