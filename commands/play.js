@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const ytdl = require('ytdl-core');
 
 const app = require('../app');
-
+// Welp.
 const queue = [];
 const voiceChannelId = {'197777408198180864': '197818048147750912', '329477820076130306': '329477820076130307'};
 const textChannelId = {'197777408198180864': '370062723326803969', '329477820076130306': '329477820076130306'};
