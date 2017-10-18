@@ -93,7 +93,7 @@ const playNext = async guild => {
 				connection.disconnect();
 			}
 		});
-		const skipSize = Math.ceil((connection.channel.members.size - 1) / 2);
+		const skipSize = Math.ceil((connection.channel.members.size - 1) / 2) + 1;
 		const message = await textChannel.send('Now playing:', {embed});
 
 		await message.react(skip);
@@ -103,13 +103,12 @@ const playNext = async guild => {
 				reaction.remove(user);
 				return false;
 			}
-			return !user.bot && reaction.emoji.name === skip;
+			return reaction.emoji.name === skip;
 		}, {max: skipSize, time: video.info.length_seconds * 1000}).then(reactions => {
-			console.log(reactions.get(skip).count);
-			console.log(skipSize);
 			if (reactions.get(skip).count >= skipSize) {
 				dispatcher.end();
 			}
+			console.log('CLEARING REACTIONS.');
 			message.clearReactions();
 		}).catch(console.error);
 	}
