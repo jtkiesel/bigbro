@@ -17,7 +17,8 @@ const commandInfo = {
 	ping: 'Pong!',
 	uptime: 'Time since bot last restarted.',
 	leaderboard: 'Users with the most messages on the server.',
-	profile: 'Information about a user.'
+	profile: 'Information about a user.',
+	play: 'Audio from a YouTube video.'
 };
 const commands = {};
 
@@ -109,7 +110,7 @@ const log = (message, type) => {
 client.on('ready', async () => {
 	console.log('Ready!');
 	try {
-		await messages.update();
+		//await messages.update();
 	} catch (err) {
 		console.error(err);
 	}
