@@ -105,6 +105,8 @@ const playNext = async guild => {
 			}
 			return !user.bot && reaction.emoji.name === skip;
 		}, {max: skipSize, time: video.info.length_seconds * 1000}).then(reactions => {
+			console.log(reactions.get(skip).count);
+			console.log(skipSize);
 			if (reactions.get(skip).count >= skipSize) {
 				dispatcher.end();
 			}
