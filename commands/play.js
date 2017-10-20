@@ -87,7 +87,7 @@ const playNext = async guild => {
 			if (user.id === app.client.user.id || !reaction.emoji.name === skip) {
 				return false;
 			}
-			if (!connection.channel.members.has(user.id)) {
+			if (user.bot || !connection.channel.members.has(user.id)) {
 				reaction.remove(user);
 				return false;
 			}
@@ -95,7 +95,7 @@ const playNext = async guild => {
 		});
 
 		collector.on('collect', (reaction, collector) => {
-			if (collector.collected.size >= Math.ceil((connection.channel.members.size - 1) / 2)) {
+			if (collector.collected.size >= Math.ceil(connection.channel.members.filter(member => !member.user.bot).size / 2)) {
 				collector.stop();
 				dispatcher.end();
 			}
