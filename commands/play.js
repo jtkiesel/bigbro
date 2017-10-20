@@ -78,12 +78,38 @@ const playNext = async guild => {
 		}
 		const stream = ytdl.downloadFromInfo(video.info, {filter: 'audioonly'});
 		const dispatcher = connection.playStream(stream, {seek: 0, volume: 1});
+		const message = await textChannel.send('Now playing:', {embed});
+
+		await message.react(skip);
+
+		const collector = new Discord.ReactionCollector(message, (reaction, user) => {
+			if (user.id === app.client.user.id || !reaction.emoji.name === skip) {
+				return false;
+			}
+			if (!connection.channel.members.has(user.id)) {
+				reaction.remove(user);
+				return false;
+			}
+			return true;
+		});
+
+		collector.on('collect', (reaction, collector) => {
+			if (collector.collected.size >= Math.floor((connection.channel.members.size - 1) / 2) + 1) {
+				collector.stop();
+				dispatcher.end();
+			}
+		});
+
+		collector.on('end', (collected, reason) => {
+			message.clearReactions();
+		});
 
 		const id = setInterval(() => {
 			textChannel.setTopic(getTopic(video, Math.floor(dispatcher.time / 1000) / video.info.length_seconds));
 		}, Math.floor(300 * video.info.length_seconds / progressBarLength));
 
 		dispatcher.on('end', reason => {
+			collector.stop();
 			clearInterval(id);
 			queue[guildId].shift();
 
@@ -94,24 +120,6 @@ const playNext = async guild => {
 				connection.disconnect();
 			}
 		});
-		const skipSize = Math.ceil((connection.channel.members.size - 1) / 2) + 1;
-		const message = await textChannel.send('Now playing:', {embed});
-
-		await message.react(skip);
-
-		message.awaitReactions((reaction, user) => {
-			if (!connection.channel.members.has(user.id) && reaction.emoji.name === skip) {
-				reaction.remove(user);
-				return false;
-			}
-			return reaction.emoji.name === skip;
-		}, {max: skipSize, time: video.info.length_seconds * 1000}).then(reactions => {
-			const skips = reactions.get(skip);
-			if (skips && skips.count >= skipSize) {
-				dispatcher.end();
-			}
-			message.clearReactions();
-		}).catch(console.error);
 	}
 };
 
