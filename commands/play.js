@@ -94,7 +94,7 @@ const playNext = async guild => {
 		});
 
 		collector.on('collect', (reaction, collector) => {
-			if (collector.collected.size >= Math.floor((connection.channel.members.size - 1) / 2) + 1) {
+			if (collector.collected.size >= Math.ceil((connection.channel.members.size - 1) / 2)) {
 				collector.stop();
 				dispatcher.end();
 			}
