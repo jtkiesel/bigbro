@@ -46,10 +46,11 @@ const playNext = async guild => {
 	const video = queue[guildId][0];
 
 	if (video) {
+		console.log(video.info);
 		const textChannel = guild.channels.get(textChannelId[guildId]);
 		const voiceId = voiceChannelId[guildId];
 		const author = video.info.author;
-		const image = video.info.iurlmaxres ? video.info.iurlmaxres : video.info.iurlsd;
+		const image = video.info.iurlmaxres || video.info.iurlsd || video.info.iurlhq;
 		const requester = video.message.member ? video.message.member.displayName : video.message.author.username;
 		const embed = new Discord.RichEmbed()
 			.setColor('BLUE')
