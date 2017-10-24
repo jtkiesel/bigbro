@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const ytdl = require('ytdl-core');
 
 const app = require('../app');
+const music = require('../music');
 
 const queue = [];
 const voiceChannelId = {'197777408198180864': '197818048147750912', '329477820076130306': '329477820076130307'};
@@ -124,35 +125,43 @@ const playNext = async guild => {
 	}
 };
 
+const newVideo = async (message, v) => {
+	const guild = message.guild;
+	const guildId = guild.id;
+	const info = await ytdl.getInfo(v);
+	const video = {message: message, info: info};
+
+	if (!queue[guildId]) {
+		queue[guildId] = [video];
+	} else {
+		queue[guildId].push(video);
+	}
+	if (queue[guildId].length === 1) {
+		playNext(guild);
+	} else {
+		const embed = new Discord.RichEmbed()
+			.setColor('BLUE')
+			.setDescription(queue[guildId].slice(1).map((video, index) => `\`${String(index + 1).padStart(2, ' ')}.\` \`[${getDuration(video)}]\` [${getTitle(video)}](${getUrl(video)}) - ${getRequester(video)}`).join('\n'));
+		message.channel.send({embed});
+	}
+};
+
 module.exports = async (message, args) => {
 	if (message.member) {
-		const guild = message.guild;
-		const guildId = guild.id;
-		const id = ytdl.getVideoID(args);
-
-		if (id) {
-			const info = await ytdl.getInfo(id);
-			const video = {message: message, info: info};
-
-			if (!queue[guildId]) {
-				queue[guildId] = [video];
-			} else {
-				queue[guildId].push(video);
-			}
-			if (queue[guildId].length === 1) {
-				playNext(guild);
-			} else {
-				const embed = new Discord.RichEmbed()
-					.setColor('BLUE')
-					.setDescription(queue[guildId].slice(1).map((video, index) => `\`${String(index + 1).padStart(2, ' ')}.\` \`[${getDuration(video)}]\` [${getTitle(video)}](${getUrl(video)}) - ${getRequester(video)}`).join('\n'));
-				message.channel.send({embed});
-			}
+		if (ytdl.validateURL(args)) {
+			newVideo(message, args);
 		} else {
-			message.reply('please provide a valid YouTube video.');
+			const videos = await music.search(args, 1);
+
+			if (videos) {
+				newVideo(message, videos[0].id.videoId);
+			} else {
+				message.reply('no videos found for that query.');
+			}
 		}
 	} else {
 		message.reply('that command is only available in servers.');
 	}
 };
 
-Object.entries(textChannelId).forEach(([guild, channel]) => app.client.guilds.get(channel));
+//Object.entries(textChannelId).forEach(([guild, channel]) => app.client.guilds.get(channel));
