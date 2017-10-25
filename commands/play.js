@@ -86,18 +86,25 @@ const playNext = async guild => {
 
 		const collector = new Discord.ReactionCollector(message, (reaction, user) => {
 			if (user.id === app.client.user.id || !reaction.emoji.name === skip) {
+				console.log('1');
 				return false;
 			}
 			if (user.bot || !connection.channel.members.has(user.id)) {
+				console.log('2');
 				reaction.remove(user);
 				return false;
 			}
+			console.log('3');
 			return true;
 		});
 
-		collector.on('collect', (reaction, collector) => {
-			if (collector.collected.size >= Math.ceil(connection.channel.members.filter(member => !member.user.bot).size / 2)) {
-				collector.stop();
+		collector.on('collect', (reaction, c) => {
+			const size = c.collected.size;
+			const required = Math.ceil(connection.channel.members.filter(member => !member.user.bot).size / 2);
+			console.log(`size: ${size}`);
+			console.log(`required: ${required}`);
+			if (size >= required) {
+				c.stop();
 				dispatcher.end();
 			}
 		});
