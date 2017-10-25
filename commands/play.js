@@ -99,7 +99,7 @@ const playNext = async guild => {
 		});
 
 		collector.on('collect', (reaction, c) => {
-			const size = c.collected.size;
+			const size = c.collected.first().count;
 			const required = Math.ceil(connection.channel.members.filter(member => !member.user.bot).size / 2);
 			console.log(`size: ${size}`);
 			console.log(`required: ${required}`);
