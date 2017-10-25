@@ -47,7 +47,6 @@ const playNext = async guild => {
 	const video = queue[guildId][0];
 
 	if (video) {
-		console.log(video.info);
 		const textChannel = guild.channels.get(textChannelId[guildId]);
 		const voiceId = voiceChannelId[guildId];
 		const author = video.info.author;
