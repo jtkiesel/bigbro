@@ -111,7 +111,7 @@ client.on('ready', async () => {
 	console.log('Ready!');
 	client.user.setGame(`${prefix}help`, 'https://github.com/jtkiesel/bigbro');
 	try {
-		//await messages.update();
+		await messages.update();
 	} catch (err) {
 		console.error(err);
 	}

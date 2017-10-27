@@ -47,22 +47,10 @@ const playNext = async guild => {
 	const video = queue[guildId][0];
 
 	if (video) {
+		const stream = ytdl.downloadFromInfo(video.info, {filter: 'audioonly'});
 		const textChannel = guild.channels.get(textChannelId[guildId]);
 		const voiceId = voiceChannelId[guildId];
-		const author = video.info.author;
-		const image = video.info.iurlmaxres || video.info.iurlsd || video.info.iurlhq;
-		const requester = video.message.member ? video.message.member.displayName : video.message.author.username;
-		const embed = new Discord.RichEmbed()
-			.setColor('BLUE')
-			.setAuthor(author.name, author.avatar, author.user_url)
-			.setTitle(getTitle(video))
-			.setURL(getUrl(video))
-			.setImage(image)
-			.setFooter(`Requested by ${requester}`, video.message.author.displayAvatarURL)
-			.setTimestamp(video.message.createdAt);
 		let connection = guild.voiceConnection;
-
-		await textChannel.setTopic(getTopic(video, 0));
 
 		if (!connection || connection.channel.id !== voiceId) {
 			const voiceChannel = guild.channels.get(voiceId);
@@ -77,8 +65,18 @@ const playNext = async guild => {
 				return;
 			}
 		}
-		const stream = ytdl.downloadFromInfo(video.info, {filter: 'audioonly'});
-		const dispatcher = connection.playStream(stream, {seek: 0, volume: 1});
+		const dispatcher = connection.playStream(stream);
+		const author = video.info.author;
+		const image = video.info.iurlmaxres || video.info.iurlsd || video.info.iurlhq;
+		const requester = video.message.member ? video.message.member.displayName : video.message.author.username;
+		const embed = new Discord.RichEmbed()
+			.setColor('BLUE')
+			.setAuthor(author.name, author.avatar, author.user_url)
+			.setTitle(getTitle(video))
+			.setURL(getUrl(video))
+			.setImage(image)
+			.setFooter(`Requested by ${requester}`, video.message.author.displayAvatarURL)
+			.setTimestamp(video.message.createdAt);
 		const message = await textChannel.send('Now playing:', {embed});
 
 		await message.react(skip);
