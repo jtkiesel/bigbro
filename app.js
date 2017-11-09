@@ -77,6 +77,7 @@ const log = (message, type) => {
 	if (message.guild && !message.author.bot) {
 		const author = message.member ? message.member.displayName : message.author.username;
 		const attachment = message.attachments.first();
+		const url = attachment ? `\n${attachment.url || attachment.proxyUrl}` : '';
 
 		let color;
 		switch (type) {
@@ -96,7 +97,7 @@ const log = (message, type) => {
 			.setTimestamp(message.createdAt);
 
 		if (message.content) {
-			embed.setDescription(message.content + (attachment !== undefined) ? `\n${attachment.url || attachment.proxyUrl}` : '');
+			embed.setDescription(message.content + url);
 		}
 		if (attachment) {
 			embed.setImage(attachment.url || attachment.proxyUrl);
