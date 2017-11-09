@@ -96,7 +96,7 @@ const log = (message, type) => {
 			.setTimestamp(message.createdAt);
 
 		if (message.content) {
-			embed.setDescription(message.content);
+			embed.setDescription(message.content + attachment ? `\n${attachment.url || attachment.proxyUrl}` : '');
 		}
 		if (attachment) {
 			embed.setImage(attachment.url || attachment.proxyUrl);
@@ -121,7 +121,7 @@ client.on('ready', async () => {
 client.on('error', console.error);
 
 client.on('guildMemberAdd', member => {
-	member.guild.systemChannel.send(`Welcome, ${member}! To access this server, an Admin must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask an Admin for help.`);
+	member.guild.systemChannel.send(`Welcome, ${member}! To access this server, an <@378029083230994432> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask an <@378029083230994432> for help.`);
 });
 
 client.on('message', message => {
