@@ -96,7 +96,7 @@ const log = (message, type) => {
 			.setTimestamp(message.createdAt);
 
 		if (message.content) {
-			embed.setDescription(message.content + attachment ? `\n${attachment.url || attachment.proxyUrl}` : '');
+			embed.setDescription(message.content + (attachment !== undefined) ? `\n${attachment.url || attachment.proxyUrl}` : '');
 		}
 		if (attachment) {
 			embed.setImage(attachment.url || attachment.proxyUrl);
