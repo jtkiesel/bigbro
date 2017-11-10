@@ -122,7 +122,9 @@ client.on('ready', async () => {
 client.on('error', console.error);
 
 client.on('guildMemberAdd', member => {
-	const embed = new Discord.RichEmbed().setDescription(`Welcome, ${member}! To access this server, an <@&378029083230994432> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask an <@&378029083230994432> for help.`)
+	const embed = new Discord.RichEmbed()
+			.setColor("RED")
+			.setDescription(`Welcome, ${member}! To access this server, an <@&197816965899747328> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask an <@&197816965899747328> for help.`)
 	member.guild.systemChannel.send({embed});
 });
 
