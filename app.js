@@ -110,7 +110,7 @@ const log = (message, type) => {
 
 client.on('ready', async () => {
 	console.log('Ready!');
-	client.user.setGame(`${prefix}help`, 'https://github.com/jtkiesel/bigbro');
+	client.user.setActivity(`${prefix}help`, {url: 'https://github.com/jtkiesel/bigbro', type: 'PLAYING'});
 	try {
 		await messages.update();
 	} catch (err) {

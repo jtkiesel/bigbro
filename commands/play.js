@@ -28,6 +28,8 @@ const getUrl = video => `https://youtu.be/${video.info.video_id}`;
 
 const getRequester = video => video.message.author;
 
+const getImage = video => `https://i.ytimg.com/vi/${video.info.video_id}/hqdefault.jpg`;
+
 const progressBarLength = 10 - 1;
 
 const defaultTopic = `⏹️🔘${'▬'.repeat(progressBarLength)}[00:00:00]🔇 Try the %play command to listen to music.`;
@@ -67,14 +69,13 @@ const playNext = async guild => {
 		}
 		const dispatcher = connection.playStream(stream);
 		const author = video.info.author;
-		const image = video.info.iurlmaxres || video.info.iurlsd || video.info.iurlhq;
 		const requester = video.message.member ? video.message.member.displayName : video.message.author.username;
 		const embed = new Discord.RichEmbed()
 			.setColor('BLUE')
 			.setAuthor(author.name, author.avatar, author.user_url)
 			.setTitle(getTitle(video))
 			.setURL(getUrl(video))
-			.setImage(image)
+			.setImage(getImage(video))
 			.setFooter(`Requested by ${requester}`, video.message.author.displayAvatarURL)
 			.setTimestamp(video.message.createdAt);
 		const message = await textChannel.send('Now playing:', {embed});
