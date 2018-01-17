@@ -15,7 +15,7 @@ module.exports = async (message, args) => {
 				.sort({count: -1})
 				.limit(20)
 				.toArray();
-			const embed = new Discord.RichEmbed()
+			const embed = new Discord.MessageEmbed()
 				.setColor('RANDOM')
 				.setTitle('Users with no lives:')
 				.setDescription(users.map(user => `<@${user._id}>: \`${user.count} messages\``).join('\n'));

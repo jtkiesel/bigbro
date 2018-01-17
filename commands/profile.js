@@ -35,7 +35,7 @@ module.exports = async (message, args) => {
 					status = status.charAt(0).toUpperCase() + status.slice(1);
 					break;
 			}
-			const embed = new Discord.RichEmbed()
+			const embed = new Discord.MessageEmbed()
 				.setColor(member ? member.displayColor : 0xffffff)
 				.setAuthor(member ? member.displayName : user.username, user.displayAvatarURL)
 				.setImage(user.displayAvatarURL)

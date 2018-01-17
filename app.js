@@ -41,7 +41,7 @@ const handleCommand = message => {
 	if (commands.hasOwnProperty(cmd)) {
 		commands[cmd](message, args);
 	} else if (cmd === 'help') {
-		const embed = new Discord.RichEmbed()
+		const embed = new Discord.MessageEmbed()
 			.setColor('RANDOM')
 			.setTitle('Commands')
 			.setDescription(helpDescription);
@@ -91,7 +91,7 @@ const log = (message, type) => {
 				color = 'BLUE';
 				break;
 		}
-		const embed = new Discord.RichEmbed()
+		const embed = new Discord.MessageEmbed()
 			.setAuthor(author, message.author.displayAvatarURL)
 			.setColor(color)
 			.setTimestamp(message.createdAt);

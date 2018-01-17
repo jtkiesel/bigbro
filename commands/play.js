@@ -70,7 +70,7 @@ const playNext = async guild => {
 		const dispatcher = connection.playStream(stream);
 		const author = video.info.author;
 		const requester = video.message.member ? video.message.member.displayName : video.message.author.username;
-		const embed = new Discord.RichEmbed()
+		const embed = new Discord.MessageEmbed()
 			.setColor('BLUE')
 			.setAuthor(author.name, author.avatar, author.user_url)
 			.setTitle(getTitle(video))
@@ -144,7 +144,7 @@ const newVideo = async (message, v) => {
 	if (queue[guildId].length === 1) {
 		playNext(guild);
 	} else {
-		const embed = new Discord.RichEmbed()
+		const embed = new Discord.MessageEmbed()
 			.setColor('BLUE')
 			.setDescription(queue[guildId].slice(1).map((video, index) => `\`${String(index + 1).padStart(2, ' ')}.\` \`[${getDuration(video)}]\` [${getTitle(video)}](${getUrl(video)}) - ${getRequester(video)}`).join('\n'));
 		message.channel.send({embed});
