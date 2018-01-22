@@ -67,7 +67,7 @@ const playNext = async guild => {
 				return;
 			}
 		}
-		const dispatcher = connection.playStream(stream);
+		const dispatcher = connection.play(stream);
 		const author = video.info.author;
 		const requester = video.message.member ? video.message.member.displayName : video.message.author.username;
 		const embed = new Discord.MessageEmbed()
@@ -82,47 +82,56 @@ const playNext = async guild => {
 
 		await message.react(skip);
 
-		const collector = new Discord.ReactionCollector(message, (reaction, user) => {
+		const collector = message.createReactionCollector((reaction, user) => {
 			if (user.id === app.client.user.id || !reaction.emoji.name === skip) {
 				console.log('1');
 				return false;
 			}
-			if (user.bot || !connection.channel.members.has(user.id)) {
-				console.log('2');
-				reaction.remove(user);
-				return false;
-			}
-			console.log('3');
+			console.log('2');
 			return true;
 		});
 
-		collector.on('collect', (reaction, c) => {
-			const size = c.collected.first().users.filter(user => !user.bot).size;
-			const required = Math.ceil(connection.channel.members.filter(member => !member.user.bot).size / 2);
-			console.log(`size: ${size}`);
-			console.log(`required: ${required}`);
-			if (size >= required) {
-				c.stop();
-				dispatcher.end();
+		collector.on('collect', (reaction, user) => {
+			console.log('collected');
+			if (user.bot || !connection.channel.members.has(user.id)) {
+				console.log('3');
+				reaction.users.remove(user);
+			} else {
+				const size = collector.collected.get(skip).users.filter(user => !user.bot).size;
+				console.log(`size: ${size}`);
+				const required = Math.ceil(connection.channel.members.filter(member => !member.user.bot).size / 2);
+				console.log(`required: ${required}`);
+				if (size >= required) {
+					console.log('4');
+					dispatcher.end();
+				}
 			}
 		});
 
 		collector.on('end', (collected, reason) => {
-			message.clearReactions();
+			console.log('collector ended');
+			const users = message.reactions.get(skip).users;
+			users.forEach(user => users.remove(user));
 		});
 
 		const id = setInterval(() => {
-			textChannel.setTopic(getTopic(video, Math.floor(dispatcher.time / 1000) / video.info.length_seconds));
+			textChannel.setTopic(getTopic(video, Math.floor(dispatcher.streamTime / 1000) / video.info.length_seconds));
 		}, Math.floor(300 * video.info.length_seconds / progressBarLength));
 
 		dispatcher.on('end', reason => {
+			console.log('ended');
 			collector.stop();
+			console.log('stopped');
 			clearInterval(id);
+			console.log('before: ' + queue[guildId]);
 			queue[guildId].shift();
+			console.log('after: ' + queue[guildId]);
 
 			if (queue[guildId].length) {
+				console.log('play next');
 				playNext(guild);
 			} else {
+				console.log('end');
 				textChannel.setTopic(defaultTopic);
 				connection.disconnect();
 			}
@@ -168,5 +177,3 @@ module.exports = async (message, args) => {
 		message.reply('that command is only available in servers.');
 	}
 };
-
-//Object.entries(textChannelId).forEach(([guild, channel]) => app.client.guilds.get(channel));
