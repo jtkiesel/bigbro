@@ -68,7 +68,7 @@ const handleCommand = message => {
 const addFooter = (message, embed, reply) => {
 	const author = message.member ? message.member.displayName : message.author.username;
 
-	embed.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL)
+	embed.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL())
 		.setTimestamp(message.createdAt);
 	reply.edit({embed});
 };

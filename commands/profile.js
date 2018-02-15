@@ -25,7 +25,7 @@ module.exports = async (message, args) => {
 			const joinedDiscord = `${Math.floor((Date.now() - user.createdAt) / 86400000)} days ago`;
 			const joinedServer = member ? `${Math.floor((Date.now() - member.joinedAt) / 86400000)} days ago` : null;
 			const messages = document ? document.count : 0;
-			const roles = member && member.roles.size > 1 ? member.roles.filterArray(role => role.id != message.guild.id).sort((a, b) => b.calculatedPosition - a.calculatedPosition).join(', ') : null;
+			const roles = member && member.roles.size > 1 ? member.roles.filterArray(role => role.id != message.guild.id).sort((a, b) => b.comparePositionTo(a)).join(', ') : null;
 			let status = user.presence.status;
 			switch (status) {
 				case 'dnd':
@@ -37,8 +37,8 @@ module.exports = async (message, args) => {
 			}
 			const embed = new Discord.MessageEmbed()
 				.setColor(member ? member.displayColor : 0xffffff)
-				.setAuthor(member ? member.displayName : user.username, user.displayAvatarURL)
-				.setImage(user.displayAvatarURL)
+				.setAuthor(member ? member.displayName : user.username, user.displayAvatarURL())
+				.setImage(user.displayAvatarURL({size: 2048}))
 				.addField('Status', status, true)
 				.addField('Joined Discord', joinedDiscord, true);
 			if (member) {

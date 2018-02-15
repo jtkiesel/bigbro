@@ -79,63 +79,46 @@ const playNext = async guild => {
 			.setFooter(`Requested by ${requester}`, video.message.author.displayAvatarURL)
 			.setTimestamp(video.message.createdAt);
 		const message = await textChannel.send('Now playing:', {embed});
-
-		await message.react(skip);
-
 		const collector = message.createReactionCollector((reaction, user) => {
 			if (user.id === app.client.user.id || !reaction.emoji.name === skip) {
-				console.log('1');
 				return false;
 			}
-			console.log('2');
 			return true;
 		});
-
 		collector.on('collect', (reaction, user) => {
-			console.log('collected');
 			if (user.bot || !connection.channel.members.has(user.id)) {
-				console.log('3');
 				reaction.users.remove(user);
 			} else {
 				const size = collector.collected.get(skip).users.filter(user => !user.bot).size;
-				console.log(`size: ${size}`);
 				const required = Math.ceil(connection.channel.members.filter(member => !member.user.bot).size / 2);
-				console.log(`required: ${required}`);
 				if (size >= required) {
-					console.log('4');
 					dispatcher.end();
 				}
 			}
 		});
-
 		collector.on('end', (collected, reason) => {
-			console.log('collector ended');
 			const users = message.reactions.get(skip).users;
 			users.forEach(user => users.remove(user));
 		});
-
 		const id = setInterval(() => {
 			textChannel.setTopic(getTopic(video, Math.floor(dispatcher.streamTime / 1000) / video.info.length_seconds));
 		}, Math.floor(300 * video.info.length_seconds / progressBarLength));
 
 		dispatcher.on('end', reason => {
-			console.log('ended');
 			collector.stop();
-			console.log('stopped');
 			clearInterval(id);
 			console.log('before: ' + queue[guildId]);
 			queue[guildId].shift();
 			console.log('after: ' + queue[guildId]);
 
 			if (queue[guildId].length) {
-				console.log('play next');
 				playNext(guild);
 			} else {
-				console.log('end');
 				textChannel.setTopic(defaultTopic);
 				connection.disconnect();
 			}
 		});
+		await message.react(skip);
 	}
 };
 
