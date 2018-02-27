@@ -1,4 +1,4 @@
-const google = require('googleapis');
+const {google} = require('googleapis');
 
 const youtube = google.youtube({version: 'v3', auth: process.env.GOOGLE_KEY});
 
@@ -8,7 +8,7 @@ const search = async (query, limit) => {
 			if (err) {
 				reject(err);
 			} else {
-				resolve(response.items);
+				resolve(response.data.items);
 			}
 		});
 	});

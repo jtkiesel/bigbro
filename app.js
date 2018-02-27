@@ -3,7 +3,7 @@ const mongodb = require('mongodb');
 const util = require('util');
 
 const client = new Discord.Client();
-const MongoClient = new mongodb.MongoClient();
+const MongoClient = mongodb.MongoClient;
 const token = process.env.BIGBRO_TOKEN;
 const mongodbUri = process.env.BIGBRO_DB;
 const mongodbOptions = {
@@ -24,7 +24,7 @@ const commands = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 
-let messages;
+let db, messages;
 
 const clean = text => {
 	if (typeof(text) === 'string') {
@@ -156,7 +156,8 @@ client.on('messageDeleteBulk', messageCollection => {
 	});
 });
 
-MongoClient.connect(mongodbUri, mongodbOptions).then(db => {
+MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
+	db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
 	module.exports.db = db;
 
 	Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
