@@ -89,7 +89,7 @@ const playNext = async guild => {
 			if (user.bot || !connection.channel.members.has(user.id)) {
 				reaction.users.remove(user);
 			} else {
-				const size = collector.collected.get(skip).users.filter(user => !user.bot).size;
+				const size = reaction.users.filter(user => !user.bot).size;
 				const required = Math.ceil(connection.channel.members.filter(member => !member.user.bot).size / 2);
 				if (size >= required) {
 					dispatcher.end();
