@@ -94,7 +94,7 @@ const log = (message, type) => {
 
 		embed.setDescription(`${message.member}\n${message.content}`);
 
-		if (attachments) {
+		if (attachments.length) {
 			for (let attachment of attachments) {
 				if (attachment.hasOwnProperty('height')) {
 					console.log('setting image');
