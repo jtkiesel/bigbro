@@ -97,7 +97,7 @@ const log = (message, type) => {
 		if (attachments.length) {
 			for (let attachment of attachments) {
 				if (attachment.hasOwnProperty('height')) {
-					embed.setImage(attachment);
+					embed.setImage(attachment.url);
 					break;
 				}
 			}
