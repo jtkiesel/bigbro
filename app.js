@@ -75,10 +75,7 @@ const addFooter = (message, embed, reply) => {
 
 const log = (message, type) => {
 	if (message.guild && !message.author.bot) {
-		const author = message.member ? message.member.displayName : message.author.username;
-		const attachment = message.attachments.first();
-		const url = attachment ? `\n${attachment.url || attachment.proxyUrl}` : '';
-
+		const attachments = message.attachments.array();
 		let color;
 		switch (type) {
 			case 'updated':
@@ -92,19 +89,21 @@ const log = (message, type) => {
 				break;
 		}
 		const embed = new Discord.MessageEmbed()
-			.setAuthor(author, message.author.displayAvatarURL)
 			.setColor(color)
 			.setTimestamp(message.createdAt);
 
-		if (message.content) {
-			embed.setDescription(message.content + url);
+		embed.setDescription(`${message.member}\n${message.content}`);
+
+		if (attachments) {
+			for (let attachment of attachments) {
+				if (attachment.hasOwnProperty('height')) {
+					embed.setImage(attachment);
+					break;
+				}
+			}
+			embed.attachFiles(attachments);
 		}
-		if (attachment) {
-			embed.setImage(attachment.url || attachment.proxyUrl);
-		}
-		message.guild.channels.get('263385335105323015').send({embed}).then(reply => {
-			reply.edit(`Message by ${message.author} ${type} in ${message.channel}:`, {embed});
-		}).catch(console.error);
+		message.guild.channels.get('263385335105323015').send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
 	}
 };
 
