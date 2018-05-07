@@ -97,15 +97,10 @@ const log = (message, type) => {
 		if (attachments.length) {
 			for (let attachment of attachments) {
 				if (attachment.hasOwnProperty('height')) {
-					console.log('setting image');
 					embed.setImage(attachment);
-					console.log('done setting image');
 					break;
 				}
 			}
-			console.log('attaching files');
-			embed.attachFiles(attachments);
-			console.log('done attaching files');
 		}
 		message.guild.channels.get('263385335105323015').send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
 	}
