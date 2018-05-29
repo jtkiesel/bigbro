@@ -85,7 +85,7 @@ const log = (message, type) => {
 				color = 'RED';
 				break;
 			case 'bulk deleted':
-				color = 'PINK':
+				color = 'PINK';
 				break;
 			default:
 				color = 'BLUE';
@@ -112,7 +112,7 @@ const log = (message, type) => {
 const logAttachments = message => {
 	const embed = new Discord.MessageEmbed()
 		.setColor('BLUE')
-		.setDescription(message.member);
+		.setDescription(message.member)
 		.setTimestamp(message.createdAt);
 	const attachments = message.attachments.filter(attachment => {
 		if (attachment.hasOwnProperty('height')) {
