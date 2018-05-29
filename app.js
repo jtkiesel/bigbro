@@ -115,15 +115,9 @@ const logAttachments = message => {
 			.setColor('BLUE')
 			.setDescription(message.member)
 			.setTimestamp(message.createdAt);
-		const attachments = message.attachments.filter(attachment => {
-			if (attachment.hasOwnProperty('height')) {
-				embed.setImage(attachment.url);
-				return false;
-			}
-			return true;
-		}).array();
 
 		let plural = '';
+		const attachments = message.attachments.array();
 		if (attachments.length > 0) {
 			embed.attachFiles(attachments);
 			plural = 's';
