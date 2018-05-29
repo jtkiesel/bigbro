@@ -84,42 +84,32 @@ const log = (message, type) => {
 			case 'deleted':
 				color = 'RED';
 				break;
-			case 'bulk deleted':
-				color = 'PINK';
-				break;
 			default:
 				color = 'BLUE';
 				break;
 		}
 		const embed = new Discord.MessageEmbed()
 			.setColor(color)
+			.setDescription(`${message.member}\n${message.content}`)
 			.setTimestamp(message.createdAt);
 
-		embed.setDescription(`${message.member}\n${message.content}`);
-
 		if (attachments.length) {
-			for (let attachment of attachments) {
-				if (attachment.hasOwnProperty('height')) {
-					embed.setImage(attachment.url);
-					break;
-				}
-			}
+			embed.attachFiles(attachments);
 		}
 		message.guild.channels.get('263385335105323015').send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
 	}
 };
 
-const logAttachments = message => {
+const logAttachments = (message, attachments) => {
 	if (message.author.id !== client.user.id) {
 		const embed = new Discord.MessageEmbed()
-			.setColor('BLUE')
+			.attachFiles(attachments)
+			.setColor('YELLOW')
 			.setDescription(message.member)
 			.setTimestamp(message.createdAt);
 
 		let plural = '';
-		const attachments = message.attachments.array();
 		if (attachments.length > 1) {
-			embed.attachFiles(attachments);
 			plural = 's';
 		}
 		message.guild.channels.get('263385335105323015').send(`Attachment${plural} added in ${message.channel}:`, {embed}).catch(console.error);
@@ -148,8 +138,9 @@ client.on('message', message => {
 		handleCommand(message);
 	}
 	if (message.guild) {
-		if (message.attachments.size > 0) {
-			logAttachments(message);
+		const attachments = message.attachments.array();
+		if (attachments.length) {
+			logAttachments(message, attachments);
 		}
 		messages.upsertMessageInDb(message);
 	}
