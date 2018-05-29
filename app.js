@@ -110,24 +110,26 @@ const log = (message, type) => {
 };
 
 const logAttachments = message => {
-	const embed = new Discord.MessageEmbed()
-		.setColor('BLUE')
-		.setDescription(message.member)
-		.setTimestamp(message.createdAt);
-	const attachments = message.attachments.filter(attachment => {
-		if (attachment.hasOwnProperty('height')) {
-			embed.setImage(attachment.url);
+	if (message.author.id !== client.user.id) {
+		const embed = new Discord.MessageEmbed()
+			.setColor('BLUE')
+			.setDescription(message.member)
+			.setTimestamp(message.createdAt);
+		const attachments = message.attachments.filter(attachment => {
+			if (attachment.hasOwnProperty('height')) {
+				embed.setImage(attachment.url);
+				return false;
+			}
 			return true;
-		}
-		return false;
-	}).array();
+		}).array();
 
-	let plural = '';
-	if (attachments.length > 0) {
-		embed.attachFiles(attachments);
-		plural = 's';
+		let plural = '';
+		if (attachments.length > 0) {
+			embed.attachFiles(attachments);
+			plural = 's';
+		}
+		message.guild.channels.get('263385335105323015').send(`Attachment${plural} added in ${message.channel}:`, {embed}).catch(console.error);
 	}
-	message.guild.channels.get('263385335105323015').send(`Attachment${plural} added in ${message.channel}:`, {embed}).catch(console.error);
 };
 
 client.on('ready', async () => {
