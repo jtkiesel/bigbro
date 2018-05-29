@@ -104,7 +104,7 @@ const logAttachments = (message, attachments) => {
 	if (message.author.id !== client.user.id) {
 		const embed = new Discord.MessageEmbed()
 			.attachFiles(attachments)
-			.setColor('YELLOW')
+			.setColor('GOLD')
 			.setDescription(message.member)
 			.setTimestamp(message.createdAt);
 
