@@ -118,7 +118,7 @@ const logAttachments = message => {
 
 		let plural = '';
 		const attachments = message.attachments.array();
-		if (attachments.length > 0) {
+		if (attachments.length > 1) {
 			embed.attachFiles(attachments);
 			plural = 's';
 		}
