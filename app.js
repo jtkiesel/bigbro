@@ -84,6 +84,9 @@ const log = (message, type) => {
 			case 'deleted':
 				color = 'RED';
 				break;
+			case 'bulk deleted':
+				color = 'PINK':
+				break;
 			default:
 				color = 'BLUE';
 				break;
@@ -104,6 +107,27 @@ const log = (message, type) => {
 		}
 		message.guild.channels.get('263385335105323015').send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
 	}
+};
+
+const logAttachments = message => {
+	const embed = new Discord.MessageEmbed()
+		.setColor('BLUE')
+		.setDescription(message.member);
+		.setTimestamp(message.createdAt);
+	const attachments = message.attachments.filter(attachment => {
+		if (attachment.hasOwnProperty('height')) {
+			embed.setImage(attachment.url);
+			return true;
+		}
+		return false;
+	}).array();
+
+	let plural = '';
+	if (attachments.length > 0) {
+		embed.attachFiles(attachments);
+		plural = 's';
+	}
+	message.guild.channels.get('263385335105323015').send(`Attachment${plural} added in ${message.channel}:`, {embed}).catch(console.error);
 };
 
 client.on('ready', async () => {
@@ -128,6 +152,9 @@ client.on('message', message => {
 		handleCommand(message);
 	}
 	if (message.guild) {
+		if (message.attachments.size > 0) {
+			logAttachments(message);
+		}
 		messages.upsertMessageInDb(message);
 	}
 });

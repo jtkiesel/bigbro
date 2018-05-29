@@ -6,13 +6,14 @@ const client = app.client;
 const db = app.db;
 
 const leaderboardChannels =
-['260546095082504202',  // #vex
+['260546095082504202',  // #general
 	'360136094500519946',  // #vexu
-	'342822239076483074',  // #vexforum
-	'198658294007463936',  // #coding
+	'342822239076483074',  // #hardware
+	'198658294007463936',  // #software
 	'198658074876182538',  // #lounge
 	'260546551255007232',  // #memes
-	'197818075796471808',  // #admins
+	'197818075796471808',  // #administration
+	'442826048120291338',  // #moderation
 	'198658419945635840',  // #voicechat
 	'329477820076130306'];  // Dev server.
 
