@@ -75,7 +75,6 @@ const addFooter = (message, embed, reply) => {
 
 const log = (message, type) => {
 	if (message.guild && !message.author.bot) {
-		const attachments = message.attachments.array();
 		let color;
 		switch (type) {
 			case 'updated':
@@ -93,26 +92,11 @@ const log = (message, type) => {
 			.setDescription(`${message.member}\n${message.content}`)
 			.setTimestamp(message.createdAt);
 
+		const attachments = message.attachments.array();
 		if (attachments.length) {
 			embed.attachFiles(attachments);
 		}
 		message.guild.channels.get('263385335105323015').send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
-	}
-};
-
-const logAttachments = (message, attachments) => {
-	if (message.author.id !== client.user.id) {
-		const embed = new Discord.MessageEmbed()
-			.attachFiles(attachments)
-			.setColor('GOLD')
-			.setDescription(message.member)
-			.setTimestamp(message.createdAt);
-
-		let plural = '';
-		if (attachments.length > 1) {
-			plural = 's';
-		}
-		message.guild.channels.get('263385335105323015').send(`Attachment${plural} added in ${message.channel}:`, {embed}).catch(console.error);
 	}
 };
 
@@ -138,10 +122,6 @@ client.on('message', message => {
 		handleCommand(message);
 	}
 	if (message.guild) {
-		const attachments = message.attachments.array();
-		if (attachments.length) {
-			logAttachments(message, attachments);
-		}
 		messages.upsertMessageInDb(message);
 	}
 });
