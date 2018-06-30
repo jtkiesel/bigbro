@@ -5,6 +5,14 @@ const messages = require('../messages');
 
 const db = app.db;
 const leaderboardChannels = messages.leaderboardChannels;
+const statusEmojis = {
+	'online': '<:online:462707431865188354>',
+	'offline': '<:offline:462707499133304842>',
+	'away': '<:away:462707524869816330>',
+	'dnd': '<:dnd:462707542389161994>',
+	'streaming': '<:streaming:462707566552547369>',
+	'invisible': '<:invisible:462707587570204682>'
+};
 
 module.exports = async (message, args) => {
 	let user, member;
@@ -27,14 +35,12 @@ module.exports = async (message, args) => {
 			const messages = document ? document.count : 0;
 			const roles = member && member.roles.size > 1 ? member.roles.array().filter(role => role.id != message.guild.id).sort((a, b) => b.comparePositionTo(a)).join(', ') : null;
 			let status = user.presence.status;
-			switch (status) {
-				case 'dnd':
-					status = 'Do Not Disturb';
-					break;
-				default:
+			if (status === 'dnd') {
+				status = 'Do Not Disturb';
+			} else {
 					status = status.charAt(0).toUpperCase() + status.slice(1);
-					break;
 			}
+			status = `${statusEmojis[user.presence.status]} ${status}`;
 			const embed = new Discord.MessageEmbed()
 				.setColor(member ? member.displayColor : 0xffffff)
 				.setAuthor(member ? member.displayName : user.username, user.displayAvatarURL())
