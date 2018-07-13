@@ -8,7 +8,7 @@ const leaderboardChannels = messages.leaderboardChannels;
 const statusEmojis = {
 	'online': '<:online:462707431865188354>',
 	'offline': '<:offline:462707499133304842>',
-	'away': '<:away:462707524869816330>',
+	'idle': '<:idle:462707524869816330>',
 	'dnd': '<:dnd:462707542389161994>',
 	'streaming': '<:streaming:462707566552547369>',
 	'invisible': '<:invisible:462707587570204682>'

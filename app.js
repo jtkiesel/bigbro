@@ -93,9 +93,8 @@ const log = (message, type) => {
 			.setDescription(`${message.member}\n${message.content}`)
 			.setTimestamp(message.createdAt);
 
-		const attachments = message.attachments.array();
-		if (attachments.length) {
-			embed.attachFiles(attachments);
+		if (message.attachments.size) {
+			embed.attachFiles(message.attachments);
 		}
 		message.guild.channels.get('263385335105323015').send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
 	}
