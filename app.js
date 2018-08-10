@@ -100,6 +100,8 @@ const log = (message, type) => {
 	}
 };
 
+client.on('rateLimit', console.log);
+
 client.on('ready', async () => {
 	console.log('Ready!');
 	client.user.setActivity(`${prefix}help`, {url: 'https://github.com/jtkiesel/bigbro', type: 'PLAYING'});
@@ -111,7 +113,9 @@ client.on('ready', async () => {
 	console.log('Done updating messages.');
 });
 
-client.on('error', console.error);
+client.on('resume', () => {
+	console.log('Resume.');
+});
 
 client.on('guildMemberAdd', member => {
 	member.guild.systemChannel.send(`Welcome, ${member}! To access this server, one of the <@&197816965899747328> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the <@&197816965899747328> for help.`);
@@ -126,16 +130,16 @@ client.on('message', message => {
 	}
 });
 
-client.on('messageUpdate', (oldMessage, newMessage) => {
-	if (oldMessage.guild && oldMessage.content !== newMessage.content) {
-		log(oldMessage, 'updated');
-	}
-});
-
 client.on('messageDelete', message => {
 	if (message.guild) {
 		log(message, 'deleted');
 		messages.upsertMessageInDb(message, -1);
+	}
+});
+
+client.on('messageUpdate', (oldMessage, newMessage) => {
+	if (oldMessage.guild && oldMessage.content !== newMessage.content) {
+		log(oldMessage, 'updated');
 	}
 });
 
@@ -147,6 +151,20 @@ client.on('messageDeleteBulk', messageCollection => {
 		}
 	});
 });
+
+client.on('disconnect', event => {
+	console.error('Disconnect.');
+	console.error(JSON.stringify(closeEvent));
+	client.destroy().then(() => client.login(token).catch(console.error)).catch(console.error);
+});
+
+client.on('reconnecting', () => {
+	console.log('Reconnecting.');
+});
+
+client.on('error', console.error);
+
+client.on('warn', console.warn);
 
 MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
 	db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
