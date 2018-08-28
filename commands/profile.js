@@ -25,10 +25,15 @@ module.exports = async (message, args) => {
 	}
 	if (user) {
 		try {
-			const document = message.guild ? await db.collection('counts').aggregate()
-				.match({'_id.guild': message.guild.id, '_id.channel': {$in: leaderboardChannels}, '_id.user': user.id})
-				.group({_id: '$_id.user', count: {$sum: '$count'}})
-				.next() : null;
+			let document;
+			try {
+				document = message.guild ? await db.collection('counts').aggregate()
+					.match({'_id.guild': message.guild.id, '_id.channel': {$in: leaderboardChannels}, '_id.user': user.id})
+					.group({_id: '$_id.user', count: {$sum: '$count'}})
+					.next() : null;
+			} catch (err) {
+				console.error(err);
+			}
 			const game = user.presence.game;
 			const joinedDiscord = `${Math.floor((Date.now() - user.createdAt) / 86400000)} days ago`;
 			const joinedServer = member ? `${Math.floor((Date.now() - member.joinedAt) / 86400000)} days ago` : null;
@@ -38,7 +43,7 @@ module.exports = async (message, args) => {
 			if (status === 'dnd') {
 				status = 'Do Not Disturb';
 			} else {
-					status = status.charAt(0).toUpperCase() + status.slice(1);
+				status = status.charAt(0).toUpperCase() + status.slice(1);
 			}
 			status = `${statusEmojis[user.presence.status]} ${status}`;
 			const embed = new Discord.MessageEmbed()
@@ -60,12 +65,13 @@ module.exports = async (message, args) => {
 					embed.addField('Streaming', game.url, true);
 				}
 			}
+			let reply;
 			try {
-				const reply = await message.channel.send({embed});
-				app.addFooter(message, embed, reply);
+				reply = await message.channel.send({embed});
 			} catch (err) {
 				console.error(err);
 			}
+			app.addFooter(message, embed, reply);
 		} catch (err) {
 			console.error(err);
 		};

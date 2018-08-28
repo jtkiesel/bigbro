@@ -19,7 +19,8 @@ const commandInfo = {
 	uptime: 'Time since bot last restarted.',
 	leaderboard: 'Users with the most messages on the server.',
 	profile: 'Information about a user.',
-	play: 'Audio from a YouTube video.'
+	play: 'Audio from a YouTube video.',
+	search: 'Search YouTube to play audio from a video.'
 };
 const commands = {};
 
