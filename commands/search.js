@@ -28,7 +28,7 @@ module.exports = async (message, args) => {
 
 			const embed = new Discord.MessageEmbed()
 				.setColor('BLUE')
-				.setDescription(results.map((video, index) => `${searchEmojis[index]} \`[${music.getDuration(video)}]\` [${music.getTitle(video)}](${music.getUrl(video)}) - ${music.getRequester(video)}`).join('\n'));
+				.setDescription(results.map((video, index) => `${searchEmojis[index]} \`[${music.getDuration(video)}]\` [${music.getTitle(video)}](${music.getUrl(video)})`).join('\n'));
 			let reply;
 			try {
 				reply = await message.channel.send(`Search results for \`${args}\`:`, {embed});
