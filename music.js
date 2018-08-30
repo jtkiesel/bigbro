@@ -131,6 +131,18 @@ const playNext = async guild => {
 	}
 };
 
+const sendQueue = message => {
+	const guildQueue = queue[message.guild.id];
+	if (guildQueue && guildQueue.length > 1) {
+		const embed = new Discord.MessageEmbed()
+			.setColor('BLUE')
+			.setDescription(guildQueue.slice(1).map((video, index) => `\`${String(index + 1).padStart(2, ' ')}.\` \`[${getDuration(video)}]\` [${getTitle(video)}](${getUrl(video)}) - ${getRequester(video)}`).join('\n'));
+		message.channel.send({embed});
+	} else {
+		message.reply('the music queue is currently empty.');
+	}
+}
+
 const newVideo = async (message, v) => {
 	const guild = message.guild;
 	const guildId = guild.id;
@@ -150,10 +162,7 @@ const newVideo = async (message, v) => {
 	if (queue[guildId].length === 1) {
 		playNext(guild);
 	} else {
-		const embed = new Discord.MessageEmbed()
-			.setColor('BLUE')
-			.setDescription(queue[guildId].slice(1).map((video, index) => `\`${String(index + 1).padStart(2, ' ')}.\` \`[${getDuration(video)}]\` [${getTitle(video)}](${getUrl(video)}) - ${getRequester(video)}`).join('\n'));
-		message.channel.send({embed});
+		sendQueue(message);
 	}
 };
 
@@ -174,6 +183,7 @@ module.exports = {
 	getTitle: getTitle,
 	getUrl: getUrl,
 	getRequester: getRequester,
+	sendQueue: sendQueue,
 	newVideo: newVideo,
 	search: search
 };

@@ -20,7 +20,8 @@ const commandInfo = {
 	leaderboard: 'Users with the most messages on the server.',
 	profile: 'Information about a user.',
 	play: 'Audio from a YouTube video.',
-	search: 'Search YouTube to play audio from a video.'
+	search: 'Search YouTube to play audio from a video.',
+	queue: 'Current music queue.'
 };
 const commands = {};
 
