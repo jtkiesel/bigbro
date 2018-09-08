@@ -97,13 +97,11 @@ const log = (message, type) => {
 			.setTimestamp(message.createdAt);
 
 		if (message.attachments.size) {
-			embed.attachFiles(message.attachments);
+			embed.attachFiles(message.attachments.map(attachment => attachment.proxyURL));
 		}
 		message.guild.channels.get('263385335105323015').send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
 	}
 };
-
-client.on('rateLimit', console.log);
 
 client.on('ready', async () => {
 	console.log('Ready!');
