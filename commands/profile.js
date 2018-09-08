@@ -3,8 +3,6 @@ const Discord = require('discord.js');
 const app = require('../app');
 const messages = require('../messages');
 
-const db = app.db;
-const leaderboardChannels = messages.leaderboardChannels;
 const statusEmojis = {
 	'online': '<:online:462707431865188354>',
 	'offline': '<:offline:462707499133304842>',
@@ -27,8 +25,8 @@ module.exports = async (message, args) => {
 		try {
 			let document;
 			try {
-				document = message.guild ? await db.collection('counts').aggregate()
-					.match({'_id.guild': message.guild.id, '_id.channel': {$in: leaderboardChannels}, '_id.user': user.id})
+				document = message.guild ? await app.db.collection('counts').aggregate()
+					.match({'_id.guild': message.guild.id, '_id.channel': {$in: messages.leaderboardChannels}, '_id.user': user.id})
 					.group({_id: '$_id.user', count: {$sum: '$count'}})
 					.next() : null;
 			} catch (err) {
@@ -37,7 +35,7 @@ module.exports = async (message, args) => {
 			const game = user.presence.game;
 			const joinedDiscord = `${Math.floor((Date.now() - user.createdAt) / 86400000)} days ago`;
 			const joinedServer = member ? `${Math.floor((Date.now() - member.joinedAt) / 86400000)} days ago` : null;
-			const messages = document ? document.count : 0;
+			const messageCount = document ? document.count : 0;
 			const roles = member && member.roles.size > 1 ? member.roles.array().filter(role => role.id != message.guild.id).sort((a, b) => b.comparePositionTo(a)).join(', ') : null;
 			let status = user.presence.status;
 			if (status === 'dnd') {
@@ -54,7 +52,7 @@ module.exports = async (message, args) => {
 				.addField('Joined Discord', joinedDiscord, true);
 			if (member) {
 				embed.addField('Joined Server', joinedServer, true);
-				embed.addField('Messages', messages, true);
+				embed.addField('Messages', messageCount, true);
 			}
 			if (roles) {
 				embed.addField('Roles', roles, true);
@@ -74,7 +72,7 @@ module.exports = async (message, args) => {
 			app.addFooter(message, embed, reply);
 		} catch (err) {
 			console.error(err);
-		};
+		}
 	} else {
 		message.reply('please mention a user to obtain their profile.').catch(console.error);
 	}

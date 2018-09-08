@@ -36,7 +36,7 @@ const clean = text => {
 	return text;
 };
 
-const handleCommand = message => {
+const handleCommand = async message => {
 	const slice = message.content.indexOf(' ');
 	const cmd = message.content.slice(prefix.length, (slice < 0) ? message.content.length : slice);
 	const args = (slice < 0) ? '' : message.content.slice(slice);
@@ -54,16 +54,17 @@ const handleCommand = message => {
 	} else if (cmd === 'eval') {
 		if (message.author.id === '197781934116569088') {
 			try {
-				let evaled = eval(args);
+				const match = args.match(/^\s*await\s+(.*)$/);
+				let evaled = match ? (await eval(match[1])) : eval(args);
 				if (typeof evaled !== 'string') {
 					evaled = util.inspect(evaled);
 				}
-				message.channel.send(clean(evaled), {code: 'xl'});
+				message.channel.send(clean(evaled), {code: 'xl'}).catch(console.error);
 			} catch (error) {
-				message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(error)}\`\`\``);
+				message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(error)}\`\`\``).catch(console.error);
 			}
 		} else {
-			message.reply('you don\'t have permission to run that command.');
+			message.reply(`you don't have permission to run ${cmd}.`).catch(console.error);
 		}
 	}
 };
@@ -156,7 +157,7 @@ client.on('messageDeleteBulk', messageCollection => {
 
 client.on('disconnect', event => {
 	console.error('Disconnect.');
-	console.error(JSON.stringify(closeEvent));
+	console.error(JSON.stringify(event));
 	client.destroy().then(() => client.login(token).catch(console.error)).catch(console.error);
 });
 

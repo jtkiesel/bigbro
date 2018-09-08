@@ -1,9 +1,4 @@
-const Discord = require('discord.js');
-
 const app = require('./app');
-
-const client = app.client;
-const db = app.db;
 
 const leaderboardChannels =
 ['260546095082504202',  // #general
@@ -18,9 +13,9 @@ const leaderboardChannels =
 	'329477820076130306'];  // Dev server.
 
 const update = async () => {
-	for (let guild of client.guilds.array()) {
+	for (let guild of app.client.guilds.array()) {
 		for (let channel of guild.channels.array()) {
-			if (channel.type == 'text' && channel.permissionsFor(client.user).has('READ_MESSAGES')) {
+			if (channel.type == 'text' && channel.permissionsFor(app.client.user).has('READ_MESSAGES')) {
 				try {
 					await updateFromChannel(channel);
 				} catch (err) {
@@ -33,7 +28,7 @@ const update = async () => {
 
 const upsertMessageInDb = async (message, inc = 1, upsertCounts = true) => {
 	try {
-		await db.collection('temp').updateOne(
+		await app.db.collection('temp').updateOne(
 			{_id: {guild: message.guild.id, channel: message.channel.id, user: message.author.id}},
 			{$inc: {count: inc}},
 			{upsert: true});
@@ -42,7 +37,7 @@ const upsertMessageInDb = async (message, inc = 1, upsertCounts = true) => {
 	}
 	if (upsertCounts) {
 		try {
-			await db.collection('counts').updateOne(
+			await app.db.collection('counts').updateOne(
 				{_id: {guild: message.guild.id, channel: message.channel.id, user: message.author.id}},
 				{$inc: {count: inc}},
 				{upsert: true});
@@ -54,7 +49,7 @@ const upsertMessageInDb = async (message, inc = 1, upsertCounts = true) => {
 
 const updateFromChannel = async channel => {
 	try {
-		await db.collection('temp').deleteMany({'_id.guild': channel.guild.id, '_id.channel': channel.id});
+		await app.db.collection('temp').deleteMany({'_id.guild': channel.guild.id, '_id.channel': channel.id});
 		await updateFromChannelBatch(channel, 0, '');
 	} catch (err) {
 		console.error(err);
@@ -75,22 +70,22 @@ const updateFromChannelBatch = async (channel, lastUpdatedTimestamp, lastMessage
 			await updateFromChannelBatch(channel, lastUpdatedTimestamp, messages.lastKey());
 		} else {
 			console.log(`Done with #${channel.name}.`);
-			const documents = await db.collection('temp').find({'_id.guild': channel.guild.id, '_id.channel': channel.id}).toArray();
+			const documents = await app.db.collection('temp').find({'_id.guild': channel.guild.id, '_id.channel': channel.id}).toArray();
 
 			for (let document of documents) {
-				await db.collection('counts').updateOne({_id: document._id}, document, {upsert: true});
+				await app.db.collection('counts').updateOne({_id: document._id}, document, {upsert: true});
 			}
 		}
 	} catch (err) {
-		console.error(error);
+		console.error(err);
 		console.log(`Retrying from #${channel.name}, at ${lastMessageId}.`);
 		await updateFromChannelBatch(channel, lastUpdatedTimestamp, lastMessageId);
 	}
 };
 
 module.exports = {
-	upsertMessageInDb: upsertMessageInDb,
-	updateFromChannel: updateFromChannel,
-	update: update,
-	leaderboardChannels: leaderboardChannels
+	upsertMessageInDb,
+	updateFromChannel,
+	update,
+	leaderboardChannels
 };

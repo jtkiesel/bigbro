@@ -103,7 +103,7 @@ const playNext = async guild => {
 				}
 			}
 		});
-		collector.on('end', (collected, reason) => {
+		collector.on('end', () => {
 			const users = message.reactions.get(skip).users;
 			users.forEach(user => users.remove(user));
 		});
@@ -111,7 +111,7 @@ const playNext = async guild => {
 			textChannel.setTopic(getTopic(video, Math.floor(dispatcher.streamTime / 1000) / video.info.length_seconds));
 		}, Math.floor(300 * video.info.length_seconds / progressBarLength));
 
-		dispatcher.on('end', reason => {
+		dispatcher.on('end', () => {
 			collector.stop();
 			clearInterval(id);
 			queue[guildId].shift();
@@ -131,6 +131,10 @@ const playNext = async guild => {
 	}
 };
 
+const getQueue = guildId => {
+	return queue[guildId] || [];
+};
+
 const sendQueue = message => {
 	const guildQueue = queue[message.guild.id];
 	if (guildQueue && guildQueue.length > 1) {
@@ -141,7 +145,7 @@ const sendQueue = message => {
 	} else {
 		message.reply('the music queue is currently empty.');
 	}
-}
+};
 
 const newVideo = async (message, v) => {
 	const guild = message.guild;
@@ -179,11 +183,12 @@ const search = async (query, limit) => {
 };
 
 module.exports = {
-	getDuration: getDuration,
-	getTitle: getTitle,
-	getUrl: getUrl,
-	getRequester: getRequester,
-	sendQueue: sendQueue,
-	newVideo: newVideo,
-	search: search
+	getDuration,
+	getTitle,
+	getUrl,
+	getRequester,
+	getQueue,
+	sendQueue,
+	newVideo,
+	search
 };

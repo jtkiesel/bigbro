@@ -2,12 +2,11 @@ const Discord = require('discord.js');
 
 const app = require('../app');
 
-const clockEmojis = ['🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠', '🕕',
-		'🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'];
+const clockEmojis = ['🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠', '🕕', '🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'];
 
 const formatTime = (time, unit) => `${time} ${unit}${(time == 1) ? '' : 's'}`;
 
-module.exports = (message, args) => {
+module.exports = message => {
 	const milliseconds = new Date(app.client.uptime);
 
 	let seconds = Math.floor(milliseconds / 1000);

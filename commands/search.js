@@ -49,9 +49,9 @@ module.exports = async (message, args) => {
 					collector.stop();
 				}
 			});
-			collector.on('end', (collected, reason) => {
+			collector.on('end', () => {
 				searchEmojis.forEach((emoji, index) => {
-					users = reply.reactions.get(emoji).users;
+					const users = reply.reactions.get(emoji).users;
 					users.forEach(user => {
 						if (user.id === message.author.id && index < (searchEmojis.length - 1)) {
 							music.newVideo(message, videos[index].id.videoId);
