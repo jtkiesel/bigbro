@@ -3,7 +3,6 @@ const mongodb = require('mongodb');
 const util = require('util');
 
 const client = new Discord.Client();
-const MongoClient = mongodb.MongoClient;
 const token = process.env.BIGBRO_TOKEN;
 const mongodbUri = process.env.BIGBRO_DB;
 const mongodbOptions = {
@@ -64,7 +63,13 @@ const handleCommand = async message => {
 				message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(error)}\`\`\``).catch(console.error);
 			}
 		} else {
-			message.reply(`you don't have permission to run ${cmd}.`).catch(console.error);
+			message.reply(`you don't have permission to run \`${cmd}\`.`).catch(console.error);
+		}
+	} else if (cmd === 'restart') {
+		if (message.author.id === '197781934116569088') {
+			restart();
+		} else {
+			message.reply(`you don't have permission to run \`${cmd}\`.`).catch(console.error);
 		}
 	}
 };
@@ -103,6 +108,13 @@ const log = (message, type) => {
 	}
 };
 
+const login = () => client.login(token).catch(console.error);
+
+const restart = () => {
+	client.destroy();
+	login();
+};
+
 client.on('ready', async () => {
 	console.log('Ready!');
 	client.user.setActivity(`${prefix}help`, {url: 'https://github.com/jtkiesel/bigbro', type: 'PLAYING'});
@@ -114,13 +126,9 @@ client.on('ready', async () => {
 	console.log('Done updating messages.');
 });
 
-client.on('resume', () => {
-	console.log('Resume.');
-});
+client.on('resume', () => console.log('Resume.'));
 
-client.on('guildMemberAdd', member => {
-	member.guild.systemChannel.send(`Welcome, ${member}! To access this server, one of the <@&197816965899747328> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the <@&197816965899747328> for help.`);
-});
+client.on('guildMemberAdd', member => member.guild.systemChannel.send(`Welcome, ${member}! To access this server, one of the <@&197816965899747328> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the <@&197816965899747328> for help.`));
 
 client.on('message', message => {
 	if (message.content.startsWith(prefix)) {
@@ -156,18 +164,16 @@ client.on('messageDeleteBulk', messageCollection => {
 client.on('disconnect', event => {
 	console.error('Disconnect.');
 	console.error(JSON.stringify(event));
-	client.destroy().then(() => client.login(token).catch(console.error)).catch(console.error);
+	restart();
 });
 
-client.on('reconnecting', () => {
-	console.log('Reconnecting.');
-});
+client.on('reconnecting', () => console.log('Reconnecting.'));
 
 client.on('error', console.error);
 
 client.on('warn', console.warn);
 
-MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
+mongodb.MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
 	db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
 	module.exports.db = db;
 
@@ -175,7 +181,7 @@ MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
 	Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
 
 	messages = require('./messages');
-	client.login(token).catch(console.error);
+	login();
 }).catch(console.error);
 
 module.exports.client = client;
