@@ -53,8 +53,7 @@ const handleCommand = async message => {
   } else if (cmd === 'eval') {
     if (message.author.id === '197781934116569088') {
       try {
-        const match = args.match(/^\s*await\s+(.*)$/);
-        let evaled = match ? (await eval(match[1])) : eval(args);
+        let evaled = /\s*await\s+/.test(args) ? (await eval(`const f = async () => {\n${args}\n};\nf();`)) : eval(args);
         if (typeof evaled !== 'string') {
           evaled = util.inspect(evaled);
         }
