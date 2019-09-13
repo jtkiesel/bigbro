@@ -25,18 +25,14 @@
     "start": "node app.js"
   },
   "dependencies": {
-    "bufferutil": "^4.0.1",
-    "cron": "^1.7.1",
+    "cron": "^1.7.2",
     "discord.js": "github:hydrabolt/discord.js",
-    "erlpack": "github:discordapp/erlpack",
-    "googleapis": "^40.0.1",
-    "mongodb": "^3.2.7",
+    "googleapis": "^43.0.0",
+    "mongodb": "^3.3.2",
     "node-opus": "^0.3.2",
-    "sodium": "^3.0.2",
-    "ytdl-core": "github:fent/node-ytdl-core",
-    "zlib-sync": "^0.1.4"
+    "ytdl-core": "github:fent/node-ytdl-core"
   },
   "engines": {
-    "node": "^12.6.0"
+    "node": "^12.10.0"
   }
 }
