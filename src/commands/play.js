@@ -1,8 +1,8 @@
-const ytdl = require('ytdl-core');
+import ytdl from 'ytdl-core';
 
-const music = require('../music');
+import music from '../music';
 
-module.exports = async (message, args) => {
+export default async (message, args) => {
   if (message.member) {
     if (ytdl.validateURL(args)) {
       music.newVideo(message, args);

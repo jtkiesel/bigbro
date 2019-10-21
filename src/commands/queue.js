@@ -1,6 +1,6 @@
-const music = require('../music.js');
+import music from '../music';
 
-module.exports = message => {
+export default message => {
   if (message.member) {
     const queue = music.getQueue(message.guild.id);
   } else {

@@ -1,8 +1,8 @@
-const Discord = require('discord.js');
-const {google} = require('googleapis');
-const ytdl = require('ytdl-core');
+import { MessageEmbed } from 'discord.js';
+import { google } from 'googleapis';
+import ytdl from 'ytdl-core';
 
-const app = require('./app');
+import { client } from '.';
 
 const youtube = google.youtube({version: 'v3', auth: process.env.GOOGLE_KEY});
 
@@ -72,7 +72,7 @@ const playNext = async guild => {
     const dispatcher = connection.play(stream);
     const author = video.info.author;
     const requester = video.message.member ? video.message.member.displayName : video.message.author.username;
-    const embed = new Discord.MessageEmbed()
+    const embed = new MessageEmbed()
       .setColor('BLUE')
       .setAuthor(author.name, author.avatar, author.user_url)
       .setTitle(getTitle(video))
@@ -87,7 +87,7 @@ const playNext = async guild => {
       console.error(err);
     }
     const collector = message.createReactionCollector((reaction, user) => {
-      if (user.id === app.client.user.id || !reaction.emoji.name === skip) {
+      if (user.id === client.user.id || !reaction.emoji.name === skip) {
         return false;
       }
       return true;
@@ -138,7 +138,7 @@ const getQueue = guildId => {
 const sendQueue = message => {
   const guildQueue = queue[message.guild.id];
   if (guildQueue && guildQueue.length > 1) {
-    const embed = new Discord.MessageEmbed()
+    const embed = new MessageEmbed()
       .setColor('BLUE')
       .setDescription(guildQueue.slice(1).map((video, index) => `\`${String(index + 1).padStart(2, ' ')}.\` \`[${getDuration(video)}]\` [${getTitle(video)}](${getUrl(video)}) - ${getRequester(video)}`).join('\n'));
     message.channel.send({embed});
@@ -182,13 +182,13 @@ const search = async (query, limit) => {
   });
 };
 
-module.exports = {
+export {
   getDuration,
+  getQueue,
+  getRequester,
   getTitle,
   getUrl,
-  getRequester,
-  getQueue,
-  sendQueue,
   newVideo,
-  search
+  search,
+  sendQueue
 };

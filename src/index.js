@@ -1,16 +1,15 @@
-const Discord = require('discord.js');
-const mongodb = require('mongodb');
-const util = require('util');
+import { Client, MessageEmbed } from 'discord.js';
+import { MongoClient } from 'mongodb';
+import { inspect } from 'util';
 
-const client = new Discord.Client();
+const client = new Client();
 const token = process.env.BIGBRO_TOKEN;
-const mongodbUri = process.env.BIGBRO_DB;
-const mongodbOptions = {
-  keepAlive: 1,
-  connectTimeoutMS: 30000,
-  reconnectTries: 30,
-  reconnectInterval: 5000,
-  useNewUrlParser: true
+const dbUri = process.env.BIGBRO_DB;
+const mongoOptions = {
+  retryWrites: true,
+  reconnectTries: Number.MAX_VALUE,
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 };
 const prefix = '%';
 const commandInfo = {
@@ -43,7 +42,7 @@ const handleCommand = async message => {
   if (commands.hasOwnProperty(cmd)) {
     commands[cmd](message, args);
   } else if (cmd === 'help') {
-    const embed = new Discord.MessageEmbed()
+    const embed = new MessageEmbed()
       .setColor('RANDOM')
       .setTitle('Commands')
       .setDescription(helpDescription);
@@ -55,7 +54,7 @@ const handleCommand = async message => {
       try {
         let evaled = /\s*await\s+/.test(args) ? (await eval(`const f = async () => {\n${args}\n};\nf();`)) : eval(args);
         if (typeof evaled !== 'string') {
-          evaled = util.inspect(evaled);
+          evaled = inspect(evaled);
         }
         message.channel.send(clean(evaled), {code: 'xl'}).catch(console.error);
       } catch (error) {
@@ -95,7 +94,7 @@ const log = (message, type) => {
       color = 'BLUE';
       break;
     }
-    const embed = new Discord.MessageEmbed()
+    const embed = new MessageEmbed()
       .setColor(color)
       .setDescription(`${message.member}\n${message.content}`)
       .setTimestamp(message.createdAt);
@@ -103,7 +102,10 @@ const log = (message, type) => {
     if (message.attachments.size) {
       embed.attachFiles(message.attachments.map(attachment => attachment.proxyURL));
     }
-    message.guild.channels.get('263385335105323015').send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
+    const logChannel = message.guild.channels.get('263385335105323015');
+    if (logChannel) {
+      logChannel.send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
+    }
   }
 };
 
@@ -118,7 +120,7 @@ client.on('ready', async () => {
   console.log('Ready!');
   client.user.setActivity(`${prefix}help`, {url: 'https://github.com/jtkiesel/bigbro', type: 'PLAYING'});
   try {
-    await messages.update();
+    await messages.updateGuilds();
   } catch (err) {
     console.error(err);
   }
@@ -126,6 +128,10 @@ client.on('ready', async () => {
 });
 
 client.on('resume', () => console.log('Resume.'));
+
+client.on('channelCreate', channel => messages.updateChannel(channel));
+
+client.on('guildCreate', guild => messages.updateGuild(guild));
 
 client.on('guildMemberAdd', member => member.guild.systemChannel.send(`Welcome, ${member}! To access this server, one of the <@&197816965899747328> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the <@&197816965899747328> for help.`));
 
@@ -172,16 +178,20 @@ client.on('error', console.error);
 
 client.on('warn', console.warn);
 
-mongodb.MongoClient.connect(mongodbUri, mongodbOptions).then(mongoClient => {
-  db = mongoClient.db(mongodbUri.match(/\/([^/]+)$/)[1]);
+MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
+  db = mongoClient.db('bigbro');
   module.exports.db = db;
 
-  Object.keys(commandInfo).forEach(name => commands[name] = require('./commands/' + name));
-  Object.entries(commandInfo).forEach(([name, desc]) => helpDescription += `\n\`${prefix}${name}\`: ${desc}`);
+  Object.entries(commandInfo).forEach(([name, desc]) => {
+    commands[name] = require('./commands/' + name).default;
+    helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
+  });
 
   messages = require('./messages');
   login();
 }).catch(console.error);
 
-module.exports.client = client;
-module.exports.addFooter = addFooter;
+export {
+  addFooter,
+  client
+};

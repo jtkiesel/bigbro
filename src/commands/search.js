@@ -1,12 +1,12 @@
-const Discord = require('discord.js');
-const ytdl = require('ytdl-core');
+import { MessageEmbed } from 'discord.js';
+import ytdl from 'ytdl-core';
 
-const app = require('../app');
-const music = require('../music');
+import { client } from '..';
+import music from '../music';
 
 const searchEmojis = ['\u0031\u20E3', '\u0032\u20E3', '\u0033\u20E3', '\u0034\u20E3', '❌'];
 
-module.exports = async (message, args) => {
+export default async (message, args) => {
   if (message.member) {
     let videos;
     try {
@@ -26,7 +26,7 @@ module.exports = async (message, args) => {
         results.push({message, info});
       }
 
-      const embed = new Discord.MessageEmbed()
+      const embed = new MessageEmbed()
         .setColor('BLUE')
         .setDescription(results.map((video, index) => `${searchEmojis[index]} \`[${music.getDuration(video)}]\` [${music.getTitle(video)}](${music.getUrl(video)})`).join('\n'));
       let reply;
@@ -37,7 +37,7 @@ module.exports = async (message, args) => {
       }
 
       const collector = reply.createReactionCollector((reaction, user) => {
-        if (user.id === app.client.user.id || !searchEmojis.includes(reaction.emoji.name)) {
+        if (user.id === client.user.id || !searchEmojis.includes(reaction.emoji.name)) {
           return false;
         }
         return true;

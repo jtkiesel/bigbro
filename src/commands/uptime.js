@@ -1,13 +1,13 @@
-const Discord = require('discord.js');
+import { MessageEmbed } from 'discord.js';
 
-const app = require('../app');
+import { addFooter, client } from '..';
 
 const clockEmojis = ['🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠', '🕕', '🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'];
 
 const formatTime = (time, unit) => `${time} ${unit}${(time == 1) ? '' : 's'}`;
 
-module.exports = message => {
-  const milliseconds = new Date(app.client.uptime);
+export default message => {
+  const milliseconds = new Date(client.uptime);
 
   let seconds = Math.floor(milliseconds / 1000);
   let minutes = Math.floor(seconds / 60);
@@ -40,10 +40,10 @@ module.exports = message => {
   if (halfHours) {
     emojis += clockEmojis[halfHours];
   }
-  const embed = new Discord.MessageEmbed()
+  const embed = new MessageEmbed()
     .setColor('RANDOM')
     .setDescription(`${emojis}\n${uptime.join(', ')}`);
   message.channel.send({embed})
-    .then(reply => app.addFooter(message, embed, reply))
+    .then(reply => addFooter(message, embed, reply))
     .catch(console.error);
 };

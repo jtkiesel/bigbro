@@ -1,7 +1,7 @@
-const Discord = require('discord.js');
+import { MessageEmbed } from 'discord.js';
 
-const app = require('../app');
-const messages = require('../messages');
+import { addFooter, db } from '..';
+import { leaderboardChannels } from '../messages';
 
 const statusEmojis = {
   'online': '<:online:462707431865188354>',
@@ -12,7 +12,7 @@ const statusEmojis = {
   'invisible': '<:invisible:462707587570204682>'
 };
 
-module.exports = async (message, args) => {
+export default async (message, args) => {
   let user, member;
   if (!args) {
     user = message.author;
@@ -25,8 +25,8 @@ module.exports = async (message, args) => {
     try {
       let document;
       try {
-        document = message.guild ? await app.db.collection('counts').aggregate()
-          .match({'_id.guild': message.guild.id, '_id.channel': {$in: messages.leaderboardChannels}, '_id.user': user.id})
+        document = message.guild ? await db.collection('messages').aggregate()
+          .match({'_id.guild': message.guild.id, '_id.channel': {$in: leaderboardChannels}, '_id.user': user.id})
           .group({_id: '$_id.user', count: {$sum: '$count'}})
           .next() : null;
       } catch (err) {
@@ -44,7 +44,7 @@ module.exports = async (message, args) => {
         status = status.charAt(0).toUpperCase() + status.slice(1);
       }
       status = `${statusEmojis[user.presence.status]} ${status}`;
-      const embed = new Discord.MessageEmbed()
+      const embed = new MessageEmbed()
         .setColor(member ? member.displayColor : 0xffffff)
         .setAuthor(member ? member.displayName : user.username, user.displayAvatarURL())
         .setImage(user.displayAvatarURL({size: 2048}))
@@ -69,7 +69,7 @@ module.exports = async (message, args) => {
       } catch (err) {
         console.error(err);
       }
-      app.addFooter(message, embed, reply);
+      addFooter(message, embed, reply);
     } catch (err) {
       console.error(err);
     }

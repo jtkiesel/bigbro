@@ -1,16 +1,16 @@
-const Discord = require('discord.js');
+import { MessageEmbed } from 'discord.js';
 
-const app = require('../app');
+import { addFooter } from '..';
 
-module.exports = message => {
+export default message => {
   const ping = Date.now();
-  const embed = new Discord.MessageEmbed()
+  const embed = new MessageEmbed()
     .setColor('RANDOM')
     .setDescription('🏓 Pong!');
   message.channel.send({embed}).then(reply => {
     embed.setDescription(`${embed.description} \`${(Date.now() - ping) / 1000}s\``);
     reply.edit({embed})
-      .then(reply => app.addFooter(message, embed, reply))
+      .then(reply => addFooter(message, embed, reply))
       .catch(console.error);
   }).catch(console.error);
 };

@@ -1,7 +1,7 @@
-const Discord = require('discord.js');
+import { MessageEmbed } from 'discord.js';
 
-const app = require('../app');
-const messages = require('../messages');
+import { addFooter, client, db } from '..';
+import { leaderboardChannels } from '../messages';
 
 const rankEmojis = ['🥇', '🥈', '🥉'];
 const pageSize = 10;
@@ -19,21 +19,21 @@ const getDescription = (users, index = 0) => {
   return description;
 };
 
-module.exports = async message => {
+export default async message => {
   if (message.guild) {
     let leaderboard;
     try {
-      leaderboard = await app.db.collection('counts').aggregate()
-        .match({'_id.guild': message.guild.id, '_id.channel': {$in: messages.leaderboardChannels}})
+      leaderboard = await db.collection('messages').aggregate()
+        .match({'_id.guild': message.guild.id, '_id.channel': {$in: leaderboardChannels}})
         .group({_id: '$_id.user', count: {$sum: '$count'}})
         .sort({count: -1})
         .toArray();
     } catch (err) {
       console.error(err);
     }
-    const embed = new Discord.MessageEmbed()
+    const embed = new MessageEmbed()
       .setColor('RANDOM')
-      .setTitle('Users with no lives:')
+      .setTitle('Message Leaderboard:')
       .setDescription(getDescription(leaderboard));
 
     let reply;
@@ -44,7 +44,7 @@ module.exports = async message => {
     }
     let index = 0;
     const collector = reply.createReactionCollector((reaction, user) => {
-      return user.id !== app.client.user.id && (reaction.emoji.name === previous || reaction.emoji.name === next);
+      return user.id !== client.user.id && (reaction.emoji.name === previous || reaction.emoji.name === next);
     }, {time: 30000, dispose: true});
     collector.on('collect', (reaction, user) => {
       if (user.id === message.author.id) {
@@ -75,7 +75,7 @@ module.exports = async message => {
       users.forEach(user => users.remove(user));
       users = reply.reactions.get(previous).users;
       users.forEach(user => users.remove(user));
-      app.addFooter(message, embed, reply);
+      addFooter(message, embed, reply);
     });
     try {
       await reply.react(previous);
