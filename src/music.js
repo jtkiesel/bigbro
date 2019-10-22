@@ -46,6 +46,24 @@ const getTopic = (video, progress) => {
   return `▶️${'▬'.repeat(progressBar)}🔘${'▬'.repeat(progressBarLength - progressBar)}[${getDuration(video)}]${volumeEmojis[2]} ${getTitle(video)} - ${getRequester(video)}`;
 };
 
+const getVoiceConnection = async guild => {
+  const voiceId = voiceChannelId[guild.id];
+  const connection = guild.voiceConnection;
+
+  if (connection && connection.channel.id === voiceId) {
+    return connection;
+  }
+  const voiceChannel = guild.channels.get(voiceId);
+
+  if (voiceChannel && voiceChannel.joinable) {
+    try {
+      return await voiceChannel.join();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+};
+
 const playNext = async guild => {
   const guildId = guild.id;
   const video = queue[guildId][0];
@@ -53,22 +71,7 @@ const playNext = async guild => {
   if (video) {
     const stream = ytdl.downloadFromInfo(video.info, {filter: 'audioonly'});
     const textChannel = guild.channels.get(textChannelId[guildId]);
-    const voiceId = voiceChannelId[guildId];
-    let connection = guild.voiceConnection;
-
-    if (!connection || connection.channel.id !== voiceId) {
-      const voiceChannel = guild.channels.get(voiceId);
-
-      if (voiceChannel && voiceChannel.joinable) {
-        try {
-          connection = await voiceChannel.join();
-        } catch (err) {
-          console.error(err);
-        }
-      } else {
-        return;
-      }
-    }
+    const connection = await getVoiceConnection(guild);
     const dispatcher = connection.play(stream);
     const author = video.info.author;
     const requester = video.message.member ? video.message.member.displayName : video.message.author.username;
@@ -86,12 +89,7 @@ const playNext = async guild => {
     } catch (err) {
       console.error(err);
     }
-    const collector = message.createReactionCollector((reaction, user) => {
-      if (user.id === client.user.id || !reaction.emoji.name === skip) {
-        return false;
-      }
-      return true;
-    });
+    const collector = message.createReactionCollector((reaction, user) => user.id !== client.user.id && reaction.emoji.name === skip);
     collector.on('collect', (reaction, user) => {
       if (user.bot || !connection.channel.members.has(user.id)) {
         reaction.users.remove(user);
@@ -112,7 +110,9 @@ const playNext = async guild => {
     }, Math.floor(300 * video.info.length_seconds / progressBarLength));
 
     dispatcher.on('end', () => {
-      collector.stop();
+      if (collector) {
+        collector.stop();
+      }
       clearInterval(id);
       queue[guildId].shift();
 
@@ -123,10 +123,8 @@ const playNext = async guild => {
         connection.disconnect();
       }
     });
-    try {
-      await message.react(skip);
-    } catch (err) {
-      console.error(err);
+    if (message) {
+      message.react(skip).catch(console.error);
     }
   }
 };
@@ -182,7 +180,7 @@ const search = async (query, limit) => {
   });
 };
 
-export {
+export default {
   getDuration,
   getQueue,
   getRequester,
