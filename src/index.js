@@ -136,6 +136,10 @@ client.on('guildCreate', guild => messages.updateGuild(guild));
 client.on('guildMemberAdd', member => member.guild.systemChannel.send(`Welcome, ${member}! To access this server, one of the <@&197816965899747328> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the <@&197816965899747328> for help.`));
 
 client.on('message', message => {
+  const mentions = message.mentions.members;
+  if (mentions && mentions.size > 10) {
+    message.member.kick(`Mentioned ${mentions.size} users`);
+  }
   if (message.content.startsWith(prefix)) {
     handleCommand(message);
   }
