@@ -85,7 +85,6 @@ const upsertMessageInDb = async (message, inc = 1) => {
 
 export {
   leaderboardChannels,
-  updateGuild,
   updateGuilds,
   updateChannel,
   upsertMessageInDb
