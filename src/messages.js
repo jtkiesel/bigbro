@@ -32,8 +32,8 @@ const updateGuild = async guild => {
 };
 
 const updateChannel = async channel => {
-  if (channel.type != 'text' || !channel.permissionsFor(client.user).has(Permissions.VIEW_CHANNEL)
-      || !channel.permissionsFor(client.user).has(Permissions.READ_MESSAGE_HISTORY)) {
+  if (channel.type != 'text' || !channel.permissionsFor(client.user).has(Permissions.FLAGS.VIEW_CHANNEL)
+      || !channel.permissionsFor(client.user).has(Permissions.FLAGS.READ_MESSAGE_HISTORY)) {
     return;
   }
   const id = channel.lastMessageID;
