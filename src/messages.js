@@ -1,3 +1,5 @@
+import { Permissions } from 'discord.js';
+
 import { client, db } from '.';
 
 const leaderboardChannels = [
@@ -30,7 +32,8 @@ const updateGuild = async guild => {
 };
 
 const updateChannel = async channel => {
-  if (channel.type != 'text' || !channel.permissionsFor(client.user).has('READ_MESSAGE_HISTORY')) {
+  if (channel.type != 'text' || !channel.permissionsFor(client.user).has(Permissions.VIEW_CHANNEL)
+      || !channel.permissionsFor(client.user).has(Permissions.READ_MESSAGE_HISTORY)) {
     return;
   }
   const id = channel.lastMessageID;
