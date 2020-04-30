@@ -7,7 +7,6 @@ const token = process.env.BIGBRO_TOKEN;
 const dbUri = process.env.BIGBRO_DB;
 const mongoOptions = {
   retryWrites: true,
-  reconnectTries: Number.MAX_VALUE,
   useNewUrlParser: true,
   useUnifiedTopology: true
 };
@@ -24,7 +23,6 @@ const commandInfo = {
 const commands = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
-
 let db, messages;
 
 const clean = text => {
@@ -46,7 +44,7 @@ const handleCommand = async message => {
       .setColor('RANDOM')
       .setTitle('Commands')
       .setDescription(helpDescription);
-    message.channel.send({embed})
+    message.channel.send(embed)
       .then(reply => addFooter(message, embed, reply))
       .catch(console.error);
   } else if (cmd === 'eval') {
@@ -77,7 +75,7 @@ const addFooter = (message, embed, reply) => {
 
   embed.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL())
     .setTimestamp(message.createdAt);
-  reply.edit({embed});
+  reply.edit(embed);
 };
 
 const log = (message, type) => {
@@ -102,9 +100,9 @@ const log = (message, type) => {
     if (message.attachments.size) {
       embed.attachFiles(message.attachments.map(attachment => attachment.proxyURL));
     }
-    const logChannel = message.guild.channels.get('263385335105323015');
+    const logChannel = message.guild.channels.cache.get('263385335105323015');
     if (logChannel) {
-      logChannel.send(`Message ${type} in ${message.channel}:`, {embed}).catch(console.error);
+      logChannel.send(`Message ${type} in ${message.channel}:`, embed).catch(console.error);
     }
   }
 };
@@ -118,7 +116,7 @@ const restart = () => {
 
 client.on('ready', async () => {
   console.log('Ready!');
-  client.user.setActivity(`${prefix}help`, {url: 'https://github.com/jtkiesel/bigbro', type: 'PLAYING'});
+  client.user.setActivity(`${prefix}help`, {url: 'https://github.com/jtkiesel/bigbro', type: 'PLAYING'}).catch(console.error);
   try {
     await messages.updateGuilds();
   } catch (err) {

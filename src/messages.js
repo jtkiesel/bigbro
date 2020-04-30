@@ -16,13 +16,17 @@ const leaderboardChannels = [
 ];
 
 const updateGuilds = async () => {
-  for (let guild of client.guilds.array()) {
-    await updateGuild(guild);
+  for (let guild of client.guilds.cache.array()) {
+    try {
+      await updateGuild(guild);
+    } catch (err) {
+      console.error(err);
+    }
   }
 };
 
 const updateGuild = async guild => {
-  for (let channel of guild.channels.array()) {
+  for (let channel of guild.channels.cache.array()) {
     try {
       await updateChannel(channel);
     } catch (err) {

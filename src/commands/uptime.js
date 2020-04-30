@@ -43,7 +43,7 @@ export default message => {
   const embed = new MessageEmbed()
     .setColor('RANDOM')
     .setDescription(`${emojis}\n${uptime.join(', ')}`);
-  message.channel.send({embed})
+  message.channel.send(embed)
     .then(reply => addFooter(message, embed, reply))
     .catch(console.error);
 };
