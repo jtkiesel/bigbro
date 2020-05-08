@@ -22,7 +22,6 @@
     "url": "https://github.com/jtkiesel/bigbro.git"
   },
   "scripts": {
-    "heroku-postbuild": "npm run build",
     "prod": "npm run build && node build",
     "start": "nodemon --exec ts-node src/index.ts",
     "build": "tsc"
