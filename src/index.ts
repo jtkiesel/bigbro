@@ -1,10 +1,17 @@
-import { Client, MessageEmbed } from 'discord.js';
-import { MongoClient } from 'mongodb';
+import { Client, ColorResolvable, Constants, Message, MessageEmbed, PartialMessage, TextChannel } from 'discord.js';
+import { Db, MongoClient } from 'mongodb';
 import { inspect } from 'util';
 
-const client = new Client();
+import * as messages from './messages';
+
+export interface Command {
+  execute(message: Message, args: string): Promise<void>;
+}
+
+export const client = new Client();
 const token = process.env.BIGBRO_TOKEN;
 const dbUri = process.env.BIGBRO_DB;
+const ownerId = process.env.DISCORD_ID;
 const mongoOptions = {
   retryWrites: true,
   useNewUrlParser: true,
@@ -20,35 +27,50 @@ const commandInfo = {
   search: 'Search YouTube to play audio from a video.',
   queue: 'Current music queue.'
 };
-const commands = {};
+const commands: { [key: string]: Command } = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
-let db, messages;
+let _db: Db;
 
-const clean = text => {
-  if (typeof text === 'string') {
-    return text.replace(/`/g, '`' + String.fromCharCode(8203)).replace(/@/g, '@' + String.fromCharCode(8203)).slice(0, 1990);
-  }
-  return text;
+export const db = (): Db => _db; 
+
+const clean = (text: string): string => {
+  return text.replace(/`/g, '`' + String.fromCharCode(8203)).replace(/@/g, '@' + String.fromCharCode(8203)).slice(0, 1990);
 };
 
-const handleCommand = async message => {
+export const addFooter = (message: Message, reply: Message): void => {
+  const author = message.member ? message.member.displayName : message.author.username;
+  const embed = reply.embeds[0].setFooter(`Triggered by ${author}`, message.author.displayAvatarURL())
+    .setTimestamp(message.createdAt);
+  reply.edit(embed).catch(console.error);
+};
+
+const login = (): void => {
+  client.login(token).catch(console.error);
+};
+
+const restart = (): void => {
+  client.destroy();
+  login();
+};
+
+const handleCommand = async (message: Message): Promise<void> => {
   const slice = message.content.indexOf(' ');
   const cmd = message.content.slice(prefix.length, (slice < 0) ? message.content.length : slice);
   const args = (slice < 0) ? '' : message.content.slice(slice);
 
   if (commands[cmd]) {
-    commands[cmd](message, args);
+    commands[cmd].execute(message, args).catch(console.error);
   } else if (cmd === 'help') {
     const embed = new MessageEmbed()
       .setColor('RANDOM')
       .setTitle('Commands')
       .setDescription(helpDescription);
     message.channel.send(embed)
-      .then(reply => addFooter(message, embed, reply))
+      .then(reply => addFooter(message, reply))
       .catch(console.error);
-  } else if (cmd === 'eval') {
-    if (message.author.id === '197781934116569088') {
+  } else if (message.author.id === ownerId) {
+    if (cmd === 'eval') {
       try {
         let evaled = /\s*await\s+/.test(args) ? (await eval(`const f = async () => {\n${args}\n};\nf();`)) : eval(args);
         if (typeof evaled !== 'string') {
@@ -58,140 +80,118 @@ const handleCommand = async message => {
       } catch (error) {
         message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(error)}\`\`\``).catch(console.error);
       }
-    } else {
-      message.reply(`you don't have permission to run \`${cmd}\`.`).catch(console.error);
-    }
-  } else if (cmd === 'restart') {
-    if (message.author.id === '197781934116569088') {
+    } else if (cmd === 'restart') {
       restart();
-    } else {
-      message.reply(`you don't have permission to run \`${cmd}\`.`).catch(console.error);
     }
   }
 };
 
-const addFooter = (message, embed, reply) => {
-  const author = message.member ? message.member.displayName : message.author.username;
-
-  embed.setFooter(`Triggered by ${author}`, message.author.displayAvatarURL())
+const log = (message: Message | PartialMessage, type: string): void => {
+  if (!message.guild || message.author.bot) {
+    return;
+  }
+  let color: ColorResolvable;
+  switch (type) {
+  case 'updated':
+    color = Constants.Colors.GREEN;
+    break;
+  case 'deleted':
+    color = Constants.Colors.RED;
+    break;
+  default:
+    color = Constants.Colors.BLUE;
+    break;
+  }
+  const embed = new MessageEmbed()
+    .setColor(color)
+    .setDescription(`${message.member}\n${message.content}`)
     .setTimestamp(message.createdAt);
-  reply.edit(embed);
-};
 
-const log = (message, type) => {
-  if (message.guild && !message.author.bot) {
-    let color;
-    switch (type) {
-    case 'updated':
-      color = 'GREEN';
-      break;
-    case 'deleted':
-      color = 'RED';
-      break;
-    default:
-      color = 'BLUE';
-      break;
-    }
-    const embed = new MessageEmbed()
-      .setColor(color)
-      .setDescription(`${message.member}\n${message.content}`)
-      .setTimestamp(message.createdAt);
-
-    if (message.attachments.size) {
-      embed.attachFiles(message.attachments.map(attachment => attachment.proxyURL));
-    }
-    const logChannel = message.guild.channels.cache.get('263385335105323015');
-    if (logChannel) {
-      logChannel.send(`Message ${type} in ${message.channel}:`, embed).catch(console.error);
-    }
+  if (message.attachments.size) {
+    embed.attachFiles(message.attachments.map(attachment => attachment.proxyURL));
+  }
+  const logChannel = message.guild.channels.cache.get('263385335105323015') as TextChannel;
+  if (logChannel) {
+    logChannel.send(`Message ${type} in ${message.channel}:`, embed).catch(console.error);
   }
 };
 
-const login = () => client.login(token).catch(console.error);
-
-const restart = () => {
-  client.destroy();
-  login();
-};
-
-client.on('ready', async () => {
-  console.log('Ready!');
-  client.user.setActivity(`${prefix}help`, {url: 'https://github.com/jtkiesel/bigbro', type: 'PLAYING'}).catch(console.error);
-  try {
-    await messages.updateGuilds();
-  } catch (err) {
-    console.error(err);
-  }
-  console.log('Done updating messages.');
+client.on(Constants.Events.CLIENT_READY, () => {
+  console.log(`Logged in as ${client.user.tag}`);
+  client.user.setPresence({
+    status: 'online',
+    activity: {
+      name: `${prefix}help`,
+      type: 'PLAYING'
+    }
+  }).catch(console.error);
+  messages.updateGuilds()
+    .then(() => console.log('Done updating messages.'))
+    .catch(console.error);
 });
 
-client.on('resume', () => console.log('Resume.'));
+client.on(Constants.Events.CHANNEL_CREATE, channel => {
+  if (channel.type === 'text') {
+    messages.updateChannel(channel as TextChannel).catch(console.error);
+  }
+});
 
-client.on('channelCreate', channel => messages.updateChannel(channel));
+client.on(Constants.Events.GUILD_MEMBER_ADD, member => {
+  member.guild.systemChannel.send(`Welcome, ${member}! To access this server, one of the <@&197816965899747328> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the <@&197816965899747328> for help.`).catch(console.error);
+});
 
-client.on('guildMemberAdd', member => member.guild.systemChannel.send(`Welcome, ${member}! To access this server, one of the <@&197816965899747328> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the <@&197816965899747328> for help.`));
-
-client.on('message', message => {
-  const mentions = message.mentions.members;
-  if (mentions && mentions.size > 10) {
-    message.member.kick(`Mentioned ${mentions.size} users`);
+client.on(Constants.Events.MESSAGE_CREATE, message => {
+  const mentionCount = message.mentions.members?.size;
+  if (mentionCount > 10) {
+    message.member.kick(`Mentioned ${mentionCount} users`);
   }
   if (message.content.startsWith(prefix)) {
-    handleCommand(message);
+    handleCommand(message).catch(console.error);
   }
   if (message.guild) {
-    messages.upsertMessageInDb(message);
+    messages.upsertMessageInDb(message).catch(console.error);
   }
 });
 
-client.on('messageDelete', message => {
+client.on(Constants.Events.MESSAGE_DELETE, message => {
   if (message.guild) {
     log(message, 'deleted');
-    messages.upsertMessageInDb(message, -1);
+    messages.upsertMessageInDb(message, -1).catch(console.error);
   }
 });
 
-client.on('messageUpdate', (oldMessage, newMessage) => {
+client.on(Constants.Events.MESSAGE_UPDATE, (oldMessage, newMessage) => {
   if (oldMessage.guild && oldMessage.content !== newMessage.content) {
     log(oldMessage, 'updated');
   }
 });
 
-client.on('messageDeleteBulk', messageCollection => {
+client.on(Constants.Events.MESSAGE_BULK_DELETE, messageCollection => {
   messageCollection.forEach(message => {
     if (message.guild) {
       log(message, 'bulk deleted');
-      messages.upsertMessageInDb(message, -1);
+      messages.upsertMessageInDb(message, -1).catch(console.error);
     }
   });
 });
 
-client.on('disconnect', event => {
+client.on(Constants.Events.DISCONNECT, event => {
   console.error('Disconnect.');
   console.error(JSON.stringify(event));
   restart();
 });
 
-client.on('reconnecting', () => console.log('Reconnecting.'));
+client.on(Constants.Events.ERROR, console.error);
 
-client.on('error', console.error);
-
-client.on('warn', console.warn);
+client.on(Constants.Events.WARN, console.warn);
 
 MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
-  db = mongoClient.db('bigbro');
-  module.exports.db = db;
+  _db = mongoClient.db('bigbro');
 
   Object.entries(commandInfo).forEach(([name, desc]) => {
     commands[name] = require('./commands/' + name).default;
     helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
   });
 
-  messages = require('./messages');
   login();
 }).catch(console.error);
-
-export {
-  addFooter,
-  client
-};

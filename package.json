@@ -22,30 +22,31 @@
     "url": "https://github.com/jtkiesel/bigbro.git"
   },
   "scripts": {
-    "dev": "nodemon --inspect --exec babel-node src",
-    "prod": "npm run build && npm run start",
     "heroku-postbuild": "npm run build",
-    "start": "NODE_ENV=production node build",
-    "build": "babel src -d build"
+    "prod": "npm run build && node build",
+    "start": "nodemon --exec ts-node src/index.ts",
+    "build": "tsc"
   },
   "dependencies": {
     "@discordjs/opus": "^0.2.1",
-    "cron": "^1.8.2",
     "discord.js": "^12.2.0",
     "googleapis": "^49.0.0",
     "mongodb": "^3.5.6",
     "ytdl-core": "^2.1.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.0",
-    "@babel/node": "^7.8.7",
-    "@babel/preset-env": "^7.9.5",
-    "nodemon": "^2.0.3"
+    "@types/mongodb": "^3.5.15",
+    "@types/ws": "^7.2.4",
+    "@typescript-eslint/eslint-plugin": "^2.31.0",
+    "@typescript-eslint/parser": "^2.31.0",
+    "eslint": "^6.8.0",
+    "nodemon": "^2.0.3",
+    "ts-node": "^8.10.1",
+    "typescript": "^3.8.3"
   },
   "engines": {
-    "node": "^12.13.1",
-    "npm": "^6.12.1"
+    "node": "^13.11.0",
+    "npm": "^6.13.7"
   },
   "private": true,
   "browserslist": "maintained node versions"
