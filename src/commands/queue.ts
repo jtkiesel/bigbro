@@ -4,12 +4,11 @@ import { Command } from '..';
 import * as music from '../music';
 
 class QueueCommand implements Command {
-  async execute(message: Message): Promise<void> {
-    if (message.member) {
-      const queue = music.getQueue(message.guild.id);
-    } else {
-      message.reply('that command is only available in servers.');
+  async execute(message: Message): Promise<Message> {
+    if (!message.guild) {
+      return message.reply('that command is only available in servers.');
     }
+    return music.sendQueue(message);
   }
 }
 

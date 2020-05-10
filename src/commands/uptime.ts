@@ -5,7 +5,7 @@ import { addFooter, client, Command } from '..';
 const formatTime = (time: number, unit: string): string => `${time} ${unit}${(time == 1) ? '' : 's'}`;
 
 class UptimeCommand implements Command {
-  async execute(message: Message): Promise<void> {
+  async execute(message: Message): Promise<Message> {
     const milliseconds = new Date(client.uptime).getTime();
 
     let seconds = Math.floor(milliseconds / 1000);
@@ -32,10 +32,9 @@ class UptimeCommand implements Command {
     }
     const embed = new MessageEmbed()
       .setColor('RANDOM')
-      .setDescription(`${uptime.join(', ')}`);
-    message.channel.send(embed)
-      .then(reply => addFooter(message, reply))
-      .catch(console.error);
+      .setDescription(`🕒 ${uptime.join(', ')}`);
+    const reply = await message.channel.send(embed);
+    return addFooter(message, reply);
   }
 }
 

@@ -5,7 +5,7 @@ import { inspect } from 'util';
 import * as messages from './messages';
 
 export interface Command {
-  execute(message: Message, args: string): Promise<void>;
+  execute(message: Message, args: string): Promise<Message>;
 }
 
 export const client = new Client();
@@ -28,35 +28,41 @@ const commandInfo = {
   queue: 'Current music queue.'
 };
 const commands: { [key: string]: Command } = {};
+const verifiersRoleId = '197816965899747328';
+const rulesChannelId = '197777408198180864';
+const welcomeMessage = `Welcome! To access this server, one of the <@&${verifiersRoleId}> must verify you.
+Please take a moment to read our server <#${rulesChannelId}>, then send a message here with your name (or \
+username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the \
+<@&${verifiersRoleId}> for help.`;
+const logChannelIds: { [key: string]: string } = {
+  '197777408198180864': '263385335105323015',
+  '329477820076130306': '329477820076130306'
+};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 let _db: Db;
 
-export const db = (): Db => _db; 
+export const db = (): Db => _db;
 
 const clean = (text: string): string => {
   return text.replace(/`/g, '`' + String.fromCharCode(8203)).replace(/@/g, '@' + String.fromCharCode(8203)).slice(0, 1990);
 };
 
-export const addFooter = (message: Message, reply: Message): void => {
-  const author = message.member ? message.member.displayName : message.author.username;
+export const addFooter = (message: Message, reply: Message): Promise<Message> => {
+  const author = message.member?.displayName || message.author.username;
   const embed = reply.embeds[0].setFooter(`Triggered by ${author}`, message.author.displayAvatarURL())
     .setTimestamp(message.createdAt);
-  reply.edit(embed).catch(console.error);
+  return reply.edit(embed);
 };
 
-const login = (): void => {
-  client.login(token).catch(console.error);
-};
-
-const restart = (): void => {
+const restart = (): Promise<string> => {
   client.destroy();
-  login();
+  return client.login(token);
 };
 
 const handleCommand = async (message: Message): Promise<void> => {
   const slice = message.content.indexOf(' ');
-  const cmd = message.content.slice(prefix.length, (slice < 0) ? message.content.length : slice);
+  const cmd = message.content.slice(prefix.length, (slice < 0) ? message.content.length : slice).toLowerCase();
   const args = (slice < 0) ? '' : message.content.slice(slice);
 
   if (commands[cmd]) {
@@ -72,11 +78,9 @@ const handleCommand = async (message: Message): Promise<void> => {
   } else if (message.author.id === ownerId) {
     if (cmd === 'eval') {
       try {
-        let evaled = /\s*await\s+/.test(args) ? (await eval(`const f = async () => {\n${args}\n};\nf();`)) : eval(args);
-        if (typeof evaled !== 'string') {
-          evaled = inspect(evaled);
-        }
-        message.channel.send(clean(evaled), {code: 'xl'}).catch(console.error);
+        const evaled = /\s*await\s+/.test(args) ? (await eval(`const f = async () => {\n${args}\n};\nf();`)) : eval(args);
+        const evaledString = (typeof evaled === 'string') ? evaled : inspect(evaled);
+        message.channel.send(clean(evaledString), {code: 'xl'}).catch(console.error);
       } catch (error) {
         message.channel.send(`\`ERROR\` \`\`\`xl\n${clean(error)}\`\`\``).catch(console.error);
       }
@@ -86,33 +90,40 @@ const handleCommand = async (message: Message): Promise<void> => {
   }
 };
 
-const log = (message: Message | PartialMessage, type: string): void => {
+const logEmbedColor = (action: string): ColorResolvable => {
+  switch (action) {
+  case 'updated':
+    return Constants.Colors.GREEN;
+  case 'deleted':
+    return Constants.Colors.RED;
+  case 'bulk deleted':
+    return Constants.Colors.BLUE;
+  default:
+    return Constants.Colors.DEFAULT;
+  }
+};
+
+const userUrl = (id: string): string => {
+  return `https://discordapp.com/users/${id}`;
+};
+
+const log = (message: Message | PartialMessage, action: string): void => {
   if (!message.guild || message.author.bot) {
     return;
   }
-  let color: ColorResolvable;
-  switch (type) {
-  case 'updated':
-    color = Constants.Colors.GREEN;
-    break;
-  case 'deleted':
-    color = Constants.Colors.RED;
-    break;
-  default:
-    color = Constants.Colors.BLUE;
-    break;
-  }
+  const authorName = message.member?.displayName || message.author.username;
   const embed = new MessageEmbed()
-    .setColor(color)
-    .setDescription(`${message.member}\n${message.content}`)
+    .setColor(logEmbedColor(action))
+    .setAuthor(authorName, message.author.displayAvatarURL(), userUrl(message.author.id))
+    .setDescription(message.content)
     .setTimestamp(message.createdAt);
 
   if (message.attachments.size) {
     embed.attachFiles(message.attachments.map(attachment => attachment.proxyURL));
   }
-  const logChannel = message.guild.channels.cache.get('263385335105323015') as TextChannel;
+  const logChannel = message.guild.channels.cache.get(logChannelIds[message.guild.id]) as TextChannel;
   if (logChannel) {
-    logChannel.send(`Message ${type} in ${message.channel}:`, embed).catch(console.error);
+    logChannel.send(`Message by ${message.author} ${action} in ${message.channel}:\n${message.url}`, embed).catch(console.error);
   }
 };
 
@@ -121,13 +132,11 @@ client.on(Constants.Events.CLIENT_READY, () => {
   client.user.setPresence({
     status: 'online',
     activity: {
-      name: `${prefix}help`,
-      type: 'PLAYING'
+      type: 'PLAYING',
+      name: `${prefix}help`
     }
   }).catch(console.error);
-  messages.updateGuilds()
-    .then(() => console.log('Done updating messages.'))
-    .catch(console.error);
+  messages.updateGuilds().catch(console.error);
 });
 
 client.on(Constants.Events.CHANNEL_CREATE, channel => {
@@ -137,7 +146,7 @@ client.on(Constants.Events.CHANNEL_CREATE, channel => {
 });
 
 client.on(Constants.Events.GUILD_MEMBER_ADD, member => {
-  member.guild.systemChannel.send(`Welcome, ${member}! To access this server, one of the <@&197816965899747328> must verify you.\nPlease take a moment to read our server <#197777408198180864>, then send a message here with your name (or username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the <@&197816965899747328> for help.`).catch(console.error);
+  member.guild.systemChannel.send(`${member} ${welcomeMessage}`).catch(console.error);
 });
 
 client.on(Constants.Events.MESSAGE_CREATE, message => {
@@ -189,9 +198,9 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
   _db = mongoClient.db('bigbro');
 
   Object.entries(commandInfo).forEach(([name, desc]) => {
-    commands[name] = require('./commands/' + name).default;
+    commands[name.toLowerCase()] = require(`./commands/${name}`).default;
     helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
   });
 
-  login();
+  client.login(token).catch(console.error);
 }).catch(console.error);

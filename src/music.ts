@@ -1,4 +1,4 @@
-import { Guild, Message, MessageEmbed, TextChannel, VoiceChannel, VoiceConnection, User } from 'discord.js';
+import { Constants, Guild, Message, MessageEmbed, TextChannel, VoiceChannel, VoiceConnection, User } from 'discord.js';
 import { google, youtube_v3 } from 'googleapis';
 import ytdl from 'ytdl-core';
 
@@ -62,18 +62,12 @@ const getTopic = (video: Video, progress: number): string => {
 const getVoiceConnection = async (guild: Guild): Promise<VoiceConnection> => {
   const voiceId = voiceChannelId[guild.id];
   const connection = guild.voice?.connection;
-
   if (connection && connection.channel.id === voiceId) {
     return connection;
   }
   const voiceChannel = guild.channels.cache.get(voiceId) as VoiceChannel;
-
   if (voiceChannel && voiceChannel.joinable) {
-    try {
-      return await voiceChannel.join();
-    } catch (err) {
-      console.error(err);
-    }
+    return await voiceChannel.join();
   }
 };
 
@@ -83,14 +77,14 @@ const playNext = async (guild: Guild): Promise<void> => {
   if (!video) {
     return;
   }
-  const stream = ytdl.downloadFromInfo(video.info, {filter: 'audioonly'});
+  const stream = ytdl.downloadFromInfo(video.info, { filter: 'audioonly' });
   const textChannel = guild.channels.cache.get(textChannelId[guildId]) as TextChannel;
   const connection = await getVoiceConnection(guild);
   const dispatcher = connection.play(stream, { volume: false });
   const author = video.info.author;
   const requester = video.message.member?.displayName || video.message.author.username;
   const embed = new MessageEmbed()
-    .setColor('BLUE')
+    .setColor(Constants.Colors.BLUE)
     .setAuthor(author.name, author.avatar, author.user_url)
     .setTitle(getTitle(video))
     .setURL(getUrl(video))
@@ -144,31 +138,30 @@ const playNext = async (guild: Guild): Promise<void> => {
 
 export const getQueue = (guildId: string): Video[] => queue[guildId] || [];
 
-export const sendQueue = (message: Message): void => {
+export const sendQueue = async (message: Message): Promise<Message> => {
   const guildQueue = queue[message.guild.id];
-  if (guildQueue && guildQueue.length > 1) {
-    const embed = new MessageEmbed()
-      .setColor('BLUE')
-      .setDescription(guildQueue.slice(1).map((video, index: number) => `\`${String(index + 1).padStart(2, ' ')}.\` \`[${getDuration(video)}]\` [${getTitle(video)}](${getUrl(video)}) - ${getRequester(video)}`).join('\n'));
-    message.channel.send(embed).catch(console.error);
-  } else {
-    message.reply('the music queue is currently empty.').catch(console.error);
+  if (!guildQueue?.length) {
+    return message.reply('the music queue is currently empty.');
   }
+  const embed = new MessageEmbed()
+    .setColor(Constants.Colors.BLUE)
+    .setDescription(guildQueue.slice(1).map((video, index) => `\`${String(index + 1).padStart(2, ' ')}.\` \`[${getDuration(video)}]\` [${getTitle(video)}](${getUrl(video)}) - ${getRequester(video)}`).join('\n'));
+  return message.channel.send(embed);
 };
 
 export const newVideo = async (message: Message, videoId: string): Promise<void> => {
   const guild = message.guild;
   const guildId = guild.id;
   const info = await ytdl.getInfo(videoId);
-  const v = { message, info };
+  const video = { message, info };
 
   if (!queue[guildId]) {
-    queue[guildId] = [v];
+    queue[guildId] = [video];
   } else {
-    queue[guildId].push(v);
+    queue[guildId].push(video);
   }
   if (queue[guildId].length === 1) {
-    playNext(guild);
+    await playNext(guild);
   } else {
     sendQueue(message);
   }
@@ -176,7 +169,7 @@ export const newVideo = async (message: Message, videoId: string): Promise<void>
 
 export const search = async (query: string, limit: number): Promise<youtube_v3.Schema$SearchResult[]> => {
   return new Promise((resolve, reject) => {
-    youtube.search.list({part: 'snippet', type: 'video', q: query, maxResults: limit}, (err, response) => {
+    youtube.search.list({ part: 'snippet', type: 'video', q: query, maxResults: limit }, (err, response) => {
       if (err) {
         reject(err);
       } else {

@@ -19,34 +19,30 @@ export const upsertMessageInDb = async (message: Message | PartialMessage, inc =
   const guild = message.guild.id;
   const channel = message.channel.id;
   const id = message.id;
-  try {
-    await Promise.all([
-      db().collection('channels').updateOne({
-        _id: {
-          guild,
-          channel
-        }
-      }, {
-        $max: { last: id },
-        $min: { first: id }
-      }, {
-        upsert: true
-      }),
-      db().collection('messages').updateOne({
-        _id: {
-          guild,
-          channel,
-          user: message.author.id
-        }
-      }, {
-        $inc: { count: inc }
-      }, {
-        upsert: true
-      })
-    ]);
-  } catch (err) {
-    console.error(err);
-  }
+  await Promise.all([
+    db().collection('channels').updateOne({
+      _id: {
+        guild,
+        channel
+      }
+    }, {
+      $max: { last: id },
+      $min: { first: id }
+    }, {
+      upsert: true
+    }),
+    db().collection('messages').updateOne({
+      _id: {
+        guild,
+        channel,
+        user: message.author.id
+      }
+    }, {
+      $inc: { count: inc }
+    }, {
+      upsert: true
+    })
+  ]);
 };
 
 export const updateChannel = async (channel: TextChannel): Promise<void> => {
@@ -54,7 +50,7 @@ export const updateChannel = async (channel: TextChannel): Promise<void> => {
     return;
   }
   const id = channel.lastMessageID;
-  const messageStore = channel.messages;
+  const messageManager = channel.messages;
   const firstMessage = (await db().collection('channels').findOneAndUpdate({
     _id: {
       guild: channel.guild.id,
@@ -76,8 +72,8 @@ export const updateChannel = async (channel: TextChannel): Promise<void> => {
   let messages;
   do {
     try {
-      messages = await messageStore.fetch(options);
-      for (const message of messages.array()) {
+      messages = await messageManager.fetch(options, false);
+      for (const message of messages.values()) {
         await upsertMessageInDb(message, 1);
         options.before = message.id;
       }
@@ -90,21 +86,23 @@ export const updateChannel = async (channel: TextChannel): Promise<void> => {
 };
 
 const updateGuild = async (guild: Guild): Promise<void> => {
-  for (const channel of guild.channels.cache.filter(channel => channel.type === 'text').array() as TextChannel[]) {
+  for (const channel of guild.channels.cache.filter(channel => channel.type === 'text').values() as IterableIterator<TextChannel>) {
     try {
       await updateChannel(channel);
     } catch (err) {
       console.error(err);
     }
   }
+  console.log(`Done with ${guild.name}`);
 };
 
 export const updateGuilds = async (): Promise<void> => {
-  for (const guild of client.guilds.cache.array()) {
+  for (const guild of client.guilds.cache.values()) {
     try {
       await updateGuild(guild);
     } catch (err) {
       console.error(err);
     }
   }
+  console.log('Done updating messages.');
 };
