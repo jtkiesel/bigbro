@@ -36,7 +36,7 @@ username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one o
 <@&${verifiersRoleId}> for help.`;
 const logChannelIds: { [key: string]: string } = {
   '197777408198180864': '263385335105323015',
-  '329477820076130306': '329477820076130306'
+  '329477820076130306': '709178148503420968'
 };
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
@@ -45,7 +45,7 @@ let _db: Db;
 export const db = (): Db => _db;
 
 const clean = (text: string): string => {
-  return text.replace(/`/g, '`' + String.fromCharCode(8203)).replace(/@/g, '@' + String.fromCharCode(8203)).slice(0, 1990);
+  return text.replace(/`/g, `\`${String.fromCharCode(8203)}`).replace(/@/g, `@${String.fromCharCode(8203)}`).slice(0, 1990);
 };
 
 export const addFooter = (message: Message, reply: Message): Promise<Message> => {
@@ -103,11 +103,9 @@ const logEmbedColor = (action: string): ColorResolvable => {
   }
 };
 
-const userUrl = (id: string): string => {
-  return `https://discordapp.com/users/${id}`;
-};
+const userUrl = (id: string): string => `https://discordapp.com/users/${id}`;
 
-const log = (message: Message | PartialMessage, action: string): void => {
+const log = async (message: Message | PartialMessage, action: string): Promise<Message> => {
   if (!message.guild || message.author.bot) {
     return;
   }
@@ -123,7 +121,10 @@ const log = (message: Message | PartialMessage, action: string): void => {
   }
   const logChannel = message.guild.channels.cache.get(logChannelIds[message.guild.id]) as TextChannel;
   if (logChannel) {
-    logChannel.send(`Message by ${message.author} ${action} in ${message.channel}:\n${message.url}`, embed).catch(console.error);
+    const content = ['Message', `${action} in ${message.channel}:\n${message.url}`];
+    const logged = await logChannel.send(content.join(' '), embed);
+    content.splice(1, 0, `by ${message.author}`);
+    return logged.edit(content.join(' '));
   }
 };
 
@@ -164,21 +165,21 @@ client.on(Constants.Events.MESSAGE_CREATE, message => {
 
 client.on(Constants.Events.MESSAGE_DELETE, message => {
   if (message.guild) {
-    log(message, 'deleted');
+    log(message, 'deleted').catch(console.error);
     messages.upsertMessageInDb(message, -1).catch(console.error);
   }
 });
 
 client.on(Constants.Events.MESSAGE_UPDATE, (oldMessage, newMessage) => {
   if (oldMessage.guild && oldMessage.content !== newMessage.content) {
-    log(oldMessage, 'updated');
+    log(oldMessage, 'updated').catch(console.error);
   }
 });
 
 client.on(Constants.Events.MESSAGE_BULK_DELETE, messageCollection => {
   messageCollection.forEach(message => {
     if (message.guild) {
-      log(message, 'bulk deleted');
+      log(message, 'bulk deleted').catch(console.error);
       messages.upsertMessageInDb(message, -1).catch(console.error);
     }
   });
