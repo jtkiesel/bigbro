@@ -30,6 +30,8 @@
     "@discordjs/opus": "^0.2.1",
     "discord.js": "^12.2.0",
     "googleapis": "^49.0.0",
+    "moment": "^2.25.3",
+    "moment-timer": "^1.3.0",
     "mongodb": "^3.5.6",
     "ytdl-core": "^2.1.1"
   },
@@ -38,6 +40,7 @@
     "@types/ws": "^7.2.4",
     "@typescript-eslint/eslint-plugin": "^2.31.0",
     "@typescript-eslint/parser": "^2.31.0",
+    "@types/moment-timer": "file:./local-types/moment-timer",
     "eslint": "^6.8.0",
     "nodemon": "^2.0.3",
     "ts-node": "^8.10.1",

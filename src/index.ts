@@ -1,8 +1,11 @@
-import { Client, ColorResolvable, Constants, Message, MessageEmbed, PartialMessage, TextChannel } from 'discord.js';
+import { Client, ColorResolvable, Constants, Message, MessageEmbed, PartialMessage, TextChannel, GuildMember } from 'discord.js';
+import moment from 'moment-timer';
 import { Db, MongoClient } from 'mongodb';
 import { inspect } from 'util';
 
 import * as messages from './messages';
+
+import { doUnTimeout } from './commands/dq';
 
 export interface Command {
   execute(message: Message, args: string): Promise<Message>;
@@ -25,7 +28,8 @@ const commandInfo = {
   profile: 'Information about a user.',
   play: 'Audio from a YouTube video.',
   search: 'Search YouTube to play audio from a video.',
-  queue: 'Current music queue.'
+  queue: 'Current music queue.',
+  dq: 'Disqualify a user or users.',
 };
 const commands: { [key: string]: Command } = {};
 const verifiersRoleId = '197816965899747328';
@@ -55,9 +59,26 @@ export const addFooter = (message: Message, reply: Message): Promise<Message> =>
   return reply.edit(embed);
 };
 
+const reloadDQTimers = async (client: Client) => {
+	await Promise.all(await db().collection('dqs').find().map(document => {
+		const member = client.guilds.cache.get(document._id.guild).members.cache.get(document._id.user);
+		
+		// check if timer has lapsed while the bot was off, and if so free the prisoner
+		if (moment().isSameOrAfter(moment(document.dqEndTime))) {
+			return doUnTimeout(member)();
+		}
+
+		// still time left so just set the timers back up
+		moment.duration(moment().diff(moment(document.dqEndTime))).timer({start: true}, doUnTimeout(member));
+		return Promise.resolve();
+	}).toArray());
+};
+
+const loginPromiseForwarder = (fn: Function) => (token: string) => { fn(); return token; };
+
 const restart = (): Promise<string> => {
   client.destroy();
-  return client.login(token);
+  return client.login(token).then(loginPromiseForwarder(reloadDQTimers));
 };
 
 const handleCommand = async (message: Message): Promise<void> => {
@@ -203,5 +224,5 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
     helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
   });
 
-  client.login(token).catch(console.error);
+  client.login(token).then(loginPromiseForwarder(reloadDQTimers)).catch(console.error);
 }).catch(console.error);
