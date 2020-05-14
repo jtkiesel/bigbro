@@ -1,4 +1,4 @@
-import { Client, ColorResolvable, Constants, Message, MessageEmbed, PartialMessage, TextChannel, GuildMember } from 'discord.js';
+import { Client, ColorResolvable, Constants, Message, MessageEmbed, PartialMessage, TextChannel } from 'discord.js';
 import moment from 'moment-timer';
 import { Db, MongoClient } from 'mongodb';
 import { inspect } from 'util';
@@ -59,22 +59,22 @@ export const addFooter = (message: Message, reply: Message): Promise<Message> =>
   return reply.edit(embed);
 };
 
-const reloadDQTimers = async (client: Client) => {
-	await Promise.all(await db().collection('dqs').find().map(document => {
-		const member = client.guilds.cache.get(document._id.guild).members.cache.get(document._id.user);
+const reloadDQTimers = async (client: Client): Promise<void> => {
+  await Promise.all(await db().collection('dqs').find().map(document => {
+    const member = client.guilds.cache.get(document._id.guild).members.cache.get(document._id.user);
 		
-		// check if timer has lapsed while the bot was off, and if so free the prisoner
-		if (moment().isSameOrAfter(moment(document.dqEndTime))) {
-			return doUnTimeout(member)();
-		}
+    // check if timer has lapsed while the bot was off, and if so free the prisoner
+    if (moment().isSameOrAfter(moment(document.dqEndTime))) {
+      return doUnTimeout(member)();
+    }
 
-		// still time left so just set the timers back up
-		moment.duration(moment().diff(moment(document.dqEndTime))).timer({start: true}, doUnTimeout(member));
-		return Promise.resolve();
-	}).toArray());
+    // still time left so just set the timers back up
+    moment.duration(moment().diff(moment(document.dqEndTime))).timer({start: true}, doUnTimeout(member));
+    return Promise.resolve();
+  }).toArray());
 };
 
-const loginPromiseForwarder = (fn: Function) => (token: string) => { fn(); return token; };
+const loginPromiseForwarder = (fn: Function) => (token: string): string => { fn(); return token; };
 
 const restart = (): Promise<string> => {
   client.destroy();
