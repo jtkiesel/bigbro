@@ -1,11 +1,11 @@
 import { Client, ColorResolvable, Constants, Message, MessageEmbed, PartialMessage, TextChannel } from 'discord.js';
-import moment from 'moment-timer';
+import moment from 'moment';
+import 'moment-timer';
 import { Db, MongoClient } from 'mongodb';
 import { inspect } from 'util';
 
+import { doUnTimeout, Dq } from './commands/dq';
 import * as messages from './messages';
-
-import { doUnTimeout } from './commands/dq';
 
 export interface Command {
   execute(message: Message, args: string): Promise<Message>;
@@ -60,9 +60,10 @@ export const addFooter = (message: Message, reply: Message): Promise<Message> =>
 };
 
 const reloadDQTimers = async (client: Client): Promise<void> => {
-  await Promise.all(await db().collection('dqs').find().map(document => {
-    const member = client.guilds.cache.get(document._id.guild).members.cache.get(document._id.user);
-		
+  await Promise.all(await db().collection<Dq>('dqs').find().map(async document => {
+    const members = client.guilds.cache.get(document._id.guild).members;
+    const member = members.cache.get(document._id.user) || await members.fetch(document._id.user);
+
     // check if timer has lapsed while the bot was off, and if so free the prisoner
     if (moment().isSameOrAfter(moment(document.dqEndTime))) {
       return doUnTimeout(member)();
@@ -74,11 +75,15 @@ const reloadDQTimers = async (client: Client): Promise<void> => {
   }).toArray());
 };
 
-const loginPromiseForwarder = (fn: Function) => (token: string): string => { fn(); return token; };
+const login = async (): Promise<string> => {
+  const t = await client.login(token);
+  await reloadDQTimers(client);
+  return t;
+};
 
 const restart = (): Promise<string> => {
   client.destroy();
-  return client.login(token).then(loginPromiseForwarder(reloadDQTimers));
+  return login();
 };
 
 const handleCommand = async (message: Message): Promise<void> => {
@@ -124,7 +129,7 @@ const logEmbedColor = (action: string): ColorResolvable => {
   }
 };
 
-const userUrl = (id: string): string => `https://discordapp.com/users/${id}`;
+export const userUrl = (id: string): string => `https://discordapp.com/users/${id}`;
 
 const log = async (message: Message | PartialMessage, action: string): Promise<Message> => {
   if (!message.guild || message.author.bot) {
@@ -224,5 +229,5 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
     helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
   });
 
-  client.login(token).then(loginPromiseForwarder(reloadDQTimers)).catch(console.error);
+  login().catch(console.error);
 }).catch(console.error);
