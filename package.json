@@ -36,11 +36,11 @@
     "ytdl-core": "^2.1.1"
   },
   "devDependencies": {
+    "@types/moment-timer": "file:./local-types/moment-timer",
     "@types/mongodb": "^3.5.15",
     "@types/ws": "^7.2.4",
     "@typescript-eslint/eslint-plugin": "^2.31.0",
     "@typescript-eslint/parser": "^2.31.0",
-    "@types/moment-timer": "file:./local-types/moment-timer",
     "eslint": "^6.8.0",
     "nodemon": "^2.0.3",
     "ts-node": "^8.10.1",
