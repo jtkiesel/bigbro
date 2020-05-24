@@ -1,4 +1,4 @@
-import { Client, ColorResolvable, Constants, Message, MessageEmbed, PartialMessage, TextChannel } from 'discord.js';
+import { Client, ColorResolvable, Constants, GuildMember, Invite, Message, MessageEmbed, PartialGuildMember, PartialMessage, TextChannel, Permissions } from 'discord.js';
 import moment from 'moment';
 import 'moment-timer';
 import { Db, MongoClient } from 'mongodb';
@@ -42,6 +42,10 @@ const logChannelIds: { [key: string]: string } = {
   '197777408198180864': '263385335105323015',
   '329477820076130306': '709178148503420968'
 };
+const logMemberJoinChannelIds: { [key: string]: string } = {
+  '197777408198180864': '263385335105323015',
+  '329477820076130306': '709178148503420968'
+};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 let _db: Db;
@@ -57,6 +61,40 @@ export const addFooter = (message: Message, reply: Message): Promise<Message> =>
   const embed = reply.embeds[0].setFooter(`Triggered by ${author}`, message.author.displayAvatarURL())
     .setTimestamp(message.createdAt);
   return reply.edit(embed);
+};
+
+const storeInvites = async (invites: Invite[]): Promise<void> => {
+  if (!invites.length) {
+    return;
+  }
+  await db().collection('invites').bulkWrite(invites.map(invite => {
+    return {
+      replaceOne: {
+        filter: {
+          _id: invite.code
+        },
+        replacement: {
+          guild: invite.guild.id,
+          uses: invite.uses
+        },
+        upsert: true
+      }
+    };
+  }), {
+    ordered: false
+  });
+};
+
+const storeInvite = async (invite: Invite): Promise<void> => storeInvites([invite]);
+
+const storeAllInvites = async (): Promise<void> => {
+  for (const guild of client.guilds.cache.filter(guild => guild.me.hasPermission(Permissions.FLAGS.MANAGE_GUILD)).values()) {
+    try {
+      await storeInvites((await guild.fetchInvites()).array());
+    } catch (error) {
+      console.error(error);
+    }
+  }
 };
 
 const reloadDQTimers = async (client: Client): Promise<void> => {
@@ -75,15 +113,9 @@ const reloadDQTimers = async (client: Client): Promise<void> => {
   }).toArray());
 };
 
-const login = async (): Promise<string> => {
-  const t = await client.login(token);
-  await reloadDQTimers(client);
-  return t;
-};
-
 const restart = (): Promise<string> => {
   client.destroy();
-  return login();
+  return client.login(token);
 };
 
 const handleCommand = async (message: Message): Promise<void> => {
@@ -154,8 +186,28 @@ const log = async (message: Message | PartialMessage, action: string): Promise<M
   }
 };
 
+const logMemberJoin = async (member: GuildMember | PartialGuildMember): Promise<void> => {
+  const [oldInvites, invites] = await Promise.all([
+    db().collection('invites').find({ guild: member.guild.id }).toArray(),
+    member.guild.fetchInvites()
+  ]);
+  const usedInvites = [];
+  for (const oldInvite of oldInvites) {
+    const invite = invites.get(oldInvite._id);
+    if (invite?.uses > oldInvite.uses) {
+      usedInvites.push(invite);
+    }
+  }
+  storeInvites(usedInvites).catch(console.error);
+  const logChannelId = logMemberJoinChannelIds[member.guild.id];
+  const logChannel = (member.guild.channels.cache.get(logChannelId) || await client.channels.fetch(logChannelId)) as TextChannel;
+  logChannel.send(`Member ${member} joined via invite: ${usedInvites.map(i => `${i.code} by ${i.inviter}`).join(', or ')}`);
+};
+
 client.on(Constants.Events.CLIENT_READY, () => {
   console.log(`Logged in as ${client.user.tag}`);
+  storeAllInvites().catch(console.error);
+  reloadDQTimers(client).catch(console.error);
   client.user.setPresence({
     status: 'online',
     activity: {
@@ -173,7 +225,20 @@ client.on(Constants.Events.CHANNEL_CREATE, channel => {
 });
 
 client.on(Constants.Events.GUILD_MEMBER_ADD, member => {
+  logMemberJoin(member).catch(console.error);
   member.guild.systemChannel.send(`${member} ${welcomeMessage}`).catch(console.error);
+});
+
+client.on(Constants.Events.INVITE_CREATE, invite => {
+  if (invite.guild) {
+    storeInvite(invite).catch(console.error);
+  }
+});
+
+client.on(Constants.Events.INVITE_DELETE, invite => {
+  if (invite.guild) {
+    db().collection('invites').deleteOne({ _id: invite.code }).catch(console.error);
+  }
 });
 
 client.on(Constants.Events.MESSAGE_CREATE, message => {
@@ -229,5 +294,5 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
     helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
   });
 
-  login().catch(console.error);
+  client.login(token).catch(console.error);
 }).catch(console.error);
