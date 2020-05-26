@@ -260,17 +260,20 @@ client.on(Constants.Events.GUILD_MEMBER_ADD, member => {
   member.guild.systemChannel.send(`${member} ${welcomeMessage}`).catch(console.error);
 });
 
-client.on(Constants.Events.INVITE_CREATE, invite => {
-  if (invite.guild) {
-    storeInvite(invite).catch(console.error);
+client.on(Constants.Events.INVITE_CREATE, async invite => {
+  console.debug(invite);
+  try {
+    invite = await client.fetchInvite(invite.code);
+    await storeInvite(invite);
+  } catch (error) {
+    console.error(`Failed to handle invite create:\n${error}`);
   }
 });
 
 client.on(Constants.Events.INVITE_DELETE, async invite => {
-  if (!invite.guild) {
-    return;
-  }
+  console.debug(invite);
   try {
+    invite = await client.fetchInvite(invite.code);
     const inviteDeleteLogs = await invite.guild.fetchAuditLogs({
       type: GuildAuditLogs.Actions.INVITE_DELETE,
       limit: 10
