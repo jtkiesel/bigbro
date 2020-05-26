@@ -1,7 +1,7 @@
-import { Client, ColorResolvable, Constants, GuildMember, Invite, Message, MessageEmbed, PartialGuildMember, PartialMessage, TextChannel, Permissions } from 'discord.js';
+import { Client, ColorResolvable, Constants, GuildMember, Invite, Message, MessageEmbed, PartialGuildMember, PartialMessage, TextChannel, Permissions, GuildAuditLogs } from 'discord.js';
 import moment from 'moment';
 import 'moment-timer';
-import { Db, MongoClient } from 'mongodb';
+import { Db, MongoClient, DeleteWriteOpResultObject } from 'mongodb';
 import { inspect } from 'util';
 
 import { doUnTimeout, Dq } from './commands/dq';
@@ -10,6 +10,13 @@ import * as messages from './messages';
 export interface Command {
   execute(message: Message, args: string): Promise<Message>;
 }
+
+type StoredInvite = {
+  _id: string;
+  guild: string;
+  inviter: string;
+  uses: number;
+};
 
 export const client = new Client();
 const token = process.env.BIGBRO_TOKEN;
@@ -75,6 +82,7 @@ const storeInvites = async (invites: Invite[]): Promise<void> => {
         },
         replacement: {
           guild: invite.guild.id,
+          inviter: invite.inviter.id,
           uses: invite.uses
         },
         upsert: true
@@ -87,12 +95,23 @@ const storeInvites = async (invites: Invite[]): Promise<void> => {
 
 const storeInvite = async (invite: Invite): Promise<void> => storeInvites([invite]);
 
+const unStoreInvite = async (code: string): Promise<DeleteWriteOpResultObject> => {
+  return db().collection<StoredInvite>('invites').deleteOne({ _id: code });
+};
+
 const storeAllInvites = async (): Promise<void> => {
   for (const guild of client.guilds.cache.filter(guild => guild.me.hasPermission(Permissions.FLAGS.MANAGE_GUILD)).values()) {
     try {
-      await storeInvites((await guild.fetchInvites()).array());
+      const invites = await guild.fetchInvites();
+      await db().collection<StoredInvite>('invites').deleteMany({
+        _id: {
+          $nin: invites.keyArray()
+        },
+        guild: guild.id
+      });
+      await storeInvites(invites.array());
     } catch (error) {
-      console.error(error);
+      console.error(`Unable to store invites for guild ${guild}:\n${error}`);
     }
   }
 };
@@ -188,20 +207,32 @@ const log = async (message: Message | PartialMessage, action: string): Promise<M
 
 const logMemberJoin = async (member: GuildMember | PartialGuildMember): Promise<void> => {
   const [oldInvites, invites] = await Promise.all([
-    db().collection('invites').find({ guild: member.guild.id }).toArray(),
+    db().collection<StoredInvite>('invites').find({ guild: member.guild.id }).toArray(),
     member.guild.fetchInvites()
   ]);
   const usedInvites = [];
   for (const oldInvite of oldInvites) {
     const invite = invites.get(oldInvite._id);
-    if (invite?.uses > oldInvite.uses) {
-      usedInvites.push(invite);
+    if (!invite) {
+      await unStoreInvite(oldInvite._id);
+      usedInvites.push(oldInvite);
+    } else if (invite.uses > oldInvite.uses) {
+      await storeInvite(invite);
+      usedInvites.push(oldInvite);
+    } else if (invite.uses < oldInvite.uses) {
+      console.warn(`Invite ${invite.code} uses decreased from ${oldInvite.uses} to ${invite.uses}`);
+      await storeInvite(invite);
     }
+    invites.delete(oldInvite._id);
   }
-  storeInvites(usedInvites).catch(console.error);
+  if (invites.size) {
+    console.warn(`${invites.size} invites were missing from database: ${invites.keyArray()}`);
+    await storeInvites(invites.array());
+  }
   const logChannelId = logMemberJoinChannelIds[member.guild.id];
-  const logChannel = (member.guild.channels.cache.get(logChannelId) || await client.channels.fetch(logChannelId)) as TextChannel;
-  logChannel.send(`Member ${member} joined via invite: ${usedInvites.map(i => `${i.code} by ${i.inviter}`).join(', or ')}`);
+  const logChannel = (await client.channels.fetch(logChannelId)) as TextChannel;
+  const inviteString = usedInvites.map(i => `${i._id} by <@${i.inviter}>`).join(', or ');
+  logChannel.send(`Member ${member} joined via invite: ${inviteString}`);
 };
 
 client.on(Constants.Events.CLIENT_READY, () => {
@@ -235,9 +266,20 @@ client.on(Constants.Events.INVITE_CREATE, invite => {
   }
 });
 
-client.on(Constants.Events.INVITE_DELETE, invite => {
-  if (invite.guild) {
-    db().collection('invites').deleteOne({ _id: invite.code }).catch(console.error);
+client.on(Constants.Events.INVITE_DELETE, async invite => {
+  if (!invite.guild) {
+    return;
+  }
+  try {
+    const inviteDeleteLogs = await invite.guild.fetchAuditLogs({
+      type: GuildAuditLogs.Actions.INVITE_DELETE,
+      limit: 10
+    });
+    if (inviteDeleteLogs.entries.some(log => log.changes.some(change => change.key === 'code' && change.old === invite.code))) {
+      await unStoreInvite(invite.code);
+    }
+  } catch (error) {
+    console.error(`Failed to handle invite delete:\n${error}`);
   }
 });
 
