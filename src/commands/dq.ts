@@ -3,7 +3,7 @@ import moment from 'moment';
 import 'moment-timer';
 import { BulkWriteOperation } from 'mongodb';
 
-import { Command, db, userUrl } from '..';
+import { client, Command, db, userUrl } from '..';
 
 export type Dq = {
   _id: {
@@ -25,17 +25,14 @@ const doTimeout = async (
   members: Collection<string, GuildMember>,
   duration: moment.Duration,
   reason?: string): Promise<void> => {
-  const channel = guild.channels.cache.get(timeoutChannelId) as TextChannel;
-
-  const membersStr = members.map(m => `${m}`).join('\n');
-
   // remove verified role and add DQ role for all mentioned members that are not already DQ'd
   await Promise.all(
-    [...members.filter(member => !member.roles.cache.has(timeoutRoleId)).values()].flatMap(member => [
+    members.filter(member => !member.roles.cache.has(timeoutRoleId)).array().flatMap(member => [
       member.roles.remove(verifiedRoleId, 'DQ'),
       member.roles.add(timeoutRoleId, 'DQ')
     ]));
 
+  const membersStr = members.map(m => `${m}`).join('\n');
   const announcement = new MessageEmbed()
     .setAuthor(dispatcher.displayName, dispatcher.user.displayAvatarURL(), userUrl(dispatcher.user.id))
     .setTitle('Disqualification')
@@ -43,14 +40,25 @@ const doTimeout = async (
     .addField('Reason', reason || 'unspecified')
     .addField('Duration', duration.humanize())
     .addField('Affected users', membersStr);
+  const channel = guild.channels.cache.get(timeoutChannelId) as TextChannel;
   await channel.send(announcement);
 };
 
-export const doUnTimeout = (member: GuildMember) => async (): Promise<void> => {
-  await Promise.all([
-    member.roles.remove(timeoutRoleId, 'DQ over'),
-    member.roles.add(verifiedRoleId, 'DQ over')
-  ]);
+export const doUnTimeout = async (guildId: string, userId: string): Promise<void> => {
+  const guild = client.guilds.cache.get(guildId);
+  const member = guild.member(userId);
+  if (member) {
+    await Promise.all([
+      member.roles.remove(timeoutRoleId, 'DQ over'),
+      member.roles.add(verifiedRoleId, 'DQ over')
+    ]);
+  }
+  await db().collection<Dq>('dqs').deleteOne({
+    _id: {
+      guild: guildId,
+      user: userId
+    }
+  });
 };
 
 class DqCommand implements Command {
@@ -87,7 +95,7 @@ class DqCommand implements Command {
     }
 
     const duration = moment.duration(...matches);
-    duration.timer({start: true}, () => message.mentions.members.forEach(m => doUnTimeout(m)()));
+    duration.timer({start: true}, () => message.mentions.members.forEach(m => doUnTimeout(m.guild.id, m.id)));
     const dqEndTime = moment().add(duration).valueOf();
 
     await doTimeout(message.guild, message.member, message.mentions.members, duration, reason);

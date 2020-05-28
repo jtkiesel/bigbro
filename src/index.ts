@@ -1,7 +1,7 @@
 import { Client, ColorResolvable, Constants, GuildMember, Invite, Message, MessageEmbed, PartialGuildMember, PartialMessage, TextChannel, Permissions, GuildAuditLogs } from 'discord.js';
 import moment from 'moment';
 import 'moment-timer';
-import { Db, MongoClient, DeleteWriteOpResultObject } from 'mongodb';
+import { Db, MongoClient } from 'mongodb';
 import { inspect } from 'util';
 
 import { doUnTimeout, Dq } from './commands/dq';
@@ -12,10 +12,9 @@ export interface Command {
 }
 
 type StoredInvite = {
-  _id: string;
-  guild: string;
-  inviter: string;
+  code: string;
   uses: number;
+  inviter: string;
 };
 
 export const client = new Client();
@@ -53,6 +52,7 @@ const logMemberJoinChannelIds: { [key: string]: string } = {
   '197777408198180864': '263385335105323015',
   '329477820076130306': '709178148503420968'
 };
+const storedInvites: { [key: string]: { [key: string]: StoredInvite } } = {};
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 let _db: Db;
@@ -70,65 +70,50 @@ export const addFooter = (message: Message, reply: Message): Promise<Message> =>
   return reply.edit(embed);
 };
 
-const storeInvites = async (invites: Invite[]): Promise<void> => {
-  if (!invites.length) {
-    return;
-  }
-  await db().collection('invites').bulkWrite(invites.map(invite => {
-    return {
-      replaceOne: {
-        filter: {
-          _id: invite.code
-        },
-        replacement: {
-          guild: invite.guild.id,
-          inviter: invite.inviter.id,
-          uses: invite.uses
-        },
-        upsert: true
-      }
-    };
-  }), {
-    ordered: false
-  });
+const inviteToStored = (invite: Invite): StoredInvite => {
+  return {
+    code: invite.code,
+    uses: invite.uses,
+    inviter: invite.inviter.id
+  };
 };
 
-const storeInvite = async (invite: Invite): Promise<void> => storeInvites([invite]);
-
-const unStoreInvite = async (code: string): Promise<DeleteWriteOpResultObject> => {
-  return db().collection<StoredInvite>('invites').deleteOne({ _id: code });
+const storeInvites = (guildId: string, invites: Invite[]): void => {
+  Object.assign(storedInvites[guildId], invites.reduce((invitesByCode, invite) => {
+    invitesByCode[invite.code] = inviteToStored(invite);
+    return invitesByCode;
+  }, {} as { [key: string]: StoredInvite }));
 };
+
+const storeInvite = (invite: Invite): void => {
+  storedInvites[invite.guild.id][invite.code] = inviteToStored(invite);
+};
+
+const unStoreInvite = (guildId: string, code: string): boolean => delete storedInvites[guildId][code];
 
 const storeAllInvites = async (): Promise<void> => {
   for (const guild of client.guilds.cache.filter(guild => guild.me.hasPermission(Permissions.FLAGS.MANAGE_GUILD)).values()) {
     try {
       const invites = await guild.fetchInvites();
-      await db().collection<StoredInvite>('invites').deleteMany({
-        _id: {
-          $nin: invites.keyArray()
-        },
-        guild: guild.id
-      });
-      await storeInvites(invites.array());
+      storedInvites[guild.id] = {};
+      storeInvites(guild.id, invites.array());
     } catch (error) {
-      console.error(`Unable to store invites for guild ${guild}:\n${error}`);
+      console.error(`Unable to store invites for guild: ${guild}\nCaused by:`, error);
     }
   }
 };
 
-const reloadDQTimers = async (client: Client): Promise<void> => {
+const reloadDQTimers = async (): Promise<void> => {
   await Promise.all(await db().collection<Dq>('dqs').find().map(async document => {
-    const members = client.guilds.cache.get(document._id.guild).members;
-    const member = members.cache.get(document._id.user) || await members.fetch(document._id.user);
+    const { guild, user } = document._id;
 
     // check if timer has lapsed while the bot was off, and if so free the prisoner
     if (moment().isSameOrAfter(moment(document.dqEndTime))) {
-      return doUnTimeout(member)();
+      return doUnTimeout(guild, user);
     }
 
     // still time left so just set the timers back up
-    moment.duration(moment().diff(moment(document.dqEndTime))).timer({start: true}, doUnTimeout(member));
-    return Promise.resolve();
+    moment.duration(moment().diff(moment(document.dqEndTime))).timer({start: true}, () => doUnTimeout(guild, user));
   }).toArray());
 };
 
@@ -206,39 +191,37 @@ const log = async (message: Message | PartialMessage, action: string): Promise<M
 };
 
 const logMemberJoin = async (member: GuildMember | PartialGuildMember): Promise<void> => {
-  const [oldInvites, invites] = await Promise.all([
-    db().collection<StoredInvite>('invites').find({ guild: member.guild.id }).toArray(),
-    member.guild.fetchInvites()
-  ]);
-  const usedInvites = [];
-  for (const oldInvite of oldInvites) {
-    const invite = invites.get(oldInvite._id);
+  const invites = await member.guild.fetchInvites();
+  const usedInvites: StoredInvite[] = [];
+  for (const storedInvite of Object.values(storedInvites[member.guild.id])) {
+    const invite = invites.get(storedInvite.code);
     if (!invite) {
-      await unStoreInvite(oldInvite._id);
-      usedInvites.push(oldInvite);
-    } else if (invite.uses > oldInvite.uses) {
-      await storeInvite(invite);
-      usedInvites.push(oldInvite);
-    } else if (invite.uses < oldInvite.uses) {
-      console.warn(`Invite ${invite.code} uses decreased from ${oldInvite.uses} to ${invite.uses}`);
-      await storeInvite(invite);
+      unStoreInvite(member.guild.id, storedInvite.code);
+      usedInvites.push(storedInvite);
+    } else if (invite.uses > storedInvite.uses) {
+      storeInvite(invite);
+      usedInvites.push(storedInvite);
+    } else if (invite.uses < storedInvite.uses) {
+      console.warn(`Invite ${invite.code} uses decreased from ${storedInvite.uses} to ${invite.uses}`);
+      storeInvite(invite);
     }
-    invites.delete(oldInvite._id);
+    invites.delete(storedInvite.code);
   }
   if (invites.size) {
-    console.warn(`${invites.size} invites were missing from database: ${invites.keyArray()}`);
-    await storeInvites(invites.array());
+    console.warn(`${invites.size} invites were missing from store: ${invites.keyArray()}`);
+    storeInvites(member.guild.id, invites.array());
+    usedInvites.push(...invites.filter(invite => invite.uses > 0).map(inviteToStored));
   }
   const logChannelId = logMemberJoinChannelIds[member.guild.id];
   const logChannel = (await client.channels.fetch(logChannelId)) as TextChannel;
-  const inviteString = usedInvites.map(i => `${i._id} by <@${i.inviter}>`).join(', or ');
+  const inviteString = usedInvites.map(i => `${i.code} by <@${i.inviter}>`).join(', or ');
   logChannel.send(`Member ${member} joined via invite: ${inviteString}`);
 };
 
 client.on(Constants.Events.CLIENT_READY, () => {
   console.log(`Logged in as ${client.user.tag}`);
   storeAllInvites().catch(console.error);
-  reloadDQTimers(client).catch(console.error);
+  reloadDQTimers().catch(console.error);
   client.user.setPresence({
     status: 'online',
     activity: {
@@ -261,28 +244,24 @@ client.on(Constants.Events.GUILD_MEMBER_ADD, member => {
 });
 
 client.on(Constants.Events.INVITE_CREATE, async invite => {
-  console.debug(invite);
   try {
-    invite = await client.fetchInvite(invite.code);
-    await storeInvite(invite);
+    storeInvite(invite);
   } catch (error) {
-    console.error(`Failed to handle invite create:\n${error}`);
+    console.error(`Failed to handle creation of invite: ${invite}\nCaused by:`, error);
   }
 });
 
 client.on(Constants.Events.INVITE_DELETE, async invite => {
-  console.debug(invite);
   try {
-    invite = await client.fetchInvite(invite.code);
     const inviteDeleteLogs = await invite.guild.fetchAuditLogs({
       type: GuildAuditLogs.Actions.INVITE_DELETE,
       limit: 10
     });
     if (inviteDeleteLogs.entries.some(log => log.changes.some(change => change.key === 'code' && change.old === invite.code))) {
-      await unStoreInvite(invite.code);
+      unStoreInvite(invite.guild.id, invite.code);
     }
   } catch (error) {
-    console.error(`Failed to handle invite delete:\n${error}`);
+    console.error(`Failed to handle delete of invite: ${invite}\nCaused by:`, error);
   }
 });
 
