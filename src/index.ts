@@ -6,6 +6,7 @@ import { inspect } from 'util';
 
 import { doUnTimeout, Dq } from './commands/dq';
 import * as messages from './messages';
+import { MemberVerifier } from './verify';
 
 export interface Command {
   execute(message: Message, args: string): Promise<Message>;
@@ -36,12 +37,6 @@ const commandInfo = {
   dq: 'Disqualify a user or users.',
 };
 const commands: { [key: string]: Command } = {};
-const verifiersRoleId = '197816965899747328';
-const rulesChannelId = '197777408198180864';
-const welcomeMessage = `Welcome! To access this server, one of the <@&${verifiersRoleId}> must verify you.
-Please take a moment to read our server <#${rulesChannelId}>, then send a message here with your name (or \
-username) and team ID (such as "Kayley, 24B" or "Jordan, BNS"), and/or ask one of the \
-<@&${verifiersRoleId}> for help.`;
 const logChannelIds: { [key: string]: string } = {
   '197777408198180864': '263385335105323015',
   '329477820076130306': '709178148503420968'
@@ -232,12 +227,7 @@ client.on(Constants.Events.CHANNEL_CREATE, channel => {
   }
 });
 
-client.on(Constants.Events.GUILD_MEMBER_ADD, member => {
-  logMemberJoin(member).catch(console.error);
-  member.guild.systemChannel.send(`${member} ${welcomeMessage}`).catch(console.error);
-});
-
-client.on(Constants.Events.INVITE_CREATE, invite => {
+client.on(Constants.Events.INVITE_CREATE, async invite => {
   try {
     storeInvite(invite);
   } catch (error) {
@@ -310,6 +300,22 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
   Object.entries(commandInfo).forEach(([name, desc]) => {
     commands[name.toLowerCase()] = require(`./commands/${name}`).default;
     helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
+  });
+
+  const memberVerifier = new MemberVerifier(db().collection('members'));
+
+  client.on(Constants.Events.GUILD_MEMBER_ADD, (member: GuildMember) => {
+    logMemberJoin(member)
+      .catch((error: Error) => console.error(`Failed to log member join: ${member}
+Caused by:`, error));
+    memberVerifier.verify(member);
+  });
+
+  client.on(Constants.Events.GUILD_MEMBER_REMOVE, (member: GuildMember) => {
+    memberVerifier.store(member)
+      .catch((error: Error) => console.error(`Failed to store removed member's \
+verification info: ${member}
+Caused by:`, error));
   });
 
   client.login(token)
