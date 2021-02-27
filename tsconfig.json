@@ -3,9 +3,9 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es6",
+    "target": "ES6",
     "lib": [
-	"ES2019"
+	    "ESNext"
     ],
     "noImplicitAny": true,
     "moduleResolution": "node",

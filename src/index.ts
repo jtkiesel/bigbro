@@ -1,4 +1,4 @@
-import { Client, ColorResolvable, Constants, GuildMember, Invite, Message, MessageEmbed, PartialGuildMember, PartialMessage, TextChannel, Permissions, GuildAuditLogs } from 'discord.js';
+import { Client, ColorResolvable, Constants, GuildMember, Invite, Message, MessageEmbed, TextChannel, Permissions, GuildAuditLogs, Collection } from 'discord.js';
 import moment from 'moment';
 import 'moment-timer';
 import { Db, MongoClient } from 'mongodb';
@@ -32,9 +32,6 @@ const commandInfo = {
   uptime: 'Time since bot last restarted.',
   leaderboard: 'Users with the most messages on the server.',
   profile: 'Information about a user.',
-  play: 'Audio from a YouTube video.',
-  search: 'Search YouTube to play audio from a video.',
-  queue: 'Current music queue.',
   dq: 'Disqualify a user or users.',
 };
 const commands: { [key: string]: Command } = {};
@@ -154,20 +151,20 @@ const handleCommand = async (message: Message): Promise<void> => {
 
 const logEmbedColor = (action: string): ColorResolvable => {
   switch (action) {
-  case 'updated':
-    return Constants.Colors.GREEN;
-  case 'deleted':
-    return Constants.Colors.RED;
-  case 'bulk deleted':
-    return Constants.Colors.BLUE;
-  default:
-    return Constants.Colors.DEFAULT;
+    case 'updated':
+      return Constants.Colors.GREEN;
+    case 'deleted':
+      return Constants.Colors.RED;
+    case 'bulk deleted':
+      return Constants.Colors.BLUE;
+    default:
+      return Constants.Colors.DEFAULT;
   }
 };
 
 export const userUrl = (id: string): string => `https://discordapp.com/users/${id}`;
 
-const log = async (message: Message | PartialMessage, action: string): Promise<Message> => {
+const log = async (message: Message, action: string): Promise<Message> => {
   if (!message.guild || message.author.bot) {
     return;
   }
@@ -190,7 +187,7 @@ const log = async (message: Message | PartialMessage, action: string): Promise<M
   }
 };
 
-const logMemberJoin = async (member: GuildMember | PartialGuildMember): Promise<void> => {
+const logMemberJoin = async (member: GuildMember): Promise<void> => {
   const invites = await member.guild.fetchInvites();
   const usedInvites: StoredInvite[] = [];
   for (const storedInvite of Object.values(storedInvites[member.guild.id])) {
@@ -278,20 +275,20 @@ client.on(Constants.Events.MESSAGE_CREATE, message => {
   }
 });
 
-client.on(Constants.Events.MESSAGE_DELETE, message => {
+client.on(Constants.Events.MESSAGE_DELETE, (message: Message) => {
   if (message.guild) {
     log(message, 'deleted').catch(console.error);
     messages.upsertMessageInDb(message, -1).catch(console.error);
   }
 });
 
-client.on(Constants.Events.MESSAGE_UPDATE, (oldMessage, newMessage) => {
+client.on(Constants.Events.MESSAGE_UPDATE, (oldMessage: Message, newMessage: Message) => {
   if (oldMessage.guild && oldMessage.content !== newMessage.content) {
     log(oldMessage, 'updated').catch(console.error);
   }
 });
 
-client.on(Constants.Events.MESSAGE_BULK_DELETE, messageCollection => {
+client.on(Constants.Events.MESSAGE_BULK_DELETE, (messageCollection: Collection<string, Message>) => {
   messageCollection.forEach(message => {
     if (message.guild) {
       log(message, 'bulk deleted').catch(console.error);
@@ -318,5 +315,6 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
     helpDescription += `\n\`${prefix}${name}\`: ${desc}`;
   });
 
-  client.login(token).catch(console.error);
+  client.login(token)
+    .catch((error: Error) => console.error('Failed to login\nCaused by:', error));
 }).catch(console.error);

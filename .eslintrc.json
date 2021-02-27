@@ -8,17 +8,18 @@
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2020,
+    "ecmaVersion": 12,
     "sourceType": "module"
   },
   "plugins": [
     "@typescript-eslint"
   ],
   "rules": {
-    "indent": [
+    "@typescript-eslint/indent": [
       "error",
       2
     ],
+    "indent": "off",
     "linebreak-style": [
       "error",
       "unix"

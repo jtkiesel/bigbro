@@ -1,12 +1,12 @@
 {
   "name": "bigbro",
   "version": "1.0.0",
-  "description": "He's always watching.",
+  "description": "Discord bot that assists performing moderation duties for the VEX Robotics Competition server.",
   "keywords": [
     "Discord",
     "bot",
-    "log",
-    "music"
+    "moderation",
+    "log"
   ],
   "homepage": "https://github.com/jtkiesel/bigbro#readme",
   "bugs": {
@@ -14,7 +14,7 @@
   },
   "license": "MIT",
   "author": {
-    "name": "Jordan T Kiesel"
+    "name": "Jordan Kiesel"
   },
   "main": "build/index.js",
   "repository": {
@@ -27,24 +27,22 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@discordjs/opus": "^0.2.1",
-    "discord.js": "^12.2.0",
-    "googleapis": "^49.0.0",
-    "moment": "^2.25.3",
+    "axios": "^0.21.1",
+    "discord.js": "^12.5.1",
+    "moment": "^2.29.1",
     "moment-timer": "^1.3.0",
-    "mongodb": "^3.5.6",
-    "ytdl-core": "^2.1.1"
+    "mongodb": "^3.6.4"
   },
   "devDependencies": {
     "@types/moment-timer": "file:./local-types/moment-timer",
-    "@types/mongodb": "^3.5.15",
-    "@types/ws": "^7.2.4",
-    "@typescript-eslint/eslint-plugin": "^2.31.0",
-    "@typescript-eslint/parser": "^2.31.0",
-    "eslint": "^6.8.0",
-    "nodemon": "^2.0.3",
-    "ts-node": "^8.10.1",
-    "typescript": "^3.8.3"
+    "@types/mongodb": "^3.6.8",
+    "@types/ws": "^7.4.0",
+    "@typescript-eslint/eslint-plugin": "^4.15.2",
+    "@typescript-eslint/parser": "^4.15.2",
+    "eslint": "^7.20.0",
+    "nodemon": "^2.0.7",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.5"
   },
   "engines": {
     "node": "^13.11.0",
