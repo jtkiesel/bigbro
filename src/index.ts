@@ -15,6 +15,7 @@ type StoredInvite = {
   code: string;
   uses: number;
   inviter: string;
+  expires: number;
 };
 
 export const client = new Client();
@@ -71,19 +72,13 @@ const inviteToStored = (invite: Invite): StoredInvite => {
   return {
     code: invite.code,
     uses: invite.uses,
-    inviter: invite.inviter.id
+    inviter: invite.inviter.id,
+    expires: invite.expiresTimestamp
   };
 };
 
-const storeInvites = (guildId: string, invites: Invite[]): void => {
-  Object.assign(storedInvites[guildId], invites.reduce((invitesByCode, invite) => {
-    invitesByCode[invite.code] = inviteToStored(invite);
-    return invitesByCode;
-  }, {} as { [key: string]: StoredInvite }));
-};
-
-const storeInvite = (invite: Invite): void => {
-  storedInvites[invite.guild.id][invite.code] = inviteToStored(invite);
+const storeInvite = (invite: Invite, guildId?: string): void => {
+  storedInvites[guildId || invite.guild.id][invite.code] = inviteToStored(invite);
 };
 
 const unStoreInvite = (guildId: string, code: string): boolean => delete storedInvites[guildId][code];
@@ -93,7 +88,7 @@ const storeAllInvites = async (): Promise<void> => {
     try {
       const invites = await guild.fetchInvites();
       storedInvites[guild.id] = {};
-      storeInvites(guild.id, invites.array());
+      invites.forEach(invite => storeInvite(invite, guild.id));
     } catch (error) {
       console.error(`Unable to store invites for guild: ${guild}\nCaused by:`, error);
     }
@@ -194,24 +189,26 @@ const logMemberJoin = async (member: GuildMember): Promise<void> => {
     const invite = invites.get(storedInvite.code);
     if (!invite) {
       unStoreInvite(member.guild.id, storedInvite.code);
-      usedInvites.push(storedInvite);
+      if (member.joinedTimestamp <= storedInvite.expires) {
+        usedInvites.push(storedInvite);
+      }
     } else if (invite.uses > storedInvite.uses) {
-      storeInvite(invite);
+      storedInvite.uses = invite.uses;
       usedInvites.push(storedInvite);
     } else if (invite.uses < storedInvite.uses) {
       console.warn(`Invite ${invite.code} uses decreased from ${storedInvite.uses} to ${invite.uses}`);
-      storeInvite(invite);
+      storedInvite.uses = invite.uses;
     }
     invites.delete(storedInvite.code);
   }
   if (invites.size) {
     console.warn(`${invites.size} invites were missing from store: ${invites.keyArray()}`);
-    storeInvites(member.guild.id, invites.array());
+    invites.forEach(invite => storeInvite(invite, member.guild.id));
     usedInvites.push(...invites.filter(invite => invite.uses > 0).map(inviteToStored));
   }
   const logChannelId = logMemberJoinChannelIds[member.guild.id];
   const logChannel = (await client.channels.fetch(logChannelId)) as TextChannel;
-  const inviteString = usedInvites.map(i => `${i.code} by <@${i.inviter}>`).join(', or ');
+  const inviteString = usedInvites.map(i => `\`${i.code}\` by <@${i.inviter}>`).join(', or ');
   logChannel.send(`Member ${member} joined via invite: ${inviteString}`);
 };
 
@@ -240,7 +237,7 @@ client.on(Constants.Events.GUILD_MEMBER_ADD, member => {
   member.guild.systemChannel.send(`${member} ${welcomeMessage}`).catch(console.error);
 });
 
-client.on(Constants.Events.INVITE_CREATE, async invite => {
+client.on(Constants.Events.INVITE_CREATE, invite => {
   try {
     storeInvite(invite);
   } catch (error) {
