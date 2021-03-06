@@ -141,7 +141,7 @@ channels of the ${member.guild} server! Say hello here: ${verifiedMessage.url}`)
       user: member.id,
       guild: member.guild.id,
       nickname: member.nickname,
-      roles: member.roles.cache.map(({id}) => id)
+      roles: member.roles.cache.keyArray()
     };
     await this.collection.updateOne({
       user: verifiedMember.user,

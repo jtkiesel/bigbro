@@ -46,7 +46,7 @@ const doTimeout = async (
 
 export const doUnTimeout = async (guildId: string, userId: string): Promise<void> => {
   const guild = client.guilds.cache.get(guildId);
-  const member = guild.member(userId);
+  const member = guild.members.cache.get(userId);
   if (member) {
     await Promise.all([
       member.roles.remove(timeoutRoleId, 'DQ over'),

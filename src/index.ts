@@ -308,7 +308,14 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
     logMemberJoin(member)
       .catch((error: Error) => console.error(`Failed to log member join: ${member}
 Caused by:`, error));
-    memberVerifier.verify(member);
+  });
+
+  client.on(Constants.Events.GUILD_MEMBER_UPDATE, (oldMember: GuildMember, newMember: GuildMember) => {
+    if (oldMember.pending && !newMember.pending) {
+      memberVerifier.verify(newMember)
+        .catch((error: Error) => console.error(`Failed to verify member: ${newMember}
+Caused by:`, error));
+    }
   });
 
   client.on(Constants.Events.GUILD_MEMBER_REMOVE, (member: GuildMember) => {
