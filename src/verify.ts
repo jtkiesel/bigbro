@@ -239,7 +239,7 @@ message a member of the moderation team for help.`);
   private async promptForConfirmation(member: GuildMember, nickname: string): Promise<boolean> {
     const confirmation = await member.send(`Your nickname in the \
 ${member.guild} server will be set to \
-\`\`${nickname.replaceAll('`', '`\u200b')}\`\`, is that correct?
+\`\`${nickname.replace(/`/g, '`\u200b')}\`\`, is that correct?
 (Select the reaction corresponding to your answer.)
 > ${MemberVerifier.YES}: Yes
 > ${MemberVerifier.NO}: No`);
