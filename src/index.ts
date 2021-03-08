@@ -12,12 +12,21 @@ export interface Command {
   execute(message: Message, args: string): Promise<Message>;
 }
 
-type StoredInvite = {
-  code: string;
-  uses: number;
-  inviter: string;
-  expires: number;
-};
+class CachedInvite {
+  public readonly inviter: string;
+  public readonly code: string;
+  public readonly uses: number;
+  public readonly maxUses: number;
+  public readonly expiresTimestamp: number;
+
+  constructor(invite: Invite) {
+    this.inviter = invite.inviter.id;
+    this.code = invite.code;
+    this.uses = invite.uses;
+    this.maxUses = invite.maxUses;
+    this.expiresTimestamp = invite.expiresTimestamp;
+  }
+}
 
 export const client = new Client();
 const token = process.env.BIGBRO_TOKEN;
@@ -45,7 +54,8 @@ const logMemberJoinChannelIds: { [key: string]: string } = {
   '197777408198180864': '263385335105323015',
   '329477820076130306': '709178148503420968'
 };
-const storedInvites: { [key: string]: { [key: string]: StoredInvite } } = {};
+const cachedInvites = new Map<string, Map<string, CachedInvite>>();
+const cachedVanityUses = new Map<string, number>();
 
 let helpDescription = `\`${prefix}help\`: Provides information about all commands.`;
 let _db: Db;
@@ -63,29 +73,24 @@ export const addFooter = (message: Message, reply: Message): Promise<Message> =>
   return reply.edit(embed);
 };
 
-const inviteToStored = (invite: Invite): StoredInvite => {
-  return {
-    code: invite.code,
-    uses: invite.uses,
-    inviter: invite.inviter.id,
-    expires: invite.expiresTimestamp
-  };
-};
-
-const storeInvite = (invite: Invite, guildId?: string): void => {
-  storedInvites[guildId || invite.guild.id][invite.code] = inviteToStored(invite);
-};
-
-const unStoreInvite = (guildId: string, code: string): boolean => delete storedInvites[guildId][code];
-
-const storeAllInvites = async (): Promise<void> => {
-  for (const guild of client.guilds.cache.filter(guild => guild.me.hasPermission(Permissions.FLAGS.MANAGE_GUILD)).values()) {
+const cacheAllInvites = async (): Promise<void> => {
+  const manageableGuilds = client.guilds.cache
+    .filter(guild => guild.me.hasPermission(Permissions.FLAGS.MANAGE_GUILD))
+    .values();
+  for (const guild of manageableGuilds) {
     try {
-      const invites = await guild.fetchInvites();
-      storedInvites[guild.id] = {};
-      invites.forEach(invite => storeInvite(invite, guild.id));
-    } catch (error) {
-      console.error(`Unable to store invites for guild: ${guild}\nCaused by:`, error);
+      const invitesCollection = await guild.fetchInvites();
+      const invites = invitesCollection
+        .reduce((map, invite) => map.set(invite.code, new CachedInvite(invite)),
+          new Map<string, CachedInvite>());
+      cachedInvites.set(guild.id, invites);
+      if (guild.vanityURLCode) {
+        const vanity = await guild.fetchVanityData();
+        cachedVanityUses.set(guild.id, vanity.uses);
+      }
+    } catch (e) {
+      console.error(`Unable to store invites for server: ${guild}
+Caused by:`, e);
     }
   }
 };
@@ -178,38 +183,58 @@ const log = async (message: Message, action: string): Promise<Message> => {
 };
 
 const logMemberJoin = async (member: GuildMember): Promise<void> => {
-  const invites = await member.guild.fetchInvites();
-  const usedInvites: StoredInvite[] = [];
-  for (const storedInvite of Object.values(storedInvites[member.guild.id])) {
-    const invite = invites.get(storedInvite.code);
-    if (!invite) {
-      unStoreInvite(member.guild.id, storedInvite.code);
-      if (member.joinedTimestamp <= storedInvite.expires) {
-        usedInvites.push(storedInvite);
-      }
-    } else if (invite.uses > storedInvite.uses) {
-      storedInvite.uses = invite.uses;
-      usedInvites.push(storedInvite);
-    } else if (invite.uses < storedInvite.uses) {
-      console.warn(`Invite ${invite.code} uses decreased from ${storedInvite.uses} to ${invite.uses}`);
-      storedInvite.uses = invite.uses;
+  if (!member.guild.me.hasPermission(Permissions.FLAGS.MANAGE_GUILD)) {
+    console.error(`Missing Manage Server permission in server: ${member.guild}`);
+    return;
+  }
+  const invitesCollection = await member.guild.fetchInvites()
+    .catch((e: Error) => {
+      console.error(`Failed to fetch invites when logging member join.
+Caused by:`, e);
+      return new Collection<string, Invite>();
+    });
+  const newInvites = invitesCollection.reduce((map, invite) =>
+    map.set(invite.code, new CachedInvite(invite)), new Map<string, CachedInvite>());
+  const oldInvites = cachedInvites.get(member.guild.id);
+  // invites that had their uses increase
+  const usedInvites = Array.from(newInvites.values())
+    .filter(newInvite => oldInvites.get(newInvite.code).uses < newInvite.uses);
+  if (!usedInvites.length) {
+    // invites that reached their max number of uses
+    Array.from(oldInvites.values())
+      .filter(i => !newInvites.has(i.code) && i.uses === i.maxUses - 1)
+      .forEach(invite => usedInvites.push(invite));
+  }
+  if (!usedInvites.length && member.guild.vanityURLCode) {
+    // vanity invite uses
+    const vanity = await member.guild.fetchVanityData();
+    if (cachedVanityUses.get(member.guild.id) < vanity.uses) {
+      usedInvites.push({
+        inviter: member.guild.ownerID,
+        code: vanity.code,
+        uses: vanity.uses,
+        maxUses: 0,
+        expiresTimestamp: null,
+      });
+      cachedVanityUses.set(member.guild.id, vanity.uses);
     }
-    invites.delete(storedInvite.code);
   }
-  if (invites.size) {
-    console.warn(`${invites.size} invites were missing from store: ${invites.keyArray()}`);
-    invites.forEach(invite => storeInvite(invite, member.guild.id));
-    usedInvites.push(...invites.filter(invite => invite.uses > 0).map(inviteToStored));
+  if (!usedInvites.length) {
+    console.error(`Could not determine invite used for member ${member}
+oldInvites: ${JSON.stringify(Array.from(oldInvites))}
+newInvites: ${JSON.stringify(Array.from(newInvites))}`);
   }
+  cachedInvites.set(member.guild.id, newInvites);
   const logChannelId = logMemberJoinChannelIds[member.guild.id];
   const logChannel = (await client.channels.fetch(logChannelId)) as TextChannel;
-  const inviteString = usedInvites.map(i => `\`${i.code}\` by <@${i.inviter}>`).join(', or ');
-  logChannel.send(`Member ${member} joined via invite: ${inviteString}`);
+  const inviteString = usedInvites.map(i => `\`${i.code}\` by <@${i.inviter}>`)
+    .join(', or ');
+  await logChannel.send(`Member ${member} joined via invite: ${inviteString}`);
 };
 
 client.on(Constants.Events.CLIENT_READY, () => {
   console.log(`Logged in as ${client.user.tag}`);
-  storeAllInvites().catch(console.error);
+  cacheAllInvites().catch(console.error);
   reloadDQTimers().catch(console.error);
   client.user.setPresence({
     status: 'online',
@@ -227,25 +252,37 @@ client.on(Constants.Events.CHANNEL_CREATE, channel => {
   }
 });
 
-client.on(Constants.Events.INVITE_CREATE, async invite => {
-  try {
-    storeInvite(invite);
-  } catch (error) {
-    console.error(`Failed to handle creation of invite: ${invite}\nCaused by:`, error);
+client.on(Constants.Events.GUILD_UPDATE, (oldGuild, newGuild) => {
+  if (oldGuild.vanityURLCode !== newGuild.vanityURLCode) {
+    cachedVanityUses.set(newGuild.id, newGuild.vanityURLUses);
   }
 });
 
+client.on(Constants.Events.INVITE_CREATE, invite => {
+  cachedInvites.get(invite.guild.id)
+    .set(invite.code, new CachedInvite(invite));
+});
+
 client.on(Constants.Events.INVITE_DELETE, async invite => {
+  const cachedInvite = cachedInvites.get(invite.guild.id)
+    .get(invite.code);
+  if (cachedInvite.expiresTimestamp <= Date.now()) {
+    cachedInvites.get(invite.guild.id)
+      .delete(invite.code);
+    return;
+  }
   try {
     const inviteDeleteLogs = await invite.guild.fetchAuditLogs({
       type: GuildAuditLogs.Actions.INVITE_DELETE,
-      limit: 10
+      limit: 10,
     });
     if (inviteDeleteLogs.entries.some(log => log.changes.some(change => change.key === 'code' && change.old === invite.code))) {
-      unStoreInvite(invite.guild.id, invite.code);
+      cachedInvites.get(invite.guild.id)
+        .delete(invite.code);
     }
-  } catch (error) {
-    console.error(`Failed to handle delete of invite: ${invite}\nCaused by:`, error);
+  } catch (e) {
+    console.error(`Failed to handle delete of invite: ${invite}
+Caused by:`, e);
   }
 });
 
@@ -306,25 +343,25 @@ MongoClient.connect(dbUri, mongoOptions).then(mongoClient => {
 
   client.on(Constants.Events.GUILD_MEMBER_ADD, (member: GuildMember) => {
     logMemberJoin(member)
-      .catch((error: Error) => console.error(`Failed to log member join: ${member}
-Caused by:`, error));
+      .catch((e: Error) => console.error(`Failed to log member join: ${member}
+Caused by:`, e));
   });
 
   client.on(Constants.Events.GUILD_MEMBER_UPDATE, (oldMember: GuildMember, newMember: GuildMember) => {
     if (oldMember.pending && !newMember.pending) {
       memberVerifier.verify(newMember)
-        .catch((error: Error) => console.error(`Failed to verify member: ${newMember}
-Caused by:`, error));
+        .catch((e: Error) => console.error(`Failed to verify member: ${newMember}
+Caused by:`, e));
     }
   });
 
   client.on(Constants.Events.GUILD_MEMBER_REMOVE, (member: GuildMember) => {
     memberVerifier.store(member)
-      .catch((error: Error) => console.error(`Failed to store removed member's \
+      .catch((e: Error) => console.error(`Failed to store removed member's \
 verification info: ${member}
-Caused by:`, error));
+Caused by:`, e));
   });
 
   client.login(token)
-    .catch((error: Error) => console.error('Failed to login\nCaused by:', error));
+    .catch((e: Error) => console.error('Failed to login\nCaused by:', e));
 }).catch(console.error);
