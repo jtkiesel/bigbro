@@ -44,6 +44,7 @@ const commandInfo = {
   leaderboard: 'Users with the most messages on the server.',
   profile: 'Information about a user.',
   dq: 'Disqualify a user or users.',
+  pid: 'Post a link to the holy texts.',
 };
 const commands: { [key: string]: Command } = {};
 const logChannelIds: { [key: string]: string } = {
