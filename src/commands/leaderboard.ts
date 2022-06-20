@@ -1,83 +1,150 @@
-import { Message, MessageEmbed } from 'discord.js';
+import {bold, inlineCode, userMention} from '@discordjs/builders';
+import {ApplyOptions} from '@sapphire/decorators';
+import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
+import {
+  type Message,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+} from 'discord.js';
+import type {AbstractCursor} from 'mongodb';
+import {messageCounts} from '..';
+import type {MessageCount} from '../lib/leaderboard';
+import {Colors} from '../lib/embeds';
 
-import { addFooter, Command, db } from '..';
-import { leaderboardChannels } from '../messages';
+@ApplyOptions<Command.Options>({
+  description: 'Get server message count leaderboard',
+  runIn: [CommandOptionsRunTypeEnum.GuildText],
+  chatInputCommand: {
+    register: true,
+    idHints: ['988533581695578153', '983911169758732338'],
+  },
+})
+export class LeaderboardCommand extends Command {
+  private static readonly PAGE_SIZE = 10;
+  private static readonly RANK_EMOJIS = ['🥇', '🥈', '🥉'];
+  private static readonly ZERO_WIDTH_SPACE = '\u200B';
+  private static readonly PADDING_L = `${LeaderboardCommand.ZERO_WIDTH_SPACE} `;
+  private static readonly PADDING_R =
+    ` ${LeaderboardCommand.ZERO_WIDTH_SPACE}`.repeat(4);
+  private static readonly BUTTON_PREV = 'prev';
+  private static readonly BUTTON_NEXT = 'next';
 
-export type MessageCount = {
-  _id: {
-    guild: string;
-    channel: string;
-    user: string;
-  };
-  count: number;
-};
-
-export type LeaderboardUser = {
-  _id: string;
-  count: number;
-};
-
-const rankEmojis = ['🥇', '🥈', '🥉'];
-const pageSize = 10;
-const previous = '🔺';
-const next = '🔻';
-
-const getDescription = (users: LeaderboardUser[], index = 0): string => {
-  let description = '';
-  for (let i = index; i < users.length && i < (index + pageSize); i++) {
-    const user = users[i];
-    const rank = (i < 3) ? `\u200B ${rankEmojis[i]} \u200B \u200B \u200B \u200B` : `**\`#${String(i + 1).padEnd(3)}\`**`;
-    description += `${rank} <@${user._id}> \`${user.count} messages\`\n`;
-  }
-  return description;
-};
-
-class LeaderboardCommand implements Command {
-  async execute(message: Message): Promise<Message> {
-    if (!message.guild) {
-      return message.reply('that command is only available in servers.');
+  public override async chatInputRun(
+    interaction: Command.ChatInputInteraction
+  ) {
+    if (!interaction.inGuild() || !interaction.channel) {
+      return;
     }
-    const leaderboard = await db().collection<MessageCount>('messages').aggregate()
-      .match({'_id.guild': message.guild.id, '_id.channel': {$in: leaderboardChannels}})
+
+    let page = 0;
+    const leaderboardUsers = messageCounts
+      .aggregate<MessageCount>()
+      .match({'_id.guild': interaction.guildId})
       .group<LeaderboardUser>({_id: '$_id.user', count: {$sum: '$count'}})
-      .sort({count: -1})
-      .toArray();
+      .project<LeaderboardUser>({count: true})
+      .sort({count: -1, _id: 1});
+    const cachedPages: string[] = [];
+
     const embed = new MessageEmbed()
-      .setColor('RANDOM')
-      .setTitle('Message Leaderboard:')
-      .setDescription(getDescription(leaderboard));
-    const reply = await message.channel.send(embed);
-    let index = 0;
-    const collector = reply.createReactionCollector((reaction, user) => {
-      return user.id === message.author.id && [previous, next].includes(reaction.emoji.name);
-    }, {time: 30000, dispose: true});
-    collector.on('collect', (reaction) => {
-      index += (reaction.emoji.name === next ? 1 : -1) * pageSize;
-      if (index >= leaderboard.length) {
-        index = 0;
-      } else if (index < 0) {
-        index = Math.max(leaderboard.length - pageSize, 0);
+      .setColor(Colors.GREEN)
+      .setTitle('Message Count Leaderboard');
+    const replyOptions = async () => ({
+      embeds: [
+        embed.setDescription(
+          await this.page(page, leaderboardUsers, cachedPages)
+        ),
+      ],
+      components: [
+        await this.actionRow(page, leaderboardUsers, cachedPages.length),
+      ],
+    });
+    const reply = (await interaction.reply({
+      fetchReply: true,
+      ...(await replyOptions()),
+    })) as Message;
+
+    const collector = reply.createMessageComponentCollector();
+    collector.on('collect', async i => {
+      if (i.user.id !== interaction.user.id) {
+        return i.reply({
+          ephemeral: true,
+          content: `Please stop interacting with the components on this message. They are only for ${userMention(
+            interaction.user.id
+          )}.`,
+        });
       }
-      reply.edit(embed.setDescription(getDescription(leaderboard, index))).catch(console.error);
-    });
-    collector.on('remove', (reaction, user) => {
-      if (user.id === message.author.id) {
-        index += (reaction.emoji.name === next ? 1 : -1) * pageSize;
-        if (index >= leaderboard.length) {
-          index = 0;
-        } else if (index < 0) {
-          index = Math.max(leaderboard.length - pageSize, 0);
-        }
-        reply.edit(embed.setDescription(getDescription(leaderboard, index))).catch(console.error);
+      if (i.customId === LeaderboardCommand.BUTTON_PREV) {
+        page--;
+      } else if (i.customId === LeaderboardCommand.BUTTON_NEXT) {
+        page++;
       }
+      await i.update(await replyOptions());
     });
-    collector.on('end', () => {
-      reply.reactions.removeAll().catch(console.error);
-      addFooter(message, reply);
-    });
-    await reply.react(previous);
-    await reply.react(next);
+  }
+
+  private async page(
+    index: number,
+    leaderboardUsers: AbstractCursor<LeaderboardUser>,
+    cache: string[]
+  ) {
+    if (index < cache.length) {
+      return cache[index];
+    }
+    const users: LeaderboardUser[] = [];
+    for (let i = 0; i < LeaderboardCommand.PAGE_SIZE; i++) {
+      const user = await leaderboardUsers.next();
+      if (!user) {
+        break;
+      }
+      users.push(user);
+    }
+    const start = index * LeaderboardCommand.PAGE_SIZE;
+    const page = users
+      .map(({_id, count}, i) => [
+        this.formatRank(start + i),
+        userMention(_id),
+        inlineCode(`${count} messages`),
+      ])
+      .map(columns => columns.join(' '))
+      .join('\n');
+    cache.push(page);
+    return page;
+  }
+
+  private formatRank(index: number) {
+    return index < LeaderboardCommand.RANK_EMOJIS.length
+      ? [
+          LeaderboardCommand.PADDING_L,
+          LeaderboardCommand.RANK_EMOJIS[index],
+          LeaderboardCommand.PADDING_R,
+        ].join('')
+      : bold(inlineCode(`#${String(index + 1).padEnd(3)}`));
+  }
+
+  private async actionRow(
+    page: number,
+    leaderboardUsers: AbstractCursor<LeaderboardUser>,
+    cachedPages: number
+  ) {
+    const isLastPage =
+      page === cachedPages - 1 && !(await leaderboardUsers.hasNext());
+    return new MessageActionRow().addComponents(
+      new MessageButton()
+        .setCustomId(LeaderboardCommand.BUTTON_PREV)
+        .setStyle('PRIMARY')
+        .setEmoji('◀️')
+        .setDisabled(page === 0),
+      new MessageButton()
+        .setCustomId(LeaderboardCommand.BUTTON_NEXT)
+        .setStyle('PRIMARY')
+        .setEmoji('▶️')
+        .setDisabled(isLastPage)
+    );
   }
 }
 
-export default new LeaderboardCommand();
+interface LeaderboardUser {
+  _id: string;
+  count: number;
+}
