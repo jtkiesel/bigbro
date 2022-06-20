@@ -1,9 +1,19 @@
-# Node.js
-build/
-node_modules/
+# dependencies
+/.yarn/cache
+/.yarn/install-state.gz
+/node_modules
 
-# macOS
+# testing
+/coverage
+
+# production
+/dist
+
+# environment variables
+/.env
+
+# IDE
+/.vscode
+
+# OS
 .DS_Store
-
-# VS Code
-.vscode/

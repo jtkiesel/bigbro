@@ -1,41 +1,53 @@
-import { Message, MessageEmbed } from 'discord.js';
+import {ApplyOptions} from '@sapphire/decorators';
+import {Command} from '@sapphire/framework';
+import {MessageEmbed} from 'discord.js';
+import {DurationUnit} from '../lib/duration';
+import {Colors} from '../lib/embeds';
 
-import { addFooter, client, Command } from '..';
-
-const formatTime = (time: number, unit: string): string => `${time} ${unit}${(time == 1) ? '' : 's'}`;
-
-class UptimeCommand implements Command {
-  async execute(message: Message): Promise<Message> {
-    const milliseconds = new Date(client.uptime).getTime();
-
-    let seconds = Math.floor(milliseconds / 1000);
-    let minutes = Math.floor(seconds / 60);
-    let hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    seconds %= 60;
-    minutes %= 60;
-    hours %= 24;
-
-    const uptime = [];
-    if (days) {
-      uptime.push(formatTime(days, 'day'));
+@ApplyOptions<Command.Options>({
+  description: 'Get time since bot last restarted',
+  chatInputCommand: {
+    register: true,
+    idHints: ['988533583431995392', '983913881221079070'],
+  },
+})
+export class UptimeCommand extends Command {
+  public override async chatInputRun(
+    interaction: Command.ChatInputInteraction
+  ) {
+    const uptime = interaction.client.uptime;
+    if (uptime === null) {
+      return interaction.reply({
+        embeds: [
+          new MessageEmbed()
+            .setColor(Colors.RED)
+            .setDescription('Could not obtain uptime'),
+        ],
+        ephemeral: true,
+      });
     }
-    if (hours) {
-      uptime.push(formatTime(hours, 'hour'));
-    }
-    if (minutes) {
-      uptime.push(formatTime(minutes, 'minute'));
-    }
-    if (seconds) {
-      uptime.push(formatTime(seconds, 'second'));
-    }
-    const embed = new MessageEmbed()
-      .setColor('RANDOM')
-      .setDescription(`🕒 ${uptime.join(', ')}`);
-    const reply = await message.channel.send(embed);
-    return addFooter(message, reply);
+
+    await interaction.reply({
+      embeds: [
+        new MessageEmbed()
+          .setColor(Colors.BLUE)
+          .setDescription(`🕒 Uptime: ${this.uptime(uptime)}`),
+      ],
+      ephemeral: true,
+    });
+  }
+
+  private uptime(milliseconds: number) {
+    return DurationUnit.values()
+      .map(unit => {
+        const value = Math.floor(milliseconds / unit.milliseconds);
+        return {
+          unit,
+          value: unit.modulo ? value % unit.modulo : value,
+        };
+      })
+      .filter(({value}) => value > 0)
+      .map(({unit, value}) => unit.format(value))
+      .join(', ');
   }
 }
-
-export default new UptimeCommand();

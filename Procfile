@@ -1,1 +1,1 @@
-worker: node build
+process: yarn start

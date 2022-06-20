@@ -1,7 +1,7 @@
 {
   "name": "bigbro",
-  "version": "1.0.0",
-  "description": "Discord bot that assists performing moderation duties for the VEX Robotics Competition server.",
+  "version": "2.0.0",
+  "description": "Discord bot that assists with moderation duties for the VEX Robotics Competition server.",
   "keywords": [
     "Discord",
     "bot",
@@ -9,44 +9,44 @@
     "log"
   ],
   "homepage": "https://github.com/jtkiesel/bigbro#readme",
-  "bugs": {
-    "url": "https://github.com/jtkiesel/bigbro/issues"
-  },
+  "bugs": "https://github.com/jtkiesel/bigbro/issues",
   "license": "MIT",
   "author": {
-    "name": "Jordan Kiesel"
+    "name": "Jordan Kiesel",
+    "url": "https://github.com/jtkiesel"
   },
-  "main": "build/index.js",
+  "main": "dist/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/jtkiesel/bigbro.git"
   },
   "scripts": {
-    "prod": "npm run build && node build",
-    "start": "nodemon --exec ts-node src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "clean": "rm -fr dist",
+    "dev": "tsc-watch --onSuccess \"yarn start\"",
+    "start": "node dist"
   },
   "dependencies": {
-    "axios": "^0.21.1",
-    "discord.js": "https://github.com/discordjs/discord.js/tarball/c4c8171",
-    "moment": "^2.29.1",
-    "moment-timer": "^1.3.0",
-    "mongodb": "^3.6.4"
+    "@discordjs/builders": "^0.15.0",
+    "@sapphire/decorators": "^4.3.6",
+    "@sapphire/discord.js-utilities": "^4.11.3",
+    "@sapphire/framework": "next",
+    "@sapphire/plugin-logger": "^2.2.1",
+    "@sapphire/plugin-subcommands": "pr-271",
+    "axios": "^0.27.2",
+    "discord.js": "^13.8.0",
+    "dotenv": "^16.0.1",
+    "lru-cache": "^7.10.1",
+    "mongodb": "^4.7.0"
   },
   "devDependencies": {
-    "@types/moment-timer": "file:./local-types/moment-timer",
-    "@types/mongodb": "^3.6.8",
-    "@types/ws": "^7.4.0",
-    "@typescript-eslint/eslint-plugin": "^4.15.2",
-    "@typescript-eslint/parser": "^4.15.2",
-    "eslint": "^7.20.0",
-    "nodemon": "^2.0.7",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.1.5"
+    "@sapphire/ts-config": "^3.3.4",
+    "@types/mongodb": "^4.0.7",
+    "tsc-watch": "^5.0.3",
+    "typescript": "^4.7.4"
   },
   "engines": {
-    "node": "14.x"
+    "node": ">=16.6.0"
   },
-  "private": true,
-  "browserslist": "maintained node versions"
+  "packageManager": "yarn@3.2.1"
 }
