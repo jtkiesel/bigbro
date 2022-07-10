@@ -11,13 +11,13 @@ import {
 } from 'colorette';
 import {nodeEnv, version} from '../../lib/config';
 
-const dev = nodeEnv !== 'production';
+const dev = nodeEnv === 'development';
 
 @ApplyOptions<Listener.Options>({event: Events.ClientReady, once: true})
 export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
   private readonly style = dev ? yellow : blue;
 
-  public run() {
+  public override run() {
     this.printBanner();
     this.printStoreDebugInformation();
   }

@@ -6,7 +6,7 @@ import {
 import '@sapphire/plugin-logger/register';
 import {Constants, Intents, Options} from 'discord.js';
 import {MongoClient} from 'mongodb';
-import {discordToken, logLevel, mongoUrl} from './lib/config';
+import {logLevel, messageCacheSize, mongoUrl} from './lib/config';
 import {
   type ChannelMessages,
   type MessageCount,
@@ -45,28 +45,37 @@ const client = new SapphireClient({
     Intents.FLAGS.GUILD_MESSAGES,
   ],
   logger: {level: logLevel},
-  makeCache: Options.cacheWithLimits({MessageManager: 2000}),
+  makeCache: Options.cacheWithLimits({
+    BaseGuildEmojiManager: 0,
+    GuildEmojiManager: 0,
+    GuildBanManager: 0,
+    GuildInviteManager: 0,
+    GuildStickerManager: 0,
+    GuildScheduledEventManager: 0,
+    MessageManager: {
+      maxSize: messageCacheSize,
+      keepOverLimit: ({pinned}) => pinned,
+    },
+    PresenceManager: 0,
+    ReactionManager: 0,
+    ReactionUserManager: 0,
+    StageInstanceManager: 0,
+    ThreadMemberManager: 0,
+    VoiceStateManager: 0,
+  }),
 });
 
 const main = async () => {
   await mongoClient.connect().catch(error => client.logger.error(error));
   try {
     client.logger.info('Logging in');
-    await client.login(discordToken);
+    await client.login();
     client.logger.info('Logged in');
   } catch (error) {
     client.logger.fatal(error);
     client.destroy();
     throw error;
   }
-
-  const guilds = await client.guilds.fetch();
-  await Promise.all(
-    guilds.map(async oAuth2Guild => {
-      const guild = await oAuth2Guild.fetch();
-      await messageCounter.countMessagesInGuild(guild);
-    })
-  );
 };
 
 main();
