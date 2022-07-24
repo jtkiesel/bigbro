@@ -1,15 +1,19 @@
 import {bold} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
-import {MessageEmbed, Permissions} from 'discord.js';
+import {
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  PermissionsBitField,
+} from 'discord.js';
 import {DurationUnit} from '../lib/duration';
-import {Colors} from '../lib/embeds';
+import {Color} from '../lib/color';
 import {messageLogger} from '..';
 
 @ApplyOptions<Command.Options>({
   description: 'Timeout user',
-  requiredClientPermissions: [Permissions.FLAGS.MODERATE_MEMBERS],
-  requiredUserPermissions: [Permissions.FLAGS.MODERATE_MEMBERS],
+  requiredClientPermissions: [PermissionsBitField.Flags.ModerateMembers],
+  requiredUserPermissions: [PermissionsBitField.Flags.ModerateMembers],
   runIn: [CommandOptionsRunTypeEnum.GuildAny],
 })
 export class TimeoutCommand extends Command {
@@ -18,9 +22,7 @@ export class TimeoutCommand extends Command {
     new Map<string, number>()
   );
 
-  public override async chatInputRun(
-    interaction: Command.ChatInputInteraction
-  ) {
+  public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     if (!interaction.inGuild()) {
       return;
     }
@@ -47,12 +49,12 @@ export class TimeoutCommand extends Command {
       return;
     }
 
-    const embed = new MessageEmbed()
-      .setColor(Colors.BLUE)
+    const embed = new EmbedBuilder()
+      .setColor(Color.BLUE)
       .setAuthor({
         name: user.tag,
         url: `https://discord.com/users/${user.id}`,
-        iconURL: member.displayAvatarURL({dynamic: true}),
+        iconURL: member.displayAvatarURL(),
       })
       .setDescription(
         bold(`${user} timed out for ${readableDuration} by ${interaction.user}`)
@@ -60,7 +62,7 @@ export class TimeoutCommand extends Command {
       .setFooter({text: `User ID: ${user.id}`})
       .setTimestamp(interaction.createdAt);
     if (reason) {
-      embed.addField('Reason', reason);
+      embed.addFields({name: 'Reason', value: reason});
     }
 
     await logChannel.send({embeds: [embed]});

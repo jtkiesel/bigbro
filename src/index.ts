@@ -4,7 +4,7 @@ import {
   SapphireClient,
 } from '@sapphire/framework';
 import '@sapphire/plugin-logger/register';
-import {Constants, Intents, Options} from 'discord.js';
+import {GatewayIntentBits, Options, Partials} from 'discord.js';
 import {MongoClient} from 'mongodb';
 import {logLevel, messageCacheSize, mongoUrl} from './lib/config';
 import {
@@ -37,12 +37,11 @@ ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(
 
 const client = new SapphireClient({
   shards: 'auto',
-  partials: [Constants.PartialTypes.MESSAGE],
+  partials: [Partials.Message],
   intents: [
-    Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MEMBERS,
-    Intents.FLAGS.GUILD_INVITES,
-    Intents.FLAGS.GUILD_MESSAGES,
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
   ],
   logger: {level: logLevel},
   makeCache: Options.cacheWithLimits({
@@ -66,16 +65,23 @@ const client = new SapphireClient({
 });
 
 const main = async () => {
-  await mongoClient.connect().catch(error => client.logger.error(error));
   try {
-    client.logger.info('Logging in');
+    client.logger.info('Connecting to database');
+    await mongoClient.connect();
+    client.logger.info('Connected to database');
+
+    client.logger.info('Logging in to Discord');
     await client.login();
-    client.logger.info('Logged in');
+    client.logger.info('Logged in to Discord');
   } catch (error) {
     client.logger.fatal(error);
-    client.destroy();
     throw error;
   }
 };
+
+process.on('SIGTERM', async () => {
+  client.destroy();
+  await mongoClient.close();
+});
 
 main();

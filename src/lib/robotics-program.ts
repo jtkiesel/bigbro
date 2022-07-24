@@ -1,11 +1,11 @@
 export class Program {
-  public static readonly NONE = new Program({
+  public static readonly None = new Program({
     name: 'None',
     role: '197817210729791489',
     emoji: '❓',
   });
 
-  private static readonly VALUES = [
+  private static readonly Values = [
     {
       name: 'VRC',
       description: 'VEX Robotics Competition',
@@ -60,7 +60,7 @@ export class Program {
     },
   ]
     .map(program => new Program(program))
-    .concat(Program.NONE);
+    .concat(Program.None);
 
   public readonly name: string;
   public readonly description?: string;
@@ -83,6 +83,6 @@ export class Program {
   }
 
   public static values() {
-    return Program.VALUES;
+    return Program.Values;
   }
 }

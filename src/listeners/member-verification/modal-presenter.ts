@@ -1,11 +1,12 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {Events, Listener} from '@sapphire/framework';
 import {
+  ActionRowBuilder,
   Interaction,
-  MessageActionRow,
-  Modal,
-  ModalActionRowComponent,
-  TextInputComponent,
+  ModalActionRowComponentBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
 } from 'discord.js';
 import {settingsManager} from '../..';
 import {Program} from '../../lib/robotics-program';
@@ -30,24 +31,24 @@ export class InteractionCreateListener extends Listener<
       return;
     }
 
-    const modal = new Modal()
+    const modal = new ModalBuilder()
       .setCustomId(ModalId.VERIFY)
       .setTitle('Enter your information for verification')
       .addComponents(
-        new MessageActionRow<ModalActionRowComponent>().addComponents(
-          new TextInputComponent()
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          new TextInputBuilder()
             .setCustomId(InputId.NAME)
             .setLabel('Name or preferred nickname')
-            .setStyle('SHORT')
+            .setStyle(TextInputStyle.Short)
             .setMinLength(1)
             .setMaxLength(25)
             .setRequired(true)
         ),
-        new MessageActionRow<ModalActionRowComponent>().addComponents(
-          new TextInputComponent()
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          new TextInputBuilder()
             .setCustomId(InputId.PROGRAM)
             .setLabel('Primary robotics competition program')
-            .setStyle('SHORT')
+            .setStyle(TextInputStyle.Short)
             .setPlaceholder(
               Program.values()
                 .map(({name}) => name)
@@ -57,19 +58,19 @@ export class InteractionCreateListener extends Listener<
             .setMaxLength(4)
             .setRequired(true)
         ),
-        new MessageActionRow<ModalActionRowComponent>().addComponents(
-          new TextInputComponent()
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          new TextInputBuilder()
             .setCustomId(InputId.TEAM)
             .setLabel('Robotics competition team ID#')
-            .setStyle('SHORT')
+            .setStyle(TextInputStyle.Short)
             .setMinLength(1)
             .setMaxLength(7)
         ),
-        new MessageActionRow<ModalActionRowComponent>().addComponents(
-          new TextInputComponent()
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          new TextInputBuilder()
             .setCustomId(InputId.EXPLANATION)
             .setLabel('Explanation')
-            .setStyle('PARAGRAPH')
+            .setStyle(TextInputStyle.Paragraph)
             .setPlaceholder(
               'If program is None, explain how you are involved with VEX Robotics or why you joined the server'
             )

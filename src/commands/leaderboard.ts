@@ -1,24 +1,24 @@
-import {bold, inlineCode, userMention} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
 import {
-  type Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  bold,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  inlineCode,
+  type MessageActionRowComponentBuilder,
+  userMention,
+  ChatInputCommandInteraction,
 } from 'discord.js';
 import type {AbstractCursor} from 'mongodb';
 import {messageCounts} from '..';
 import type {MessageCount} from '../lib/leaderboard';
-import {Colors} from '../lib/embeds';
+import {Color} from '../lib/color';
 
 @ApplyOptions<Command.Options>({
   description: 'Get server message count leaderboard',
   runIn: [CommandOptionsRunTypeEnum.GuildText],
-  chatInputCommand: {
-    register: true,
-    idHints: ['988533581695578153', '983911169758732338'],
-  },
 })
 export class LeaderboardCommand extends Command {
   private static readonly PAGE_SIZE = 10;
@@ -30,9 +30,7 @@ export class LeaderboardCommand extends Command {
   private static readonly BUTTON_PREV = 'prev';
   private static readonly BUTTON_NEXT = 'next';
 
-  public override async chatInputRun(
-    interaction: Command.ChatInputInteraction
-  ) {
+  public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     if (!interaction.inGuild() || !interaction.channel) {
       return;
     }
@@ -46,8 +44,8 @@ export class LeaderboardCommand extends Command {
       .sort({count: -1, _id: 1});
     const cachedPages: string[] = [];
 
-    const embed = new MessageEmbed()
-      .setColor(Colors.GREEN)
+    const embed = new EmbedBuilder()
+      .setColor(Color.GREEN)
       .setTitle('Message Count Leaderboard');
     const replyOptions = async () => ({
       embeds: [
@@ -59,20 +57,21 @@ export class LeaderboardCommand extends Command {
         await this.actionRow(page, leaderboardUsers, cachedPages.length),
       ],
     });
-    const reply = (await interaction.reply({
+    const reply = await interaction.reply({
       fetchReply: true,
       ...(await replyOptions()),
-    })) as Message;
+    });
 
     const collector = reply.createMessageComponentCollector();
     collector.on('collect', async i => {
       if (i.user.id !== interaction.user.id) {
-        return i.reply({
+        await i.reply({
           ephemeral: true,
           content: `Please stop interacting with the components on this message. They are only for ${userMention(
             interaction.user.id
           )}.`,
         });
+        return;
       }
       if (i.customId === LeaderboardCommand.BUTTON_PREV) {
         page--;
@@ -81,6 +80,13 @@ export class LeaderboardCommand extends Command {
       }
       await i.update(await replyOptions());
     });
+  }
+
+  public override registerApplicationCommands(registry: Command.Registry) {
+    registry.registerChatInputCommand(
+      command => command.setName(this.name).setDescription(this.description),
+      {idHints: ['988533581695578153', '983911169758732338']}
+    );
   }
 
   private async page(
@@ -129,16 +135,16 @@ export class LeaderboardCommand extends Command {
   ) {
     const isLastPage =
       page === cachedPages - 1 && !(await leaderboardUsers.hasNext());
-    return new MessageActionRow().addComponents(
-      new MessageButton()
+    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+      new ButtonBuilder()
         .setCustomId(LeaderboardCommand.BUTTON_PREV)
-        .setStyle('PRIMARY')
-        .setEmoji('◀️')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji({name: '◀️'})
         .setDisabled(page === 0),
-      new MessageButton()
+      new ButtonBuilder()
         .setCustomId(LeaderboardCommand.BUTTON_NEXT)
-        .setStyle('PRIMARY')
-        .setEmoji('▶️')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji({name: '▶️'})
         .setDisabled(isLastPage)
     );
   }

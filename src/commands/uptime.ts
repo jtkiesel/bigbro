@@ -1,40 +1,41 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command} from '@sapphire/framework';
-import {MessageEmbed} from 'discord.js';
+import {ChatInputCommandInteraction, EmbedBuilder} from 'discord.js';
 import {DurationUnit} from '../lib/duration';
-import {Colors} from '../lib/embeds';
+import {Color} from '../lib/color';
 
 @ApplyOptions<Command.Options>({
   description: 'Get time since bot last restarted',
-  chatInputCommand: {
-    register: true,
-    idHints: ['988533583431995392', '983913881221079070'],
-  },
 })
 export class UptimeCommand extends Command {
-  public override async chatInputRun(
-    interaction: Command.ChatInputInteraction
-  ) {
+  public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     const uptime = interaction.client.uptime;
     if (uptime === null) {
       return interaction.reply({
         embeds: [
-          new MessageEmbed()
-            .setColor(Colors.RED)
+          new EmbedBuilder()
+            .setColor(Color.RED)
             .setDescription('Could not obtain uptime'),
         ],
         ephemeral: true,
       });
     }
 
-    await interaction.reply({
+    return interaction.reply({
       embeds: [
-        new MessageEmbed()
-          .setColor(Colors.BLUE)
+        new EmbedBuilder()
+          .setColor(Color.BLUE)
           .setDescription(`🕒 Uptime: ${this.uptime(uptime)}`),
       ],
       ephemeral: true,
     });
+  }
+
+  public override registerApplicationCommands(registry: Command.Registry) {
+    registry.registerChatInputCommand(
+      command => command.setName(this.name).setDescription(this.description),
+      {idHints: ['988533583431995392', '983913881221079070']}
+    );
   }
 
   private uptime(milliseconds: number) {

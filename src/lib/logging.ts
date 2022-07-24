@@ -1,13 +1,16 @@
 import {bold} from '@discordjs/builders';
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+  EmbedBuilder,
   Guild,
   Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  MessageActionRowComponentBuilder,
   PartialMessage,
 } from 'discord.js';
-import {Colors} from './embeds';
+import {Color} from './color';
 import type {SettingsManager} from './settings';
 
 export class MessageLogger {
@@ -23,7 +26,9 @@ export class MessageLogger {
 
     const loggingChannel = await guild.channels.fetch(loggingChannelId);
 
-    return loggingChannel?.isText() ? loggingChannel : null;
+    return loggingChannel?.type === ChannelType.GuildText
+      ? loggingChannel
+      : null;
   }
 
   public async logMessageDelete(message: Message | PartialMessage) {
@@ -44,14 +49,12 @@ export class MessageLogger {
       return;
     }
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor(this.messageChangeColor(type))
       .setAuthor({
         name: message.author.tag,
         url: `https://discord.com/users/${message.author.id}`,
-        iconURL: (message.member ?? message.author).displayAvatarURL({
-          dynamic: true,
-        }),
+        iconURL: (message.member ?? message.author).displayAvatarURL(),
       })
       .setDescription(
         [
@@ -71,9 +74,9 @@ export class MessageLogger {
       files: message.attachments.map(({proxyURL}) => proxyURL),
       embeds: [embed],
       components: [
-        new MessageActionRow().addComponents(
-          new MessageButton()
-            .setStyle('LINK')
+        new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+          new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
             .setLabel('Message')
             .setURL(message.url)
         ),
@@ -84,11 +87,11 @@ export class MessageLogger {
   private messageChangeColor(type: MessageChangeType) {
     switch (type) {
       case MessageChangeType.CREATED:
-        return Colors.GREEN;
+        return Color.GREEN;
       case MessageChangeType.DELETED:
-        return Colors.RED;
+        return Color.RED;
       case MessageChangeType.UPDATED:
-        return Colors.BLUE;
+        return Color.BLUE;
     }
   }
 }

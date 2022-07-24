@@ -1,9 +1,14 @@
 import {userMention} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Events, Listener} from '@sapphire/framework';
-import {Interaction, MessageEmbed, Permissions} from 'discord.js';
+import {
+  ChannelType,
+  EmbedBuilder,
+  Interaction,
+  PermissionsBitField,
+} from 'discord.js';
 import {settingsManager} from '../..';
-import {Colors} from '../../lib/embeds';
+import {Color} from '../../lib/color';
 import {Program} from '../../lib/robotics-program';
 import {ButtonId, FieldName} from '../../lib/verification';
 
@@ -38,7 +43,11 @@ export class InteractionCreateListener extends Listener<
       return;
     }
 
-    if (!interaction.memberPermissions.has(Permissions.FLAGS.MANAGE_THREADS)) {
+    if (
+      !interaction.memberPermissions.has(
+        PermissionsBitField.Flags.ManageThreads
+      )
+    ) {
       return interaction.reply({
         ephemeral: true,
         content:
@@ -59,41 +68,39 @@ export class InteractionCreateListener extends Listener<
       )!.value;
       const reason = `Verification request approved by ${interaction.user.tag}`;
       member.setNickname(nickname, reason);
-      member.roles.add([verifiedRoleId, Program.NONE.role]);
+      member.roles.add([verifiedRoleId, Program.None.role]);
 
       const verifiedChannelId = guildSettings.verifiedChannel;
       if (!verifiedChannelId) {
         return;
       }
       const verifiedChannel = await guild.channels.fetch(verifiedChannelId);
-      if (!verifiedChannel?.isText()) {
+      if (verifiedChannel?.type !== ChannelType.GuildText) {
         return;
       }
       await verifiedChannel.send(`${member} Welcome!`);
 
       await interaction.reply({
         embeds: [
-          new MessageEmbed()
-            .setColor(Colors.GREEN)
+          new EmbedBuilder()
+            .setColor(Color.GREEN)
             .setDescription(`Verification request for ${member} approved`),
         ],
-        ephemeral: true,
       });
 
-      await channel.setArchived(true, reason);
+      return channel.setArchived(true, reason);
     } else {
       await interaction.reply({
         embeds: [
-          new MessageEmbed()
-            .setColor(Colors.GREEN)
+          new EmbedBuilder()
+            .setColor(Color.GREEN)
             .setDescription(
               `Verification request for ${userMention(userId)} denied`
             ),
         ],
-        ephemeral: true,
       });
 
-      await channel.setArchived(
+      return channel.setArchived(
         true,
         `Verification request denied by ${interaction.user.tag}`
       );

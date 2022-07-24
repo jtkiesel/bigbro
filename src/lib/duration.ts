@@ -1,5 +1,5 @@
 export class DurationUnit {
-  private static readonly VALUES = [
+  private static readonly Values = [
     {name: 'day', milliseconds: 86_400_000},
     {name: 'hour', milliseconds: 3_600_000},
     {name: 'minute', milliseconds: 60_000},
@@ -13,18 +13,14 @@ export class DurationUnit {
       )
   );
 
-  public readonly name;
-  public readonly milliseconds;
-  public readonly modulo?;
-
-  private constructor(name: string, milliseconds: number, modulo?: number) {
-    this.name = name;
-    this.milliseconds = milliseconds;
-    this.modulo = modulo;
-  }
+  private constructor(
+    public readonly name: string,
+    public readonly milliseconds: number,
+    public readonly modulo?: number
+  ) {}
 
   public static values() {
-    return DurationUnit.VALUES;
+    return DurationUnit.Values;
   }
 
   public format(value: number) {

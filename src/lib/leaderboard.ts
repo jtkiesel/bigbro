@@ -1,9 +1,11 @@
 import {
+  ChannelType,
   Guild,
   GuildChannel,
   Message,
+  NonThreadGuildBasedChannel,
   PartialMessage,
-  Permissions,
+  PermissionsBitField,
 } from 'discord.js';
 import type {Collection} from 'mongodb';
 
@@ -45,18 +47,18 @@ export class MessageCounter {
     );
   }
 
-  public async countMessagesInChannel(channel: GuildChannel) {
-    if (!channel.isText()) {
+  public async countMessagesInChannel(channel: NonThreadGuildBasedChannel) {
+    if (channel.type !== ChannelType.GuildText) {
       return;
     }
 
     if (
       !channel.lastMessageId ||
-      !channel.guild.me
-        ?.permissionsIn(channel)
+      !(await channel.guild.members.fetchMe())
+        .permissionsIn(channel)
         .has([
-          Permissions.FLAGS.VIEW_CHANNEL,
-          Permissions.FLAGS.READ_MESSAGE_HISTORY,
+          PermissionsBitField.Flags.ViewChannel,
+          PermissionsBitField.Flags.ReadMessageHistory,
         ])
     ) {
       await Promise.all([
@@ -76,10 +78,11 @@ export class MessageCounter {
     });
     let firstMessage = channelMessages?.first;
     while (true) {
-      const messages = await channel.messages.fetch(
-        {limit: 100, before: firstMessage},
-        {cache: false}
-      );
+      const messages = await channel.messages.fetch({
+        limit: 100,
+        before: firstMessage,
+        cache: false,
+      });
       firstMessage = messages.lastKey();
       if (!firstMessage) {
         break;
