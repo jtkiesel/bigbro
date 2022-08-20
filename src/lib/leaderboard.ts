@@ -1,13 +1,18 @@
 import {
-  Guild,
-  GuildChannel,
-  Message,
-  PartialMessage,
+  BaseGuildTextChannel,
+  type Guild,
+  type GuildChannel,
+  type Message,
+  type NewsChannel,
+  type PartialMessage,
   Permissions,
+  type TextChannel,
 } from 'discord.js';
-import type {Collection} from 'mongodb';
+import {type Collection, Long} from 'mongodb';
 
 export class MessageCounter {
+  private readonly missedMessagesCountedChannels = new Set<string>();
+
   public constructor(
     private readonly channels: Collection<ChannelMessages>,
     private readonly messages: Collection<MessageCount>
@@ -18,12 +23,29 @@ export class MessageCounter {
       return;
     }
 
+    const messageIdLong = this.longFromSnowflake(message.id);
     await Promise.all([
-      this.channels.updateOne(
-        {_id: {guild: message.guildId, channel: message.channelId}},
-        {$min: {first: message.id}, $max: {last: message.id}},
-        {upsert: true}
-      ),
+      this.channels
+        .findOneAndUpdate(
+          {_id: {guild: message.guildId, channel: message.channelId}},
+          {$min: {first: messageIdLong}, $max: {last: messageIdLong}},
+          {upsert: true}
+        )
+        .then(async result => {
+          if (
+            !result.value ||
+            !(message.channel instanceof BaseGuildTextChannel) ||
+            this.missedMessagesCountedChannels.has(message.channelId)
+          ) {
+            return;
+          }
+          await this.countMessagesInChannelBetween(
+            message.channel,
+            message.id,
+            result.value.last
+          );
+          this.missedMessagesCountedChannels.add(message.channelId);
+        }),
       this.messages.updateOne(
         {
           _id: {
@@ -74,16 +96,37 @@ export class MessageCounter {
     const channelMessages = await this.channels.findOne({
       _id: {guild: channel.guildId, channel: channel.id},
     });
-    let firstMessage = channelMessages?.first;
+    let firstMessage = channelMessages
+      ? this.snowflakeFromLong(channelMessages.first)
+      : undefined;
+    await this.countMessagesInChannelBetween(channel, firstMessage);
+    channel.client.logger.info(
+      `Done counting messages in guild ${channel.guild.name} channel ${channel.name}`
+    );
+  }
+
+  private async countMessagesInChannelBetween(
+    channel: NewsChannel | TextChannel,
+    before?: string,
+    after?: Long
+  ) {
+    let firstMessage = before;
+    let lastMessageLong: Long | undefined;
     while (true) {
-      const messages = await channel.messages.fetch(
-        {limit: 100, before: firstMessage},
-        {cache: false}
-      );
+      const messages = (
+        await channel.messages.fetch(
+          {limit: 100, before: firstMessage},
+          {cache: false}
+        )
+      ).filter(({id}) => !after || this.longFromSnowflake(id).gt(after));
       firstMessage = messages.lastKey();
       if (!firstMessage) {
         break;
       }
+      if (!lastMessageLong) {
+        lastMessageLong = this.longFromSnowflake(messages.firstKey()!);
+      }
+      const firstMessageLong = this.longFromSnowflake(firstMessage);
       const countsByUser = messages
         .filter(({author: {bot}}) => !bot)
         .map(({author: {id}}) => id)
@@ -94,7 +137,7 @@ export class MessageCounter {
       await Promise.all([
         this.channels.updateOne(
           {_id: {guild: channel.guildId, channel: channel.id}},
-          {$min: {first: firstMessage}, $max: {last: firstMessage}},
+          {$min: {first: firstMessageLong}, $max: {last: lastMessageLong}},
           {upsert: true}
         ),
         ...[...countsByUser.entries()].map(([user, count]) =>
@@ -112,32 +155,14 @@ export class MessageCounter {
         ),
       ]);
     }
-    channel.client.logger.info(
-      `Done counting messages in guild ${channel.guild.name} channel ${channel.name}`
-    );
   }
 
-  public async resetMessageCountsForGuild(guild: Guild) {
-    await Promise.all([
-      this.channels.updateMany(
-        {'_id.guild': guild.id},
-        {$unset: {first: true, last: true}}
-      ),
-      this.messages.updateMany({'_id.guild': guild.id}, {$set: {count: 0}}),
-    ]);
+  private longFromSnowflake(snowflake: string): Long {
+    return Long.fromBigInt(BigInt(snowflake) - 2n ** 63n);
   }
 
-  public async resetMessageCountsForChannel(channel: GuildChannel) {
-    await Promise.all([
-      this.channels.updateOne(
-        {'_id.guild': channel.guildId, '_id.channel': channel.id},
-        {$unset: {first: true, last: true}}
-      ),
-      this.messages.updateMany(
-        {'_id.guild': channel.guildId, '_id.channel': channel.id},
-        {$set: {count: 0}}
-      ),
-    ]);
+  private snowflakeFromLong(long: Long): string {
+    return `${long.toBigInt() + 2n ** 63n}`;
   }
 }
 
@@ -146,8 +171,8 @@ export interface ChannelMessages {
     guild: string;
     channel: string;
   };
-  first: string;
-  last: string;
+  first: Long;
+  last: Long;
 }
 
 export interface MessageCount {

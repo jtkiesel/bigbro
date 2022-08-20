@@ -208,9 +208,15 @@ const error = (interaction: Command.ChatInputInteraction, content: string) => {
             new MessageEmbed()
               .setColor(Colors.GREEN)
               .setTitle('Member verification setup')
-              .addField('Verification channel', verificationChannel.toString())
-              .addField('Verified role', verifiedRole.toString())
-              .addField('Verified channel', verifiedChannel.toString(), true),
+              .addFields(
+                {name: 'Verification channel', value: `${verificationChannel}`},
+                {name: 'Verified role', value: `${verifiedRole}`},
+                {
+                  name: 'Verified channel',
+                  value: `${verifiedChannel}`,
+                  inline: true,
+                }
+              ),
           ],
           ephemeral: true,
         });

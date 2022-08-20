@@ -44,7 +44,7 @@ export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
 
   private styleStore(store: Store<Piece>, index: number, all: Store<Piece>[]) {
     const last = index === all.length - 1;
-    const size = this.style(store.size.toString().padEnd(3, ' '));
+    const size = this.style(`${store.size}`.padEnd(3, ' '));
     return gray(`${last ? '└─' : '├─'} Loaded ${size} ${store.name}.`);
   }
 }

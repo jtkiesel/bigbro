@@ -35,7 +35,7 @@ ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(
   RegisterBehavior.Overwrite
 );
 
-const client = new SapphireClient({
+const discordClient = new SapphireClient({
   shards: 'auto',
   partials: [Constants.PartialTypes.MESSAGE],
   intents: [
@@ -66,16 +66,23 @@ const client = new SapphireClient({
 });
 
 const main = async () => {
-  await mongoClient.connect().catch(error => client.logger.error(error));
   try {
-    client.logger.info('Logging in');
-    await client.login();
-    client.logger.info('Logged in');
+    discordClient.logger.info('Connecting to database');
+    await mongoClient.connect();
+    discordClient.logger.info('Connected to database');
+
+    discordClient.logger.info('Logging in to Discord');
+    await discordClient.login();
+    discordClient.logger.info('Logged in to Discord');
   } catch (error) {
-    client.logger.fatal(error);
-    client.destroy();
+    discordClient.logger.fatal(error);
     throw error;
   }
 };
+
+process.on('SIGTERM', async () => {
+  discordClient.destroy();
+  await mongoClient.close();
+});
 
 main();

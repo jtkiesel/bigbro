@@ -6,6 +6,7 @@ import {
   MessageActionRow,
   MessageButton,
   MessageEmbed,
+  type GuildMemberManager,
 } from 'discord.js';
 import type {AbstractCursor} from 'mongodb';
 import {messageCounts} from '..';
@@ -44,6 +45,7 @@ export class LeaderboardCommand extends Command {
       .group<LeaderboardUser>({_id: '$_id.user', count: {$sum: '$count'}})
       .project<LeaderboardUser>({count: true})
       .sort({count: -1, _id: 1});
+    const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const cachedPages: string[] = [];
 
     const embed = new MessageEmbed()
@@ -52,7 +54,7 @@ export class LeaderboardCommand extends Command {
     const replyOptions = async () => ({
       embeds: [
         embed.setDescription(
-          await this.page(page, leaderboardUsers, cachedPages)
+          await this.page(page, leaderboardUsers, guild.members, cachedPages)
         ),
       ],
       components: [
@@ -86,18 +88,23 @@ export class LeaderboardCommand extends Command {
   private async page(
     index: number,
     leaderboardUsers: AbstractCursor<LeaderboardUser>,
+    members: GuildMemberManager,
     cache: string[]
   ) {
     if (index < cache.length) {
       return cache[index];
     }
     const users: LeaderboardUser[] = [];
-    for (let i = 0; i < LeaderboardCommand.PAGE_SIZE; i++) {
+    for (let i = 0; i < LeaderboardCommand.PAGE_SIZE; ) {
       const user = await leaderboardUsers.next();
       if (!user) {
         break;
       }
+      if (!(await members.fetch()).has(user._id)) {
+        continue;
+      }
       users.push(user);
+      i++;
     }
     const start = index * LeaderboardCommand.PAGE_SIZE;
     const page = users
