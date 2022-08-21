@@ -6,7 +6,8 @@ import {
   MessageActionRow,
   MessageButton,
   MessageEmbed,
-  type GuildMemberManager,
+  type Collection,
+  type GuildMember,
 } from 'discord.js';
 import type {AbstractCursor} from 'mongodb';
 import {messageCounts} from '..';
@@ -31,12 +32,15 @@ export class LeaderboardCommand extends Command {
   private static readonly BUTTON_PREV = 'prev';
   private static readonly BUTTON_NEXT = 'next';
 
+  private readonly guildsWithMembersFetched = new Set<string>();
+
   public override async chatInputRun(
     interaction: Command.ChatInputInteraction
   ) {
     if (!interaction.inGuild() || !interaction.channel) {
       return;
     }
+    await interaction.deferReply();
 
     let page = 0;
     const leaderboardUsers = messageCounts
@@ -46,7 +50,12 @@ export class LeaderboardCommand extends Command {
       .project<LeaderboardUser>({count: true})
       .sort({count: -1, _id: 1});
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
-    const cachedPages: string[] = [];
+    const cachedPages = new Array<string>();
+
+    if (!this.guildsWithMembersFetched.has(interaction.guildId)) {
+      await guild.members.fetch();
+      this.guildsWithMembersFetched.add(interaction.guildId);
+    }
 
     const embed = new MessageEmbed()
       .setColor(Colors.GREEN)
@@ -54,14 +63,19 @@ export class LeaderboardCommand extends Command {
     const replyOptions = async () => ({
       embeds: [
         embed.setDescription(
-          await this.page(page, leaderboardUsers, guild.members, cachedPages)
+          await this.page(
+            page,
+            leaderboardUsers,
+            guild.members.cache,
+            cachedPages
+          )
         ),
       ],
       components: [
         await this.actionRow(page, leaderboardUsers, cachedPages.length),
       ],
     });
-    const reply = (await interaction.reply({
+    const reply = (await interaction.followUp({
       fetchReply: true,
       ...(await replyOptions()),
     })) as Message;
@@ -76,19 +90,20 @@ export class LeaderboardCommand extends Command {
           )}.`,
         });
       }
+      await i.deferUpdate();
       if (i.customId === LeaderboardCommand.BUTTON_PREV) {
         page--;
       } else if (i.customId === LeaderboardCommand.BUTTON_NEXT) {
         page++;
       }
-      await i.update(await replyOptions());
+      await i.editReply(await replyOptions());
     });
   }
 
   private async page(
     index: number,
     leaderboardUsers: AbstractCursor<LeaderboardUser>,
-    members: GuildMemberManager,
+    members: Collection<string, GuildMember>,
     cache: string[]
   ) {
     if (index < cache.length) {
@@ -100,7 +115,7 @@ export class LeaderboardCommand extends Command {
       if (!user) {
         break;
       }
-      if (!(await members.fetch()).has(user._id)) {
+      if (!members.has(user._id)) {
         continue;
       }
       users.push(user);
