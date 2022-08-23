@@ -9,6 +9,7 @@ import {
 } from 'discord.js';
 import {Colors} from './embeds';
 import type {SettingsManager} from './settings';
+import {userUrl} from './user';
 
 export class MessageLogger {
   public constructor(private readonly settingsManager: SettingsManager) {}
@@ -48,7 +49,7 @@ export class MessageLogger {
       .setColor(this.messageChangeColor(type))
       .setAuthor({
         name: message.author.tag,
-        url: `https://discord.com/users/${message.author.id}`,
+        url: userUrl(message.author.id),
         iconURL: (message.member ?? message.author).displayAvatarURL({
           dynamic: true,
         }),

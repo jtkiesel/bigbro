@@ -16,6 +16,7 @@ import {Colors} from '../../lib/embeds';
 import {ButtonId, FieldName, InputId, ModalId} from '../../lib/verification';
 import {settingsManager} from '../..';
 import {inlineCode} from '@discordjs/builders';
+import {userUrl} from '../../lib/user';
 
 @ApplyOptions<Listener.Options>({event: Events.InteractionCreate})
 export class InteractionCreateListener extends Listener<
@@ -153,7 +154,7 @@ export class InteractionCreateListener extends Listener<
             .setColor(Colors.BLUE)
             .setAuthor({
               name: interaction.user.tag,
-              url: `https://discord.com/users/${interaction.user.id}`,
+              url: userUrl(interaction.user.id),
               iconURL: (interaction.member instanceof GuildMember
                 ? interaction.member
                 : interaction.user

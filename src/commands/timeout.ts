@@ -5,6 +5,7 @@ import {MessageEmbed, Permissions} from 'discord.js';
 import {DurationUnit} from '../lib/duration';
 import {Colors} from '../lib/embeds';
 import {messageLogger} from '..';
+import {userUrl} from '../lib/user';
 
 @ApplyOptions<Command.Options>({
   description: 'Timeout user',
@@ -51,7 +52,7 @@ export class TimeoutCommand extends Command {
       .setColor(Colors.BLUE)
       .setAuthor({
         name: user.tag,
-        url: `https://discord.com/users/${user.id}`,
+        url: userUrl(user.id),
         iconURL: member.displayAvatarURL({dynamic: true}),
       })
       .setDescription(

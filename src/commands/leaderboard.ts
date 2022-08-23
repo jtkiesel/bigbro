@@ -1,4 +1,4 @@
-import {bold, inlineCode, userMention} from '@discordjs/builders';
+import {bold, hyperlink, inlineCode, userMention} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
 import {
@@ -13,6 +13,7 @@ import type {AbstractCursor} from 'mongodb';
 import {messageCounts} from '..';
 import type {MessageCount} from '../lib/leaderboard';
 import {Colors} from '../lib/embeds';
+import {userUrl} from '../lib/user';
 
 @ApplyOptions<Command.Options>({
   description: 'Get server message count leaderboard',
@@ -109,7 +110,7 @@ export class LeaderboardCommand extends Command {
     if (index < cache.length) {
       return cache[index];
     }
-    const users: LeaderboardUser[] = [];
+    const users = new Array<LeaderboardUser>();
     for (let i = 0; i < LeaderboardCommand.PAGE_SIZE; ) {
       const user = await leaderboardUsers.next();
       if (!user) {
@@ -125,7 +126,7 @@ export class LeaderboardCommand extends Command {
     const page = users
       .map(({_id, count}, i) => [
         this.formatRank(start + i),
-        userMention(_id),
+        this.formatUser(members, _id),
         inlineCode(`${count} messages`),
       ])
       .map(columns => columns.join(' '))
@@ -142,6 +143,17 @@ export class LeaderboardCommand extends Command {
           LeaderboardCommand.PADDING_R,
         ].join('')
       : bold(inlineCode(`#${String(index + 1).padEnd(3)}`));
+  }
+
+  private formatUser(
+    members: Collection<string, GuildMember>,
+    userId: string
+  ): string {
+    const member = members.get(userId);
+    return hyperlink(
+      member?.nickname ?? member?.user.username ?? userId,
+      userUrl(userId)
+    );
   }
 
   private async actionRow(
