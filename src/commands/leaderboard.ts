@@ -33,8 +33,6 @@ export class LeaderboardCommand extends Command {
   private static readonly BUTTON_PREV = 'prev';
   private static readonly BUTTON_NEXT = 'next';
 
-  private readonly guildsWithMembersFetched = new Set<string>();
-
   public override async chatInputRun(
     interaction: Command.ChatInputInteraction
   ) {
@@ -53,11 +51,6 @@ export class LeaderboardCommand extends Command {
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const cachedPages = new Array<string>();
 
-    if (!this.guildsWithMembersFetched.has(interaction.guildId)) {
-      await guild.members.fetch();
-      this.guildsWithMembersFetched.add(interaction.guildId);
-    }
-
     const embed = new MessageEmbed()
       .setColor(Colors.GREEN)
       .setTitle('Message Count Leaderboard');
@@ -67,7 +60,7 @@ export class LeaderboardCommand extends Command {
           await this.page(
             page,
             leaderboardUsers,
-            guild.members.cache,
+            await guild.members.fetch(),
             cachedPages
           )
         ),

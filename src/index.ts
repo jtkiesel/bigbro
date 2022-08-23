@@ -50,7 +50,7 @@ const discordClient = new SapphireClient({
     GuildEmojiManager: 0,
     GuildBanManager: 0,
     GuildInviteManager: 0,
-    GuildMemberManager: Number.MAX_VALUE,
+    GuildMemberManager: Infinity,
     GuildStickerManager: 0,
     GuildScheduledEventManager: 0,
     MessageManager: {
