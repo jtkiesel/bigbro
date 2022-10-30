@@ -209,11 +209,7 @@ export class InteractionCreateListener extends Listener<
 
     const member = await guild.members.fetch(interaction.member.user.id);
 
-    const isCommonProgram = ['VRC', 'VEXU'].includes(program.name);
-    const teamString = isCommonProgram
-      ? teamNumber
-      : [program.name, teamNumber].join(' ');
-    const nickname = `${name}│${teamString}`;
+    const nickname = this.nickname(name, program, teamNumber);
     const reason = 'Automatic verification';
 
     await member.setNickname(nickname, reason);
@@ -247,6 +243,17 @@ export class InteractionCreateListener extends Listener<
         ),
       ],
     });
+  }
+
+  private nickname(name: string, program: Program, teamNumber: string) {
+    if (program === Program.VIQC) {
+      return name;
+    }
+    const isCommonProgram = [Program.VRC, Program.VEXU].includes(program);
+    const team = isCommonProgram
+      ? teamNumber
+      : [program.name, teamNumber].join(' ');
+    return [name, team].join('│');
   }
 
   private async sendValidationFailure(
