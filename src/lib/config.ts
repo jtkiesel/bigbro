@@ -63,4 +63,3 @@ export const mongoUrl = Config.string('MONGO_URL').orElseThrow();
 export const nodeEnv = Config.string('NODE_ENV').orElse('development');
 export const robotEventsToken =
   Config.string('ROBOT_EVENTS_TOKEN').orElseThrow();
-export const version = Config.string('npm_package_version').orElseThrow();
