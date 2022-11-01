@@ -68,7 +68,7 @@ export class MessageCounter {
   }
 
   public async countMessagesInChannel(channel: GuildChannel) {
-    if (!channel.isText()) {
+    if (!channel?.isText()) {
       return;
     }
 

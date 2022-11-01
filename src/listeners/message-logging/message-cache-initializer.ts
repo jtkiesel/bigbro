@@ -13,7 +13,7 @@ export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
         const channels = await guild.channels.fetch();
         await Promise.all(
           channels
-            .filter(channel => channel.isText())
+            .filter(channel => channel?.isText())
             .map(channel => channel as GuildTextBasedChannel)
             .map(async channel => {
               if (
