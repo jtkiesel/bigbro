@@ -2,7 +2,6 @@ import {ApplyOptions} from '@sapphire/decorators';
 import {Events, Listener} from '@sapphire/framework';
 import type {Message, PartialMessage} from 'discord.js';
 import {messageLogger} from '../..';
-import {MessageChangeType} from '../../lib/logging';
 
 @ApplyOptions<Listener.Options>({event: Events.MessageUpdate})
 export class MessageUpdateListener extends Listener<
@@ -13,11 +12,7 @@ export class MessageUpdateListener extends Listener<
     newMessage: Message | PartialMessage
   ) {
     if (oldMessage.content !== newMessage.content) {
-      await messageLogger.logMessageChange(
-        oldMessage,
-        MessageChangeType.UPDATED,
-        newMessage.editedAt
-      );
+      await messageLogger.logMessageUpdate(oldMessage, newMessage.editedAt);
     }
   }
 }

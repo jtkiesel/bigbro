@@ -6,6 +6,7 @@ import {
   MessageButton,
   MessageEmbed,
   PartialMessage,
+  User,
 } from 'discord.js';
 import {Colors} from './embeds';
 import type {SettingsManager} from './settings';
@@ -27,14 +28,34 @@ export class MessageLogger {
     return loggingChannel?.isText() ? loggingChannel : null;
   }
 
-  public async logMessageDelete(message: Message | PartialMessage) {
-    this.logMessageChange(message, MessageChangeType.DELETED, Date.now());
+  public async logMessageDelete(
+    message: Message | PartialMessage,
+    executor?: User
+  ) {
+    await this.logMessageChange(
+      message,
+      MessageChangeType.DELETED,
+      Date.now(),
+      executor
+    );
   }
 
-  public async logMessageChange(
+  public async logMessageUpdate(
+    oldMessage: Message | PartialMessage,
+    timestamp: Date | number | null
+  ) {
+    await this.logMessageChange(
+      oldMessage,
+      MessageChangeType.UPDATED,
+      timestamp
+    );
+  }
+
+  private async logMessageChange(
     message: Message | PartialMessage,
     type: MessageChangeType,
-    timestamp: Date | number | null
+    timestamp: Date | number | null,
+    executor?: User
   ) {
     if (message.partial || message.author.bot || !message.inGuild()) {
       return;
@@ -45,6 +66,7 @@ export class MessageLogger {
       return;
     }
 
+    const executorString = executor ? ` by ${executor}` : '';
     const embed = new MessageEmbed()
       .setColor(this.messageChangeColor(type))
       .setAuthor({
@@ -56,7 +78,9 @@ export class MessageLogger {
       })
       .setDescription(
         [
-          bold(`Message by ${message.author} ${type} in ${message.channel}`),
+          bold(
+            `Message by ${message.author} ${type}${executorString} in ${message.channel}`
+          ),
           message.content,
         ].join('\n')
       )
@@ -94,7 +118,7 @@ export class MessageLogger {
   }
 }
 
-export enum MessageChangeType {
+enum MessageChangeType {
   CREATED = 'created',
   DELETED = 'deleted',
   UPDATED = 'updated',
