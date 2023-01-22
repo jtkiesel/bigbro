@@ -27,26 +27,23 @@
     "start": "node dist"
   },
   "dependencies": {
-    "@discordjs/builders": "^0.15.0",
-    "@sapphire/decorators": "^4.3.6",
-    "@sapphire/discord.js-utilities": "^4.11.3",
-    "@sapphire/framework": "next",
-    "@sapphire/plugin-logger": "^2.2.1",
-    "@sapphire/plugin-subcommands": "pr-271",
-    "axios": "^0.27.2",
-    "discord.js": "^13.8.0",
-    "dotenv": "^16.0.1",
-    "lru-cache": "^7.10.1",
-    "mongodb": "^4.7.0"
+    "@sapphire/decorators": "^6.0.0",
+    "@sapphire/framework": "^4.0.2",
+    "@sapphire/plugin-logger": "^3.0.1",
+    "@sapphire/plugin-subcommands": "^4.0.0",
+    "axios": "^1.2.3",
+    "discord.js": "^14.7.1",
+    "dotenv": "^16.0.3",
+    "lru-cache": "^7.14.1",
+    "mongodb": "^4.13.0"
   },
   "devDependencies": {
     "@sapphire/ts-config": "^3.3.4",
-    "@types/mongodb": "^4.0.7",
-    "tsc-watch": "^5.0.3",
-    "typescript": "^4.7.4"
+    "tsc-watch": "^6.0.0",
+    "typescript": "^4.9.4"
   },
   "engines": {
-    "node": ">=16.6.0"
+    "node": ">=16.9.0"
   },
-  "packageManager": "yarn@3.2.1"
+  "packageManager": "yarn@3.3.1"
 }

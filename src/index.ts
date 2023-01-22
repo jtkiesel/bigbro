@@ -4,7 +4,7 @@ import {
   SapphireClient,
 } from '@sapphire/framework';
 import '@sapphire/plugin-logger/register';
-import {Constants, Intents, Options} from 'discord.js';
+import {GatewayIntentBits, Options, Partials} from 'discord.js';
 import {MongoClient} from 'mongodb';
 import {logLevel, messageCacheSize, mongoUrl} from './lib/config';
 import {
@@ -37,12 +37,12 @@ ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(
 
 const discordClient = new SapphireClient({
   shards: 'auto',
-  partials: [Constants.PartialTypes.MESSAGE],
+  partials: [Partials.Message],
   intents: [
-    Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MEMBERS,
-    Intents.FLAGS.GUILD_INVITES,
-    Intents.FLAGS.GUILD_MESSAGES,
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
   ],
   logger: {level: logLevel},
   makeCache: Options.cacheWithLimits({

@@ -1,5 +1,5 @@
 export class Program {
-  public static readonly VRC = new Program({
+  public static readonly Vrc = new Program({
     name: 'VRC',
     description: 'VEX Robotics Competition',
     role: '197836716726288387',
@@ -8,7 +8,7 @@ export class Program {
     teamExamples: ['1', '12345A'],
     ids: [1],
   });
-  public static readonly VEXU = new Program({
+  public static readonly VexU = new Program({
     name: 'VEXU',
     description: 'VEX U college and university competition',
     role: '305392771324313610',
@@ -17,7 +17,7 @@ export class Program {
     teamExamples: ['AB', 'ABCDE12'],
     ids: [4],
   });
-  public static readonly VAIC = new Program({
+  public static readonly Vaic = new Program({
     name: 'VAIC',
     description: 'VEX AI Competition',
     role: '706299363588177940',
@@ -26,7 +26,7 @@ export class Program {
     teamExamples: ['1', '12345A', 'AB', 'ABCDE12'],
     ids: [48, 49],
   });
-  public static readonly VIQC = new Program({
+  public static readonly Viqc = new Program({
     name: 'VIQC',
     description: 'VEX IQ Competition',
     role: '197817210729791489',
@@ -35,7 +35,7 @@ export class Program {
     teamExamples: ['1', '12345A'],
     ids: [41],
   });
-  public static readonly FRC = new Program({
+  public static readonly Frc = new Program({
     name: 'FRC',
     description: 'FIRST Robotics Competition',
     role: '263900951738318849',
@@ -43,7 +43,7 @@ export class Program {
     teamRegExp: /^\d{1,4}$/,
     teamExamples: ['1', '1234'],
   });
-  public static readonly FTC = new Program({
+  public static readonly Ftc = new Program({
     name: 'FTC',
     description: 'FIRST Tech Challenge',
     role: '263900951738318849',
@@ -51,20 +51,20 @@ export class Program {
     teamRegExp: /^\d{1,5}$/,
     teamExamples: ['1', '12345'],
   });
-  public static readonly NONE = new Program({
+  public static readonly None = new Program({
     name: 'None',
     role: '197817210729791489',
     emoji: '❓',
   });
 
-  private static readonly VALUES = [
-    this.VRC,
-    this.VEXU,
-    this.VAIC,
-    this.VIQC,
-    this.FRC,
-    this.FTC,
-    this.NONE,
+  private static readonly Values = [
+    this.Vrc,
+    this.VexU,
+    this.Vaic,
+    this.Viqc,
+    this.Frc,
+    this.Ftc,
+    this.None,
   ];
 
   public readonly name: string;
@@ -88,6 +88,6 @@ export class Program {
   }
 
   public static values() {
-    return Program.VALUES;
+    return Program.Values;
   }
 }

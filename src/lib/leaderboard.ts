@@ -1,14 +1,13 @@
 import {
-  BaseGuildTextChannel,
   type Guild,
-  type GuildChannel,
   type Message,
-  type NewsChannel,
   type PartialMessage,
-  Permissions,
-  type TextChannel,
+  type NonThreadGuildBasedChannel,
+  type GuildTextBasedChannel,
+  PermissionFlagsBits,
 } from 'discord.js';
 import {type Collection, Long} from 'mongodb';
+import {nonNull} from './predicates';
 
 export class MessageCounter {
   private readonly missedMessagesCountedChannels = new Set<string>();
@@ -34,7 +33,7 @@ export class MessageCounter {
         .then(async result => {
           if (
             !result.value ||
-            !(message.channel instanceof BaseGuildTextChannel) ||
+            !message.channel.isTextBased() ||
             this.missedMessagesCountedChannels.has(message.channelId)
           ) {
             return;
@@ -63,22 +62,24 @@ export class MessageCounter {
   public async countMessagesInGuild(guild: Guild) {
     const channels = await guild.channels.fetch(undefined, {cache: false});
     await Promise.all(
-      channels.map(channel => this.countMessagesInChannel(channel))
+      channels
+        .filter(nonNull)
+        .map(channel => this.countMessagesInChannel(channel))
     );
   }
 
-  public async countMessagesInChannel(channel: GuildChannel) {
-    if (!channel?.isText()) {
+  public async countMessagesInChannel(channel: NonThreadGuildBasedChannel) {
+    if (!channel.isTextBased()) {
       return;
     }
 
     if (
       !channel.lastMessageId ||
-      !channel.guild.me
+      !channel.guild.members.me
         ?.permissionsIn(channel)
         .has([
-          Permissions.FLAGS.VIEW_CHANNEL,
-          Permissions.FLAGS.READ_MESSAGE_HISTORY,
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.ReadMessageHistory,
         ])
     ) {
       await Promise.all([
@@ -106,7 +107,7 @@ export class MessageCounter {
   }
 
   private async countMessagesInChannelBetween(
-    channel: NewsChannel | TextChannel,
+    channel: GuildTextBasedChannel,
     before?: string,
     after?: Long
   ) {
@@ -114,10 +115,11 @@ export class MessageCounter {
     let lastMessageLong: Long | undefined;
     while (true) {
       const messages = (
-        await channel.messages.fetch(
-          {limit: 100, before: firstMessage},
-          {cache: false}
-        )
+        await channel.messages.fetch({
+          limit: 100,
+          before: firstMessage,
+          cache: false,
+        })
       ).filter(({id}) => !after || this.longFromSnowflake(id).gt(after));
       firstMessage = messages.lastKey();
       if (!firstMessage) {

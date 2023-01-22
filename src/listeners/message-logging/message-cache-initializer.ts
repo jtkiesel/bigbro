@@ -1,7 +1,8 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {Events, Listener} from '@sapphire/framework';
-import {Client, GuildTextBasedChannel, Permissions} from 'discord.js';
+import {type Client, PermissionFlagsBits} from 'discord.js';
 import {messageCacheSize} from '../../lib/config';
+import {nonNull} from '../../lib/predicates';
 
 @ApplyOptions<Listener.Options>({event: Events.ClientReady, once: true})
 export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
@@ -12,37 +13,35 @@ export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
         const guild = await oAuth2Guild.fetch();
         const channels = await guild.channels.fetch();
         await Promise.all(
-          channels
-            .filter(channel => channel?.isText())
-            .map(channel => channel as GuildTextBasedChannel)
-            .map(async channel => {
-              if (
-                !guild.me
-                  ?.permissionsIn(channel)
-                  .has([
-                    Permissions.FLAGS.VIEW_CHANNEL,
-                    Permissions.FLAGS.READ_MESSAGE_HISTORY,
-                  ])
-              ) {
-                return;
-              }
-              await channel.messages.fetchPinned();
+          channels.filter(nonNull).map(async channel => {
+            if (
+              !channel.isTextBased() ||
+              !guild.members.me
+                ?.permissionsIn(channel)
+                .has([
+                  PermissionFlagsBits.ViewChannel,
+                  PermissionFlagsBits.ReadMessageHistory,
+                ])
+            ) {
+              return;
+            }
+            await channel.messages.fetchPinned();
 
-              let firstMessageId: string | undefined;
-              while (channel.messages.cache.size < messageCacheSize) {
-                const messages = await channel.messages.fetch({
-                  limit: Math.min(
-                    messageCacheSize - channel.messages.cache.size,
-                    100
-                  ),
-                  before: firstMessageId,
-                });
-                firstMessageId = messages.lastKey();
-                if (!firstMessageId) {
-                  break;
-                }
+            let firstMessageId: string | undefined;
+            while (channel.messages.cache.size < messageCacheSize) {
+              const messages = await channel.messages.fetch({
+                limit: Math.min(
+                  messageCacheSize - channel.messages.cache.size,
+                  100
+                ),
+                before: firstMessageId,
+              });
+              firstMessageId = messages.lastKey();
+              if (!firstMessageId) {
+                break;
               }
-            })
+            }
+          })
         );
       })
     );

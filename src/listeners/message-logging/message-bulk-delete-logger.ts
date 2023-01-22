@@ -1,6 +1,11 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {Events, Listener} from '@sapphire/framework';
-import {Collection, GuildAuditLogs, Message, PartialMessage} from 'discord.js';
+import {
+  AuditLogEvent,
+  type Collection,
+  type Message,
+  type PartialMessage,
+} from 'discord.js';
 import {messageLogger} from '../..';
 
 @ApplyOptions<Listener.Options>({event: Events.MessageBulkDelete})
@@ -22,7 +27,7 @@ export class MessageBulkDeleteListener extends Listener<
   ) {
     const auditLogs = await message.guild?.fetchAuditLogs({
       limit: 1,
-      type: GuildAuditLogs.Actions.MESSAGE_BULK_DELETE,
+      type: AuditLogEvent.MessageBulkDelete,
     });
     const auditLog = auditLogs?.entries.first();
     if (

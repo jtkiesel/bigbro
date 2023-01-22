@@ -6,23 +6,23 @@ export interface VerifiedMember {
 }
 
 export enum ButtonId {
-  APPROVE = 'approve',
-  DENY = 'deny',
-  VERIFY = 'verify',
+  Approve = 'approve',
+  Deny = 'deny',
+  Verify = 'verify',
 }
 
 export enum FieldName {
-  NICKNAME = 'Nickname',
-  USER_ID = 'User ID',
+  Nickname = 'Nickname',
+  UserId = 'User ID',
 }
 
 export enum ModalId {
-  VERIFY = 'verify',
+  Verify = 'verify',
 }
 
 export enum InputId {
-  NAME = 'name',
-  PROGRAM = 'program',
-  TEAM = 'team',
-  EXPLANATION = 'explanation',
+  Name = 'name',
+  Program = 'program',
+  Team = 'team',
+  Explanation = 'explanation',
 }

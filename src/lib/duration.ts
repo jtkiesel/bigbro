@@ -1,5 +1,5 @@
 export class DurationUnit {
-  private static readonly VALUES = [
+  private static readonly Values = [
     {name: 'day', milliseconds: 86_400_000},
     {name: 'hour', milliseconds: 3_600_000},
     {name: 'minute', milliseconds: 60_000},
@@ -24,7 +24,7 @@ export class DurationUnit {
   }
 
   public static values() {
-    return DurationUnit.VALUES;
+    return DurationUnit.Values;
   }
 
   public format(value: number) {

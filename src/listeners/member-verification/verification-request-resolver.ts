@@ -1,9 +1,9 @@
 import {userMention} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Events, Listener} from '@sapphire/framework';
-import {Interaction, MessageEmbed, Permissions} from 'discord.js';
+import {EmbedBuilder, type Interaction, PermissionFlagsBits} from 'discord.js';
 import {settingsManager} from '../..';
-import {Colors} from '../../lib/embeds';
+import {Color} from '../../lib/embeds';
 import {Program} from '../../lib/robotics-program';
 import {ButtonId, FieldName} from '../../lib/verification';
 
@@ -14,7 +14,7 @@ export class InteractionCreateListener extends Listener<
   public override async run(interaction: Interaction) {
     if (
       !interaction.isButton() ||
-      ![ButtonId.APPROVE, ButtonId.DENY].some(
+      ![ButtonId.Approve, ButtonId.Deny].some(
         id => id === interaction.customId
       ) ||
       !interaction.inGuild()
@@ -38,43 +38,44 @@ export class InteractionCreateListener extends Listener<
       return;
     }
 
-    if (!interaction.memberPermissions.has(Permissions.FLAGS.MANAGE_THREADS)) {
-      return interaction.reply({
+    if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageThreads)) {
+      await interaction.reply({
         ephemeral: true,
         content:
           'Please stop interacting with the components on this message. They are only for moderators.',
       });
+      return;
     }
 
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const messageId = interaction.message.id;
     const message = await channel.messages.fetch(messageId);
     const fields = message.embeds[0].fields;
-    const userId = fields.find(({name}) => name === FieldName.USER_ID)!.value;
+    const userId = fields.find(({name}) => name === FieldName.UserId)!.value;
 
-    if (interaction.customId === ButtonId.APPROVE) {
+    if (interaction.customId === ButtonId.Approve) {
       const member = await guild.members.fetch(userId);
       const nickname = fields.find(
-        ({name}) => name === FieldName.NICKNAME
+        ({name}) => name === FieldName.Nickname
       )!.value;
       const reason = `Verification request approved by ${interaction.user.tag}`;
       member.setNickname(nickname, reason);
-      member.roles.add([verifiedRoleId, Program.NONE.role]);
+      member.roles.add([verifiedRoleId, Program.None.role]);
 
       const verifiedChannelId = guildSettings.verifiedChannel;
       if (!verifiedChannelId) {
         return;
       }
       const verifiedChannel = await guild.channels.fetch(verifiedChannelId);
-      if (!verifiedChannel?.isText()) {
+      if (!verifiedChannel?.isTextBased()) {
         return;
       }
       await verifiedChannel.send(`${member} Welcome!`);
 
       await interaction.reply({
         embeds: [
-          new MessageEmbed()
-            .setColor(Colors.GREEN)
+          new EmbedBuilder()
+            .setColor(Color.Green)
             .setDescription(`Verification request for ${member} approved`),
         ],
         ephemeral: true,
@@ -84,8 +85,8 @@ export class InteractionCreateListener extends Listener<
     } else {
       await interaction.reply({
         embeds: [
-          new MessageEmbed()
-            .setColor(Colors.GREEN)
+          new EmbedBuilder()
+            .setColor(Color.Green)
             .setDescription(
               `Verification request for ${userMention(userId)} denied`
             ),

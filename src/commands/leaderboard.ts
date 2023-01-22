@@ -2,41 +2,37 @@ import {bold, hyperlink, inlineCode, userMention} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
 import {
-  type Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  type ChatInputCommandInteraction,
   type Collection,
   type GuildMember,
+  type InteractionReplyOptions,
 } from 'discord.js';
 import type {AbstractCursor} from 'mongodb';
 import {messageCounts} from '..';
 import type {MessageCount} from '../lib/leaderboard';
-import {Colors} from '../lib/embeds';
+import {Color} from '../lib/embeds';
 import {userUrl} from '../lib/user';
 
 @ApplyOptions<Command.Options>({
   description: 'Get server message count leaderboard',
-  runIn: [CommandOptionsRunTypeEnum.GuildText],
-  chatInputCommand: {
-    register: true,
-    idHints: ['988533581695578153', '983911169758732338'],
-  },
+  runIn: [CommandOptionsRunTypeEnum.GuildAny],
 })
 export class LeaderboardCommand extends Command {
-  private static readonly PAGE_SIZE = 10;
-  private static readonly RANK_EMOJIS = ['🥇', '🥈', '🥉'];
-  private static readonly ZERO_WIDTH_SPACE = '\u200B';
-  private static readonly PADDING_L = `${LeaderboardCommand.ZERO_WIDTH_SPACE} `;
-  private static readonly PADDING_R =
-    ` ${LeaderboardCommand.ZERO_WIDTH_SPACE}`.repeat(4);
-  private static readonly BUTTON_PREV = 'prev';
-  private static readonly BUTTON_NEXT = 'next';
+  private static readonly PageSize = 10;
+  private static readonly RankEmojis = ['🥇', '🥈', '🥉'];
+  private static readonly ZeroWidthSpace = '\u200B';
+  private static readonly PaddingL = `${LeaderboardCommand.ZeroWidthSpace} `;
+  private static readonly PaddingR =
+    ` ${LeaderboardCommand.ZeroWidthSpace}`.repeat(4);
+  private static readonly ButtonPrev = 'prev';
+  private static readonly ButtonNext = 'next';
 
-  public override async chatInputRun(
-    interaction: Command.ChatInputInteraction
-  ) {
-    if (!interaction.inGuild() || !interaction.channel) {
+  public override async chatInputRun(interaction: ChatInputCommandInteraction) {
+    if (!interaction.inGuild()) {
       return;
     }
     await interaction.deferReply();
@@ -51,47 +47,55 @@ export class LeaderboardCommand extends Command {
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const cachedPages = new Array<string>();
 
-    const embed = new MessageEmbed()
-      .setColor(Colors.GREEN)
-      .setTitle('Message Count Leaderboard');
-    const replyOptions = async () => ({
+    const replyOptions = async (): Promise<InteractionReplyOptions> => ({
       embeds: [
-        embed.setDescription(
-          await this.page(
-            page,
-            leaderboardUsers,
-            await guild.members.fetch(),
-            cachedPages
-          )
-        ),
+        new EmbedBuilder()
+          .setColor(Color.Green)
+          .setTitle('Message Count Leaderboard')
+          .setDescription(
+            await this.page(
+              page,
+              leaderboardUsers,
+              await guild.members.fetch(),
+              cachedPages
+            )
+          ),
       ],
       components: [
         await this.actionRow(page, leaderboardUsers, cachedPages.length),
       ],
     });
-    const reply = (await interaction.followUp({
+    const reply = await interaction.followUp({
       fetchReply: true,
       ...(await replyOptions()),
-    })) as Message;
+    });
 
     const collector = reply.createMessageComponentCollector();
     collector.on('collect', async i => {
       if (i.user.id !== interaction.user.id) {
-        return i.reply({
+        await i.reply({
           ephemeral: true,
           content: `Please stop interacting with the components on this message. They are only for ${userMention(
             interaction.user.id
           )}.`,
         });
+        return;
       }
       await i.deferUpdate();
-      if (i.customId === LeaderboardCommand.BUTTON_PREV) {
+      if (i.customId === LeaderboardCommand.ButtonPrev) {
         page--;
-      } else if (i.customId === LeaderboardCommand.BUTTON_NEXT) {
+      } else if (i.customId === LeaderboardCommand.ButtonNext) {
         page++;
       }
       await i.editReply(await replyOptions());
     });
+  }
+
+  public override registerApplicationCommands(registry: Command.Registry) {
+    registry.registerChatInputCommand(
+      command => command.setName(this.name).setDescription(this.description),
+      {idHints: ['988533581695578153', '983911169758732338']}
+    );
   }
 
   private async page(
@@ -104,7 +108,7 @@ export class LeaderboardCommand extends Command {
       return cache[index];
     }
     const users = new Array<LeaderboardUser>();
-    for (let i = 0; i < LeaderboardCommand.PAGE_SIZE; ) {
+    for (let i = 0; i < LeaderboardCommand.PageSize; ) {
       const user = await leaderboardUsers.next();
       if (!user) {
         break;
@@ -115,7 +119,7 @@ export class LeaderboardCommand extends Command {
       users.push(user);
       i++;
     }
-    const start = index * LeaderboardCommand.PAGE_SIZE;
+    const start = index * LeaderboardCommand.PageSize;
     const page = users
       .map(({_id, count}, i) => [
         this.formatRank(start + i),
@@ -129,11 +133,11 @@ export class LeaderboardCommand extends Command {
   }
 
   private formatRank(index: number) {
-    return index < LeaderboardCommand.RANK_EMOJIS.length
+    return index < LeaderboardCommand.RankEmojis.length
       ? [
-          LeaderboardCommand.PADDING_L,
-          LeaderboardCommand.RANK_EMOJIS[index],
-          LeaderboardCommand.PADDING_R,
+          LeaderboardCommand.PaddingL,
+          LeaderboardCommand.RankEmojis[index],
+          LeaderboardCommand.PaddingR,
         ].join('')
       : bold(inlineCode(`#${String(index + 1).padEnd(3)}`));
   }
@@ -156,15 +160,15 @@ export class LeaderboardCommand extends Command {
   ) {
     const isLastPage =
       page === cachedPages - 1 && !(await leaderboardUsers.hasNext());
-    return new MessageActionRow().addComponents(
-      new MessageButton()
-        .setCustomId(LeaderboardCommand.BUTTON_PREV)
-        .setStyle('PRIMARY')
+    return new ActionRowBuilder<ButtonBuilder>().setComponents(
+      new ButtonBuilder()
+        .setCustomId(LeaderboardCommand.ButtonPrev)
+        .setStyle(ButtonStyle.Primary)
         .setEmoji('◀️')
         .setDisabled(page === 0),
-      new MessageButton()
-        .setCustomId(LeaderboardCommand.BUTTON_NEXT)
-        .setStyle('PRIMARY')
+      new ButtonBuilder()
+        .setCustomId(LeaderboardCommand.ButtonNext)
+        .setStyle(ButtonStyle.Primary)
         .setEmoji('▶️')
         .setDisabled(isLastPage)
     );

@@ -1,5 +1,5 @@
 import {ApplyOptions} from '@sapphire/decorators';
-import {Events, type Piece, Listener, type Store} from '@sapphire/framework';
+import {Events, Listener, type Piece, type Store} from '@sapphire/framework';
 import {
   blue,
   gray,

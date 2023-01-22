@@ -1,39 +1,41 @@
 import {bold} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
-import {MessageEmbed, Permissions} from 'discord.js';
+import {
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  PermissionFlagsBits,
+} from 'discord.js';
 import {DurationUnit} from '../lib/duration';
-import {Colors} from '../lib/embeds';
+import {Color} from '../lib/embeds';
 import {messageLogger} from '..';
 import {userUrl} from '../lib/user';
 
 @ApplyOptions<Command.Options>({
   description: 'Timeout user',
-  requiredClientPermissions: [Permissions.FLAGS.MODERATE_MEMBERS],
-  requiredUserPermissions: [Permissions.FLAGS.MODERATE_MEMBERS],
+  requiredClientPermissions: [PermissionFlagsBits.ModerateMembers],
+  requiredUserPermissions: [PermissionFlagsBits.ModerateMembers],
   runIn: [CommandOptionsRunTypeEnum.GuildAny],
 })
 export class TimeoutCommand extends Command {
-  private static readonly MILLISECONDS_BY_UNIT = DurationUnit.values().reduce(
+  private static readonly MillisecondsByUnit = DurationUnit.values().reduce(
     (map, unit) => map.set(unit.name, unit.milliseconds),
     new Map<string, number>()
   );
 
-  public override async chatInputRun(
-    interaction: Command.ChatInputInteraction
-  ) {
+  public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     if (!interaction.inGuild()) {
       return;
     }
-    const user = interaction.options.getUser(Option.USER, true);
-    const duration = interaction.options.getNumber(Option.DURATION, true);
-    const unit = interaction.options.getString(Option.UNIT, true);
-    const reason = interaction.options.getString(Option.REASON);
+    const user = interaction.options.getUser(Option.User, true);
+    const duration = interaction.options.getNumber(Option.Duration, true);
+    const unit = interaction.options.getString(Option.Unit, true);
+    const reason = interaction.options.getString(Option.Reason);
 
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const member = await guild.members.fetch(user);
     await member.timeout(
-      duration * TimeoutCommand.MILLISECONDS_BY_UNIT.get(unit)!,
+      duration * TimeoutCommand.MillisecondsByUnit.get(unit)!,
       reason ?? undefined
     );
 
@@ -48,12 +50,12 @@ export class TimeoutCommand extends Command {
       return;
     }
 
-    const embed = new MessageEmbed()
-      .setColor(Colors.BLUE)
+    const embed = new EmbedBuilder()
+      .setColor(Color.Blue)
       .setAuthor({
         name: user.tag,
         url: userUrl(user.id),
-        iconURL: member.displayAvatarURL({dynamic: true}),
+        iconURL: member.displayAvatarURL(),
       })
       .setDescription(
         bold(`${user} timed out for ${readableDuration} by ${interaction.user}`)
@@ -61,7 +63,7 @@ export class TimeoutCommand extends Command {
       .setFooter({text: `User ID: ${user.id}`})
       .setTimestamp(interaction.createdAt);
     if (reason) {
-      embed.addField('Reason', reason);
+      embed.addFields({name: 'Reason', value: reason});
     }
 
     await logChannel.send({embeds: [embed]});
@@ -75,34 +77,32 @@ export class TimeoutCommand extends Command {
           .setDescription(this.description)
           .addUserOption(user =>
             user
-              .setName(Option.USER)
+              .setName(Option.User)
               .setDescription('The user to timeout')
               .setRequired(true)
           )
           .addNumberOption(duration =>
             duration
-              .setName(Option.DURATION)
+              .setName(Option.Duration)
               .setDescription('The duration of the timeout')
               .setRequired(true)
               .setMinValue(0)
           )
           .addStringOption(unit =>
             unit
-              .setName(Option.UNIT)
+              .setName(Option.Unit)
               .setDescription('The unit of the timeout duration')
               .setRequired(true)
               .setChoices(
-                ...[...TimeoutCommand.MILLISECONDS_BY_UNIT.keys()].map(
-                  name => ({
-                    name,
-                    value: name,
-                  })
-                )
+                ...[...TimeoutCommand.MillisecondsByUnit.keys()].map(name => ({
+                  name,
+                  value: name,
+                }))
               )
           )
           .addStringOption(reason =>
             reason
-              .setName(Option.REASON)
+              .setName(Option.Reason)
               .setDescription('The reason for timing them out, if any')
           ),
       {idHints: ['988533580663779369', '984094351170883605']}
@@ -111,8 +111,8 @@ export class TimeoutCommand extends Command {
 }
 
 enum Option {
-  USER = 'user',
-  DURATION = 'duration',
-  UNIT = 'unit',
-  REASON = 'reason',
+  User = 'user',
+  Duration = 'duration',
+  Unit = 'unit',
+  Reason = 'reason',
 }

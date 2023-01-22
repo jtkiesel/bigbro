@@ -1,14 +1,15 @@
 import {bold} from '@discordjs/builders';
 import {
-  Guild,
-  Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
-  PartialMessage,
-  User,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  type Guild,
+  type Message,
+  type PartialMessage,
+  type User,
 } from 'discord.js';
-import {Colors} from './embeds';
+import {Color} from './embeds';
 import type {SettingsManager} from './settings';
 import {userUrl} from './user';
 
@@ -25,7 +26,7 @@ export class MessageLogger {
 
     const loggingChannel = await guild.channels.fetch(loggingChannelId);
 
-    return loggingChannel?.isText() ? loggingChannel : null;
+    return loggingChannel?.isTextBased() ? loggingChannel : null;
   }
 
   public async logMessageDelete(
@@ -34,7 +35,7 @@ export class MessageLogger {
   ) {
     await this.logMessageChange(
       message,
-      MessageChangeType.DELETED,
+      MessageChangeType.Deleted,
       Date.now(),
       executor
     );
@@ -46,7 +47,7 @@ export class MessageLogger {
   ) {
     await this.logMessageChange(
       oldMessage,
-      MessageChangeType.UPDATED,
+      MessageChangeType.Updated,
       timestamp
     );
   }
@@ -67,38 +68,37 @@ export class MessageLogger {
     }
 
     const executorString = executor ? ` by ${executor}` : '';
-    const embed = new MessageEmbed()
-      .setColor(this.messageChangeColor(type))
-      .setAuthor({
-        name: message.author.tag,
-        url: userUrl(message.author.id),
-        iconURL: (message.member ?? message.author).displayAvatarURL({
-          dynamic: true,
-        }),
-      })
-      .setDescription(
-        [
-          bold(
-            `Message by ${message.author} ${type}${executorString} in ${message.channel}`
-          ),
-          message.content,
-        ].join('\n')
-      )
-      .setFooter({
-        text: [
-          `User ID: ${message.author.id}`,
-          `Message ID: ${message.id}`,
-        ].join(' | '),
-      })
-      .setTimestamp(timestamp);
 
     await logChannel.send({
       files: message.attachments.map(({proxyURL}) => proxyURL),
-      embeds: [embed],
+      embeds: [
+        new EmbedBuilder()
+          .setColor(this.messageChangeColor(type))
+          .setAuthor({
+            name: message.author.tag,
+            url: userUrl(message.author.id),
+            iconURL: (message.member ?? message.author).displayAvatarURL(),
+          })
+          .setDescription(
+            [
+              bold(
+                `Message by ${message.author} ${type}${executorString} in ${message.channel}`
+              ),
+              message.content,
+            ].join('\n')
+          )
+          .setFooter({
+            text: [
+              `User ID: ${message.author.id}`,
+              `Message ID: ${message.id}`,
+            ].join(' | '),
+          })
+          .setTimestamp(timestamp),
+      ],
       components: [
-        new MessageActionRow().addComponents(
-          new MessageButton()
-            .setStyle('LINK')
+        new ActionRowBuilder<ButtonBuilder>().setComponents(
+          new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
             .setLabel('Message')
             .setURL(message.url)
         ),
@@ -108,18 +108,18 @@ export class MessageLogger {
 
   private messageChangeColor(type: MessageChangeType) {
     switch (type) {
-      case MessageChangeType.CREATED:
-        return Colors.GREEN;
-      case MessageChangeType.DELETED:
-        return Colors.RED;
-      case MessageChangeType.UPDATED:
-        return Colors.BLUE;
+      case MessageChangeType.Created:
+        return Color.Green;
+      case MessageChangeType.Deleted:
+        return Color.Red;
+      case MessageChangeType.Updated:
+        return Color.Blue;
     }
   }
 }
 
 enum MessageChangeType {
-  CREATED = 'created',
-  DELETED = 'deleted',
-  UPDATED = 'updated',
+  Created = 'created',
+  Deleted = 'deleted',
+  Updated = 'updated',
 }
