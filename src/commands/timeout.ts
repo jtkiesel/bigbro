@@ -1,15 +1,11 @@
-import {bold} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
 import {
-  ChatInputCommandInteraction,
-  EmbedBuilder,
   PermissionFlagsBits,
+  type ChatInputCommandInteraction,
 } from 'discord.js';
 import {DurationUnit} from '../lib/duration';
-import {Color} from '../lib/embeds';
 import {messageLogger} from '..';
-import {userUrl} from '../lib/user';
 
 @ApplyOptions<Command.Options>({
   description: 'Timeout user',
@@ -18,6 +14,7 @@ import {userUrl} from '../lib/user';
   runIn: [CommandOptionsRunTypeEnum.GuildAny],
 })
 export class TimeoutCommand extends Command {
+  private static readonly MaxTimeoutMilliseconds = 2_419_200_000; // 28 days
   private static readonly MillisecondsByUnit = DurationUnit.values().reduce(
     (map, unit) => map.set(unit.name, unit.milliseconds),
     new Map<string, number>()
@@ -34,39 +31,40 @@ export class TimeoutCommand extends Command {
 
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const member = await guild.members.fetch(user);
-    await member.timeout(
-      duration * TimeoutCommand.MillisecondsByUnit.get(unit)!,
-      reason ?? undefined
-    );
+    if (!member) {
+      await interaction.reply({
+        content: `Error: ${user} is not a member of this server`,
+        ephemeral: true,
+      });
+      return;
+    }
 
+    const durationMilliseconds =
+      duration * TimeoutCommand.MillisecondsByUnit.get(unit)!;
     const readableDuration = `${duration} ${unit}${duration !== 1 ? 's' : ''}`;
+    if (durationMilliseconds > TimeoutCommand.MaxTimeoutMilliseconds) {
+      await interaction.reply({
+        content: `Error: ${readableDuration} is greater than the maximum timeout duration (28 days)`,
+        ephemeral: true,
+      });
+      return;
+    }
+
+    await member.timeout(durationMilliseconds, reason ?? undefined);
+
     await interaction.reply({
       content: `${user.tag} timed out for ${readableDuration}`,
       ephemeral: true,
     });
 
-    const logChannel = await messageLogger.channelForGuild(guild);
-    if (!logChannel) {
-      return;
-    }
-
-    const embed = new EmbedBuilder()
-      .setColor(Color.Blue)
-      .setAuthor({
-        name: user.tag,
-        url: userUrl(user.id),
-        iconURL: member.displayAvatarURL(),
-      })
-      .setDescription(
-        bold(`${user} timed out for ${readableDuration} by ${interaction.user}`)
-      )
-      .setFooter({text: `User ID: ${user.id}`})
-      .setTimestamp(interaction.createdAt);
-    if (reason) {
-      embed.addFields({name: 'Reason', value: reason});
-    }
-
-    await logChannel.send({embeds: [embed]});
+    await messageLogger.logMemberTimeout(
+      member,
+      interaction.user,
+      durationMilliseconds,
+      readableDuration,
+      reason,
+      interaction.createdTimestamp
+    );
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {

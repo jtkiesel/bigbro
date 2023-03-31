@@ -8,9 +8,10 @@ import {
   ChannelType,
   EmbedBuilder,
   GuildMember,
+  inlineCode,
+  PermissionFlagsBits,
   type Interaction,
   type ModalSubmitInteraction,
-  PermissionFlagsBits,
   type ThreadChannel,
 } from 'discord.js';
 import {robotEventsToken} from '../../lib/config';
@@ -18,7 +19,6 @@ import {Program} from '../../lib/robotics-program';
 import {Color} from '../../lib/embeds';
 import {ButtonId, FieldName, InputId, ModalId} from '../../lib/verification';
 import {settingsManager} from '../..';
-import {inlineCode} from '@discordjs/builders';
 import {userUrl} from '../../lib/user';
 
 @ApplyOptions<Listener.Options>({event: Events.InteractionCreate})
@@ -220,15 +220,17 @@ export class InteractionCreateListener extends Listener<
     const nickname = this.nickname(name, program, teamNumber);
     const reason = 'Automatic verification';
 
-    await member.setNickname(nickname, reason);
-    await member.roles.add([guildSettings.verifiedRole, program.role], reason);
+    await Promise.all([
+      member.setNickname(nickname, reason),
+      member.roles.add([guildSettings.verifiedRole, program.role], reason),
+    ]);
 
     const verifiedChannelId = guildSettings.verifiedChannel;
     if (!verifiedChannelId) {
       return;
     }
     const verifiedChannel = await guild.channels.fetch(verifiedChannelId);
-    if (!verifiedChannel?.isTextBased()) {
+    if (verifiedChannel?.type !== ChannelType.GuildText) {
       return;
     }
 

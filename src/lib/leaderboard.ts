@@ -1,12 +1,13 @@
 import {
+  ChannelType,
+  PermissionFlagsBits,
+  TextChannel,
   type Guild,
   type Message,
-  type PartialMessage,
   type NonThreadGuildBasedChannel,
-  type GuildTextBasedChannel,
-  PermissionFlagsBits,
+  type PartialMessage,
 } from 'discord.js';
-import {type Collection, Long} from 'mongodb';
+import {Long, type Collection} from 'mongodb';
 import {nonNull} from './predicates';
 
 export class MessageCounter {
@@ -33,7 +34,7 @@ export class MessageCounter {
         .then(async result => {
           if (
             !result.value ||
-            !message.channel.isTextBased() ||
+            message.channel.type !== ChannelType.GuildText ||
             this.missedMessagesCountedChannels.has(message.channelId)
           ) {
             return;
@@ -69,7 +70,7 @@ export class MessageCounter {
   }
 
   public async countMessagesInChannel(channel: NonThreadGuildBasedChannel) {
-    if (!channel.isTextBased()) {
+    if (channel.type !== ChannelType.GuildText) {
       return;
     }
 
@@ -107,7 +108,7 @@ export class MessageCounter {
   }
 
   private async countMessagesInChannelBetween(
-    channel: GuildTextBasedChannel,
+    channel: TextChannel,
     before?: string,
     after?: Long
   ) {

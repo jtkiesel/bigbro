@@ -5,6 +5,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
   EmbedBuilder,
   PermissionsBitField,
   type ChatInputCommandInteraction,
@@ -132,7 +133,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
           );
           return;
         }
-        if (!verificationChannel.isTextBased()) {
+        if (verificationChannel.type !== ChannelType.GuildText) {
           await error(
             interaction,
             `${verificationChannel} is not a text channel`

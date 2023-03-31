@@ -1,23 +1,19 @@
-import {
-  ApplicationCommandRegistries,
-  RegisterBehavior,
-  SapphireClient,
-} from '@sapphire/framework';
+import {SapphireClient} from '@sapphire/framework';
 import '@sapphire/plugin-logger/register';
 import {GatewayIntentBits, Options, Partials} from 'discord.js';
 import {MongoClient} from 'mongodb';
 import {logLevel, messageCacheSize, mongoUrl} from './lib/config';
 import {
+  MessageCounter,
   type ChannelMessages,
   type MessageCount,
-  MessageCounter,
 } from './lib/leaderboard';
 import {MessageLogger} from './lib/logging';
-import {type GuildSettings, SettingsManager} from './lib/settings';
+import {SettingsManager, type GuildSettings} from './lib/settings';
 import type {VerifiedMember} from './lib/verification';
 
 const mongoClient = new MongoClient(mongoUrl);
-const database = mongoClient.db('bigbro');
+const database = mongoClient.db();
 
 const channelMessages = database.collection<ChannelMessages>('channels');
 const guildSettings = database.collection<GuildSettings>('settings');
@@ -31,13 +27,9 @@ export const messageCounter = new MessageCounter(
 export const settingsManager = new SettingsManager(guildSettings);
 export const messageLogger = new MessageLogger(settingsManager);
 
-ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(
-  RegisterBehavior.Overwrite
-);
-
 const discordClient = new SapphireClient({
   shards: 'auto',
-  partials: [Partials.Message],
+  partials: [Partials.GuildMember, Partials.Message],
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,

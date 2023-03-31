@@ -1,7 +1,7 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command} from '@sapphire/framework';
-import {ChatInputCommandInteraction, EmbedBuilder} from 'discord.js';
-import {DurationUnit} from '../lib/duration';
+import {EmbedBuilder, type ChatInputCommandInteraction} from 'discord.js';
+import {duration} from '../lib/duration';
 import {Color} from '../lib/embeds';
 
 @ApplyOptions<Command.Options>({
@@ -13,9 +13,7 @@ export class UptimeCommand extends Command {
       embeds: [
         new EmbedBuilder()
           .setColor(Color.Blue)
-          .setDescription(
-            `🕒 Uptime: ${this.uptime(interaction.client.uptime)}`
-          ),
+          .setDescription(`🕒 Uptime: ${duration(interaction.client.uptime)}`),
       ],
       ephemeral: true,
     });
@@ -26,19 +24,5 @@ export class UptimeCommand extends Command {
       command => command.setName(this.name).setDescription(this.description),
       {idHints: ['988533583431995392', '983913881221079070']}
     );
-  }
-
-  private uptime(milliseconds: number) {
-    return DurationUnit.values()
-      .map(unit => {
-        const value = Math.floor(milliseconds / unit.milliseconds);
-        return {
-          unit,
-          value: unit.modulo ? value % unit.modulo : value,
-        };
-      })
-      .filter(({value}) => value > 0)
-      .map(({unit, value}) => unit.format(value))
-      .join(', ');
   }
 }

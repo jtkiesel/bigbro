@@ -1,6 +1,6 @@
 import {ApplyOptions} from '@sapphire/decorators';
 import {Events, Listener} from '@sapphire/framework';
-import {type Client, PermissionFlagsBits} from 'discord.js';
+import {ChannelType, PermissionFlagsBits, type Client} from 'discord.js';
 import {messageCacheSize} from '../../lib/config';
 import {nonNull} from '../../lib/predicates';
 
@@ -15,7 +15,7 @@ export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
         await Promise.all(
           channels.filter(nonNull).map(async channel => {
             if (
-              !channel.isTextBased() ||
+              channel.type !== ChannelType.GuildText ||
               !guild.members.me
                 ?.permissionsIn(channel)
                 .has([

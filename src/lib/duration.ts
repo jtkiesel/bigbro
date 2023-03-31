@@ -9,25 +9,33 @@ export class DurationUnit {
       new DurationUnit(
         name,
         milliseconds,
-        index > 0 ? array[index - 1].milliseconds / milliseconds : undefined
+        index > 0 ? array[index - 1].milliseconds / milliseconds : Infinity
       )
   );
 
-  public readonly name;
-  public readonly milliseconds;
-  public readonly modulo?;
-
-  private constructor(name: string, milliseconds: number, modulo?: number) {
-    this.name = name;
-    this.milliseconds = milliseconds;
-    this.modulo = modulo;
-  }
+  private constructor(
+    public readonly name: string,
+    public readonly milliseconds: number,
+    public readonly modulo: number
+  ) {}
 
   public static values() {
     return DurationUnit.Values;
   }
 
+  public fromMilliseconds(milliseconds: number) {
+    return Math.floor(milliseconds / this.milliseconds) % this.modulo;
+  }
+
   public format(value: number) {
     return `${value} ${this.name}${value === 1 ? '' : 's'}`;
   }
+}
+
+export function duration(milliseconds: number) {
+  return DurationUnit.values()
+    .map(unit => ({unit, value: unit.fromMilliseconds(milliseconds)}))
+    .filter(({value}) => value > 0)
+    .map(({unit, value}) => unit.format(value))
+    .join(', ');
 }

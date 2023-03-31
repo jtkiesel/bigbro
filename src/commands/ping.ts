@@ -1,7 +1,10 @@
-import {inlineCode} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command} from '@sapphire/framework';
-import {EmbedBuilder, type ChatInputCommandInteraction} from 'discord.js';
+import {
+  EmbedBuilder,
+  inlineCode,
+  type ChatInputCommandInteraction,
+} from 'discord.js';
 import {Color} from '../lib/embeds';
 
 @ApplyOptions<Command.Options>({description: 'Test connection to Discord'})

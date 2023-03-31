@@ -1,11 +1,14 @@
-import {bold, hyperlink, inlineCode, userMention} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
 import {
   ActionRowBuilder,
+  bold,
   ButtonBuilder,
   ButtonStyle,
   EmbedBuilder,
+  hyperlink,
+  inlineCode,
+  userMention,
   type ChatInputCommandInteraction,
   type Collection,
   type GuildMember,

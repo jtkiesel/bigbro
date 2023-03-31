@@ -1,7 +1,12 @@
-import {userMention} from '@discordjs/builders';
 import {ApplyOptions} from '@sapphire/decorators';
 import {Events, Listener} from '@sapphire/framework';
-import {EmbedBuilder, type Interaction, PermissionFlagsBits} from 'discord.js';
+import {
+  ChannelType,
+  EmbedBuilder,
+  PermissionFlagsBits,
+  userMention,
+  type Interaction,
+} from 'discord.js';
 import {settingsManager} from '../..';
 import {Color} from '../../lib/embeds';
 import {Program} from '../../lib/robotics-program';
@@ -38,9 +43,10 @@ export class InteractionCreateListener extends Listener<
       return;
     }
 
+    await interaction.deferReply({ephemeral: true});
+
     if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageThreads)) {
-      await interaction.reply({
-        ephemeral: true,
+      await interaction.followUp({
         content:
           'Please stop interacting with the components on this message. They are only for moderators.',
       });
@@ -64,26 +70,31 @@ export class InteractionCreateListener extends Listener<
 
       const verifiedChannelId = guildSettings.verifiedChannel;
       if (!verifiedChannelId) {
+        await interaction.followUp({
+          content: 'No verified channel set up.',
+        });
         return;
       }
       const verifiedChannel = await guild.channels.fetch(verifiedChannelId);
-      if (!verifiedChannel?.isTextBased()) {
+      if (verifiedChannel?.type !== ChannelType.GuildText) {
+        await interaction.followUp({
+          content: 'Verified channel is not a text channel.',
+        });
         return;
       }
       await verifiedChannel.send(`${member} Welcome!`);
 
-      await interaction.reply({
+      await interaction.followUp({
         embeds: [
           new EmbedBuilder()
             .setColor(Color.Green)
             .setDescription(`Verification request for ${member} approved`),
         ],
-        ephemeral: true,
       });
 
       await channel.setArchived(true, reason);
     } else {
-      await interaction.reply({
+      await interaction.followUp({
         embeds: [
           new EmbedBuilder()
             .setColor(Color.Green)
@@ -91,7 +102,6 @@ export class InteractionCreateListener extends Listener<
               `Verification request for ${userMention(userId)} denied`
             ),
         ],
-        ephemeral: true,
       });
 
       await channel.setArchived(

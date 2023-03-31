@@ -13,14 +13,14 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Environment Variables
 
-|       Variable       | Required |    Default    |                                  Description                                   |
-| :------------------: | :------: | :-----------: | :----------------------------------------------------------------------------: |
-|   `DISCORD_TOKEN`    |    ✓     |               |                  Token of the Discord account to log in with                   |
-|     `MONGO_URL`      |    ✓     |               |                         MongoDB server connection URI                          |
-| `ROBOT_EVENTS_TOKEN` |    ✓     |               |                             Robot Events API token                             |
-|     `LOG_LEVEL`      |          |    `INFO`     |                               Minimum log level                                |
-| `MESSAGE_CACHE_SIZE` |          |     `250`     | Maximum number of messages to cache per channel, including all pinned messages |
-|      `NODE_ENV`      |          | `development` |                        Node.JS application environment                         |
+|       Variable       | Required |              Default               |                              Description                               |
+| :------------------: | :------: | :--------------------------------: | :--------------------------------------------------------------------: |
+|   `DISCORD_TOKEN`    |    ✓     |                                    |              Token of the Discord account to log in with               |
+|     `MONGO_URL`      |          | `mongodb://localhost:27017/bigbro` |                     MongoDB server connection URI                      |
+| `ROBOT_EVENTS_TOKEN` |    ✓     |                                    |                         Robot Events API token                         |
+|     `LOG_LEVEL`      |          |               `INFO`               |                           Minimum log level                            |
+| `MESSAGE_CACHE_SIZE` |          |               `250`                | Maximum number of messages (including all pinned) to cache per channel |
+|      `NODE_ENV`      |          |           `development`            |                    Node.JS application environment                     |
 
 ### Installing
 

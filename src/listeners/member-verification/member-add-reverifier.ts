@@ -14,8 +14,10 @@ export class GuildMemberAddListener extends Listener<
     });
     if (verifiedMember) {
       const reason = 'Automatic reverification';
-      await member.setNickname(verifiedMember.nickname, reason);
-      await member.roles.add(verifiedMember.roles, reason);
+      await Promise.all([
+        member.setNickname(verifiedMember.nickname, reason),
+        member.roles.add(verifiedMember.roles, reason),
+      ]);
     }
   }
 }

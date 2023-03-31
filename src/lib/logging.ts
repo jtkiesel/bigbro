@@ -1,10 +1,14 @@
-import {bold} from '@discordjs/builders';
 import {
   ActionRowBuilder,
+  bold,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
   EmbedBuilder,
+  time,
+  TimestampStyles,
   type Guild,
+  type GuildMember,
   type Message,
   type PartialMessage,
   type User,
@@ -15,19 +19,6 @@ import {userUrl} from './user';
 
 export class MessageLogger {
   public constructor(private readonly settingsManager: SettingsManager) {}
-
-  public async channelForGuild(guild: Guild) {
-    const guildSettings = await this.settingsManager.get(guild.id);
-
-    const loggingChannelId = guildSettings?.loggingChannel;
-    if (!loggingChannelId) {
-      return null;
-    }
-
-    const loggingChannel = await guild.channels.fetch(loggingChannelId);
-
-    return loggingChannel?.isTextBased() ? loggingChannel : null;
-  }
 
   public async logMessageDelete(
     message: Message | PartialMessage,
@@ -50,6 +41,42 @@ export class MessageLogger {
       MessageChangeType.Updated,
       timestamp
     );
+  }
+
+  public async logMemberTimeout(
+    member: GuildMember,
+    executor: User,
+    durationMilliseconds: number,
+    readableDuration: string,
+    reason: string | null,
+    executedTimestamp: number
+  ) {
+    const logChannel = await this.channelForGuild(member.guild);
+    if (!logChannel) {
+      return;
+    }
+
+    const expiration = new Date(executedTimestamp + durationMilliseconds);
+    const embed = new EmbedBuilder()
+      .setColor(Color.Red)
+      .setTitle('Member Timed Out')
+      .addFields(
+        {name: 'Member', value: `${member} (${member.user.tag})`},
+        {name: 'Performed By', value: `${executor}`, inline: true},
+        {name: 'Duration', value: readableDuration},
+        {
+          name: 'Expiration',
+          value: time(expiration, TimestampStyles.RelativeTime),
+          inline: true,
+        }
+      )
+      .setFooter({text: `User ID: ${member.id}`})
+      .setTimestamp(executedTimestamp);
+    if (reason) {
+      embed.addFields({name: 'Reason', value: reason});
+    }
+
+    await logChannel.send({embeds: [embed]});
   }
 
   private async logMessageChange(
@@ -104,6 +131,21 @@ export class MessageLogger {
         ),
       ],
     });
+  }
+
+  private async channelForGuild(guild: Guild) {
+    const guildSettings = await this.settingsManager.get(guild.id);
+
+    const loggingChannelId = guildSettings?.loggingChannel;
+    if (!loggingChannelId) {
+      return null;
+    }
+
+    const loggingChannel = await guild.channels.fetch(loggingChannelId);
+
+    return loggingChannel?.type === ChannelType.GuildText
+      ? loggingChannel
+      : null;
   }
 
   private messageChangeColor(type: MessageChangeType) {

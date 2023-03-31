@@ -1,5 +1,6 @@
 import {ApplyOptions} from '@sapphire/decorators';
-import {Events, Listener, type Piece, type Store} from '@sapphire/framework';
+import {Listener, type Piece, type Store} from '@sapphire/framework';
+import {Events} from 'discord.js';
 import {
   blue,
   gray,
@@ -25,17 +26,17 @@ export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
   }
 
   private printBanner() {
+    const {logger} = this.container;
     const llc = dev ? magentaBright : white;
     const blc = dev ? magenta : blue;
-    const lines = [`${blc(version)}`, `[${green('+')}] Gateway`];
+    logger.info(blc(version));
+    logger.info(`[${green('+')}] Gateway`);
 
     if (dev) {
-      lines.push(
+      logger.info(
         `${blc('<')}${llc('/')}${blc('>')} ${llc('DEVELOPMENT MODE')}`
       );
     }
-
-    this.container.logger.info(lines.join('\n'));
   }
 
   private printStoreDebugInformation() {

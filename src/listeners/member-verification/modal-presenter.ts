@@ -2,10 +2,10 @@ import {ApplyOptions} from '@sapphire/decorators';
 import {Events, Listener} from '@sapphire/framework';
 import {
   ActionRowBuilder,
-  type Interaction,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  type Interaction,
 } from 'discord.js';
 import {settingsManager} from '../..';
 import {Program} from '../../lib/robotics-program';
