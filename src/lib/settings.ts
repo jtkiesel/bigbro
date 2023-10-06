@@ -32,4 +32,5 @@ export interface GuildSettings {
   verificationChannel?: string;
   verifiedRole?: string;
   verifiedChannel?: string;
+  ticketChannel?: string;
 }

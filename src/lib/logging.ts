@@ -7,6 +7,7 @@ import {
   EmbedBuilder,
   time,
   TimestampStyles,
+  ThreadChannel,
   type Guild,
   type GuildMember,
   type Message,
@@ -131,6 +132,73 @@ export class MessageLogger {
         ),
       ],
     });
+  }
+
+  public async logTicketCreation(
+    member: GuildMember,
+    thread: ThreadChannel,
+    title: string,
+    ID: string,
+    description: string,
+    executedTimestamp: number
+  ) {
+    const logChannel = await this.channelForGuild(member.guild);
+    if (!logChannel) {
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(Color.Yellow)
+      .setTitle('Member Created a Ticket')
+      .addFields(
+        {name: 'Member', value: `${member} (${member.user.tag})`},
+        {name: 'Title', value: `${title} - ${ID}`},
+        {name: 'Reason', value: description},
+      )
+      .setFooter({text: `User ID: ${member.id}`})
+      .setTimestamp(executedTimestamp);
+
+      const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel('Ticket')
+          .setURL(thread.url)
+      )
+
+    await logChannel.send({embeds: [embed], components: [component]});
+  }
+
+  public async logTicketClose(
+    member: GuildMember,
+    thread: ThreadChannel,
+    title: string,
+    description: string,
+    executedTimestamp: number
+  ) {
+    const logChannel = await this.channelForGuild(member.guild);
+    if (!logChannel) {
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(Color.Red)
+      .setTitle('Member Closed a Ticket')
+      .addFields(
+        {name: 'Member', value: `${member} (${member.user.tag})`},
+        {name: 'Title', value: title},
+        {name: 'Reason', value: description},
+      )
+      .setFooter({text: `User ID: ${member.id}`})
+      .setTimestamp(executedTimestamp);
+
+      const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Link)
+          .setLabel('Ticket')
+          .setURL(thread.url)
+      )
+
+    await logChannel.send({embeds: [embed], components: [component]});
   }
 
   private async channelForGuild(guild: Guild) {
