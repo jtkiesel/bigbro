@@ -11,6 +11,7 @@ import {
 import {MessageLogger} from './lib/logging';
 import {SettingsManager, type GuildSettings} from './lib/settings';
 import type {VerifiedMember} from './lib/verification';
+import type { TicketLog } from './lib/ticket';
 
 const mongoClient = new MongoClient(mongoUrl);
 const database = mongoClient.db();
@@ -19,6 +20,7 @@ const channelMessages = database.collection<ChannelMessages>('channels');
 const guildSettings = database.collection<GuildSettings>('settings');
 export const messageCounts = database.collection<MessageCount>('messages');
 export const verifiedMembers = database.collection<VerifiedMember>('members');
+export const ticketLogs = database.collection<TicketLog>('tickets');
 
 export const messageCounter = new MessageCounter(
   channelMessages,

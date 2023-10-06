@@ -20,6 +20,8 @@ import {Color} from '../../lib/embeds';
 import {ButtonId, FieldName, InputId, ModalId} from '../../lib/verification';
 import {settingsManager} from '../..';
 import {userUrl} from '../../lib/user';
+import type { Team } from '../../lib/team';
+import { Region } from '../../lib/region';
 
 @ApplyOptions<Listener.Options>({event: Events.InteractionCreate})
 export class InteractionCreateListener extends Listener<
@@ -77,12 +79,43 @@ export class InteractionCreateListener extends Listener<
     if (program.teamRegExp && !program.teamRegExp.test(teamNumber)) {
       return this.sendValidationFailure(
         interaction,
-        `Robotics competition team ID# must be a valid ${
-          program.name
+        `Robotics competition team ID# must be a valid ${program.name
         } team ID#, for example: ${program.teamExamples
           .map(example => inlineCode(example))
           .join(', ')}`
       );
+    }
+
+    let teamObject: Team[] = [];
+    if (program.ids.length) {
+      const {
+        data: { data: teams },
+      } = await this.axiosInstance.get<{ data: Team[] }>('/teams', {
+        params: { program: program.ids, number: [teamNumber] },
+      });
+      if (!teams.length) {
+        return this.sendValidationFailure(
+          interaction,
+          `No ${program.name} team with ID# ${teamNumber} has ever been registered`
+        );
+      }
+      teamObject = teams;
+    }
+
+    let locationRole = '';
+    if (program.ids.length) {
+      const foundRegion = Region.values().find(
+        ({ name }) => name.toLowerCase() === teamObject['0']['location']['region']?.toLowerCase()
+      );
+      const foundCountry = Region.values().find(
+        ({ name }) => name.toLowerCase() === teamObject['0']['location']['country'].toLowerCase()
+      );
+      if (foundRegion !== undefined) {
+        locationRole = foundRegion.role;
+      }
+      else if (foundCountry !== undefined) {
+        locationRole = foundCountry.role;
+      }
     }
 
     if (program.ids.length) {
@@ -224,6 +257,12 @@ export class InteractionCreateListener extends Listener<
       member.setNickname(nickname, reason),
       member.roles.add([guildSettings.verifiedRole, program.role], reason),
     ]);
+
+    if (locationRole !== '') {
+      await Promise.all([
+        member.roles.add([locationRole], reason),
+      ]);
+    }
 
     const verifiedChannelId = guildSettings.verifiedChannel;
     if (!verifiedChannelId) {
