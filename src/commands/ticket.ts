@@ -1,15 +1,11 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Command, CommandOptionsRunTypeEnum } from '@sapphire/framework';
 import {
-    ActionRowBuilder,
-    ModalBuilder,
-    TextInputBuilder,
-    TextInputStyle,
     EmbedBuilder,
     type ChatInputCommandInteraction,
 } from 'discord.js';
 import { Color } from '../lib/embeds';
-import {InputId, ModalId} from '../lib/ticket';
+import { ticketModal } from '../lib/ticket';
 
 const error = (interaction: ChatInputCommandInteraction, content: string) => {
     return interaction.followUp({
@@ -19,40 +15,16 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
 };
 
 @ApplyOptions<Command.Options>({
-    description: 'Allow users to create a ticket from anywhere',
+    description: 'Speak privately with server staff',
     runIn: [CommandOptionsRunTypeEnum.GuildAny],
 })
-export class SelfTimeoutCommand extends Command {
+export class TicketCommand extends Command {
     public override async chatInputRun(interaction: ChatInputCommandInteraction) {
         if (!interaction.inGuild()) {
             await error(interaction, 'Command only available in servers');
             return;
         }
 
-        const ticketModal = new ModalBuilder()
-            .setCustomId(ModalId.Ticket)
-            .setTitle('Enter your information for verification')
-            .setComponents(
-                new ActionRowBuilder<TextInputBuilder>().setComponents(
-                    new TextInputBuilder()
-                        .setCustomId(InputId.Title)
-                        .setLabel('Title of the Ticket')
-                        .setStyle(TextInputStyle.Short)
-                        .setMinLength(1)
-                        .setMaxLength(25)
-                        .setRequired(true)
-                ),
-                new ActionRowBuilder<TextInputBuilder>().setComponents(
-                    new TextInputBuilder()
-                        .setCustomId(InputId.Explanation)
-                        .setLabel('Description')
-                        .setStyle(TextInputStyle.Paragraph)
-                        .setPlaceholder(
-                            'Provide an explanation of why you are making your ticket.'
-                        )
-                        .setRequired(true)
-                ),
-            );
         await interaction.showModal(ticketModal);
     }
 
