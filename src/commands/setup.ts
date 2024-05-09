@@ -1,6 +1,6 @@
-import {ApplyOptions} from '@sapphire/decorators';
-import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
-import {Subcommand} from '@sapphire/plugin-subcommands';
+import { ApplyOptions } from '@sapphire/decorators';
+import { Command, CommandOptionsRunTypeEnum } from '@sapphire/framework';
+import { Subcommand } from '@sapphire/plugin-subcommands';
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -10,10 +10,10 @@ import {
   PermissionsBitField,
   type ChatInputCommandInteraction,
 } from 'discord.js';
-import {settingsManager} from '..';
-import {Color} from '../lib/embeds';
-import {ButtonId} from '../lib/verification';
-import {TButtonId} from '../lib/ticket';
+import { settingsManager } from '..';
+import { Color } from '../lib/embeds';
+import { ButtonId } from '../lib/verification';
+import { TButtonId } from '../lib/ticket';
 
 enum SubcommandName {
   Logging = 'logging',
@@ -36,7 +36,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
     {
       name: SubcommandName.Logging,
       chatInputRun: async (interaction: ChatInputCommandInteraction) => {
-        await interaction.deferReply({ephemeral: true});
+        await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.inGuild()) {
           await error(interaction, 'Command only available in servers');
@@ -79,7 +79,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
           return;
         }
 
-        await settingsManager.set(guild.id, {loggingChannel: channel.id});
+        await settingsManager.set(guild.id, { loggingChannel: channel.id });
 
         await interaction.followUp({
           embeds: [
@@ -94,7 +94,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
     {
       name: SubcommandName.Verification,
       chatInputRun: async (interaction: ChatInputCommandInteraction) => {
-        await interaction.deferReply({ephemeral: true});
+        await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.inGuild()) {
           await error(interaction, 'Command only available in servers');
@@ -234,8 +234,8 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
               .setColor(Color.Green)
               .setTitle('Member verification setup')
               .setFields(
-                {name: 'Verification channel', value: `${verificationChannel}`},
-                {name: 'Verified role', value: `${verifiedRole}`},
+                { name: 'Verification channel', value: `${verificationChannel}` },
+                { name: 'Verified role', value: `${verifiedRole}` },
                 {
                   name: 'Verified channel',
                   value: `${verifiedChannel}`,
@@ -250,7 +250,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
     {
       name: SubcommandName.Ticket,
       chatInputRun: async (interaction: ChatInputCommandInteraction) => {
-        await interaction.deferReply({ephemeral: true});
+        await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.inGuild()) {
           await error(interaction, 'Command only available in servers');
@@ -314,7 +314,8 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
               new ButtonBuilder()
                 .setCustomId(TButtonId.Ticket)
                 .setStyle(ButtonStyle.Primary)
-                .setLabel('🎫 Create a Ticket')
+                .setEmoji('🎫')
+                .setLabel('Create a Ticket')
             ),
           ],
         });
@@ -391,7 +392,7 @@ export class SetupCommand extends Subcommand {
                   .setRequired(true)
               )
           ),
-      {idHints: ['988533666722488380', '985249852550168646']}
+      { idHints: ['988533666722488380', '985249852550168646'] }
     );
   }
 }
