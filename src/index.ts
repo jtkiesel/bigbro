@@ -1,17 +1,16 @@
-import {SapphireClient} from '@sapphire/framework';
+import { SapphireClient } from '@sapphire/framework';
 import '@sapphire/plugin-logger/register';
-import {GatewayIntentBits, Options, Partials} from 'discord.js';
-import {MongoClient} from 'mongodb';
-import {logLevel, messageCacheSize, mongoUrl} from './lib/config';
+import { GatewayIntentBits, Options, Partials } from 'discord.js';
+import { MongoClient } from 'mongodb';
+import { logLevel, messageCacheSize, mongoUrl } from './lib/config';
 import {
   MessageCounter,
   type ChannelMessages,
   type MessageCount,
 } from './lib/leaderboard';
-import {MessageLogger} from './lib/logging';
-import {SettingsManager, type GuildSettings} from './lib/settings';
-import type {VerifiedMember} from './lib/verification';
-import type { TicketLog } from './lib/ticket';
+import { MessageLogger } from './lib/logging';
+import { SettingsManager, type GuildSettings } from './lib/settings';
+import type { VerifiedMember } from './lib/verification';
 
 const mongoClient = new MongoClient(mongoUrl);
 const database = mongoClient.db();
@@ -20,7 +19,6 @@ const channelMessages = database.collection<ChannelMessages>('channels');
 const guildSettings = database.collection<GuildSettings>('settings');
 export const messageCounts = database.collection<MessageCount>('messages');
 export const verifiedMembers = database.collection<VerifiedMember>('members');
-export const ticketLogs = database.collection<TicketLog>('tickets');
 
 export const messageCounter = new MessageCounter(
   channelMessages,
@@ -38,7 +36,7 @@ const discordClient = new SapphireClient({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
   ],
-  logger: {level: logLevel},
+  logger: { level: logLevel },
   makeCache: Options.cacheWithLimits({
     BaseGuildEmojiManager: 0,
     GuildEmojiManager: 0,
@@ -49,7 +47,7 @@ const discordClient = new SapphireClient({
     GuildScheduledEventManager: 0,
     MessageManager: {
       maxSize: messageCacheSize,
-      keepOverLimit: ({pinned}) => pinned,
+      keepOverLimit: ({ pinned }) => pinned,
     },
     PresenceManager: 0,
     ReactionManager: 0,

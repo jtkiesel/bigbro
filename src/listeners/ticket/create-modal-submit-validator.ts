@@ -13,11 +13,8 @@ import {
 } from 'discord.js';
 import { Color } from '../../lib/embeds';
 import { TButtonId, InputId, ModalId } from '../../lib/ticket';
-import { messageLogger } from '../..';
-import { settingsManager } from '../..';
 import { userUrl } from '../../lib/user';
-import { ticketLogs } from '../..';
-import type { TicketLog } from '../../lib/ticket';
+import { messageLogger, settingsManager } from '../..';
 
 @ApplyOptions<Listener.Options>({ event: Events.InteractionCreate })
 export class InteractionCreateListener extends Listener<
@@ -51,39 +48,37 @@ export class InteractionCreateListener extends Listener<
             );
         }
 
-        const guildSettings = await settingsManager.get(interaction.guildId);
-        const guild = await interaction.client.guilds.fetch(interaction.guildId);
-        const member = await guild.members.fetch(interaction.member.user.id);
+        const guildSettingsManager = await settingsManager.get(interaction.guildId);
 
-        const ticketChannelId = guildSettings?.ticketChannel;
+        const ticketChannelId = guildSettingsManager?.ticketChannel;
         if (!ticketChannelId) {
             return;
         }
-        const ticketChannel = await guild.channels.fetch(
+        const ticketChannel = await interaction.client.channels.fetch(
             ticketChannelId
         );
         if (ticketChannel?.type !== ChannelType.GuildText) {
             return;
         }
 
-        const latestTicket = await ticketLogs.findOne(
-            { '_id.guild': interaction.guildId! },
-            { sort: { 'number': -1 } }
-        );
+        if (!guildSettingsManager.lastTicketNumber) {
+            guildSettingsManager.lastTicketNumber = 1;
+        } else {
+            guildSettingsManager.lastTicketNumber += 1;
+        }
 
-        
-        const latestTicketNumber = latestTicket ? latestTicket.number : 0;
-        const ticketID = String(latestTicketNumber + 1).padStart(6, '0');
+        const ticketID = String(guildSettingsManager.lastTicketNumber).padStart(6, '0');
 
         const threadName = `${title} - #${ticketID}`;
 
-        let thread = await ticketChannel.threads.create({
+        const thread = await ticketChannel.threads.create({
             name: threadName,
             reason: `Ticket for ${interaction.user.id}`,
             type: ChannelType.PrivateThread,
             invitable: false,
         });
 
+        const guild = await interaction.client.guilds.fetch(interaction.guildId);
         const roles = await guild.roles.fetch();
 
         await thread.send(
@@ -111,7 +106,7 @@ export class InteractionCreateListener extends Listener<
                             : interaction.user
                         ).displayAvatarURL(),
                     })
-                    .setTitle(`${title}`)
+                    .setTitle(title)
                     .setDescription(exp)
                     .setTimestamp(interaction.createdTimestamp),
             ],
@@ -125,6 +120,8 @@ export class InteractionCreateListener extends Listener<
             ],
         });
 
+        const member = await guild.members.fetch(interaction.member.user.id);
+
         messageLogger.logTicketCreation(
             member,
             thread,
@@ -133,19 +130,6 @@ export class InteractionCreateListener extends Listener<
             exp,
             interaction.createdTimestamp
         );
-
-        const ticketLogEntry: TicketLog = {
-            _id: {
-                guild: interaction.guildId!,
-                channel: thread.id,
-                user: interaction.user.id,
-            },
-            title: title,
-            number: parseInt(ticketID),
-            open: true,
-        };
-        
-        await ticketLogs.insertOne(ticketLogEntry);
 
         return interaction.editReply({
             embeds: [

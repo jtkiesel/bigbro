@@ -9,9 +9,8 @@ import {
 } from 'discord.js';
 import { Color } from '../../lib/embeds';
 import { InputId, ModalId } from '../../lib/ticket';
-import { messageLogger } from '../..';
 import { userUrl } from '../../lib/user';
-import { ticketLogs } from '../..';
+import { messageLogger } from '../..';
 
 @ApplyOptions<Listener.Options>({ event: Events.InteractionCreate })
 export class InteractionCreateListener extends Listener<
@@ -22,6 +21,7 @@ export class InteractionCreateListener extends Listener<
         if (
             !interaction.isModalSubmit() ||
             interaction.customId !== ModalId.Close ||
+            !interaction.channelId ||
             !interaction.inGuild()
         ) {
             return;
@@ -37,27 +37,13 @@ export class InteractionCreateListener extends Listener<
             );
         }
 
-        const guild = await interaction.client.guilds.fetch(interaction.guildId);
-        const member = await guild.members.fetch(interaction.member.user.id);
-
         const ticketThreadId = interaction.channelId;
-        if (!ticketThreadId) {
-            return;
-        }
-        const ticketThread = await guild.channels.fetch(
+        const ticketThread = await interaction.client.channels.fetch(
             ticketThreadId
         );
         if (ticketThread?.type !== ChannelType.PrivateThread) {
             return;
         }
-
-        const ticket = await ticketLogs.findOne(
-            { '_id.guild': interaction.guildId!, '_id.channel': ticketThread.id }
-        );
-
-        if (!ticket) { return; }
-
-        const ticketID = String(ticket.number).padStart(6, '0');
 
         await ticketThread.send({
             embeds: [
@@ -71,11 +57,15 @@ export class InteractionCreateListener extends Listener<
                             : interaction.user
                         ).displayAvatarURL(),
                     })
-                    .setTitle(`Ticket #${ticketID} closed`)
+                    .setTitle(`Ticket closed`)
                     .setDescription(resolution)
                     .setTimestamp(interaction.createdTimestamp),
             ]
         });
+
+
+        const guild = await interaction.client.guilds.fetch(interaction.guildId);
+        const member = await guild.members.fetch(interaction.member.user.id);
 
         messageLogger.logTicketClose(
             member,
@@ -91,19 +81,17 @@ export class InteractionCreateListener extends Listener<
                     .setColor(Color.Green)
                     .setDescription(
                         [
-                            `Ticket #${ticketID} successfully closed.`,
+                            `Ticket successfully closed.`,
                         ].join(' ')
                     ),
             ],
         });
 
-        await ticketThread.setLocked(true);
-        await ticketThread.setArchived(true);
+        await Promise.all([
+            ticketThread.setLocked(true),
+            ticketThread.setArchived(true),
+        ]);
 
-        await ticketLogs.updateOne(
-            { '_id.guild': interaction.guildId!, '_id.channel': ticketThread.id },
-            { $set: { open: false } }
-        );
         return;
     }
 
