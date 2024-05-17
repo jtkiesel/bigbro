@@ -13,12 +13,12 @@ import {
   type PartialMessage,
   type User,
 } from 'discord.js';
-import {Color} from './embeds';
-import type {SettingsManager} from './settings';
-import {userUrl} from './user';
+import { Color } from './embeds';
+import type { SettingsManager } from './settings';
+import { userUrl } from './user';
 
 export class MessageLogger {
-  public constructor(private readonly settingsManager: SettingsManager) {}
+  public constructor(private readonly settingsManager: SettingsManager) { }
 
   public async logMessageDelete(
     message: Message | PartialMessage,
@@ -34,12 +34,14 @@ export class MessageLogger {
 
   public async logMessageUpdate(
     oldMessage: Message | PartialMessage,
-    timestamp: Date | number | null
+    newMessage: Message | PartialMessage,
   ) {
     await this.logMessageChange(
       oldMessage,
       MessageChangeType.Updated,
-      timestamp
+      newMessage.editedAt,
+      undefined,
+      newMessage
     );
   }
 
@@ -61,29 +63,30 @@ export class MessageLogger {
       .setColor(Color.Red)
       .setTitle('Member Timed Out')
       .addFields(
-        {name: 'Member', value: `${member} (${member.user.tag})`},
-        {name: 'Performed By', value: `${executor}`, inline: true},
-        {name: 'Duration', value: readableDuration},
+        { name: 'Member', value: `${member} (${member.user.tag})` },
+        { name: 'Performed By', value: `${executor}`, inline: true },
+        { name: 'Duration', value: readableDuration },
         {
           name: 'Expiration',
           value: time(expiration, TimestampStyles.RelativeTime),
           inline: true,
         }
       )
-      .setFooter({text: `User ID: ${member.id}`})
+      .setFooter({ text: `User ID: ${member.id}` })
       .setTimestamp(executedTimestamp);
     if (reason) {
-      embed.addFields({name: 'Reason', value: reason});
+      embed.addFields({ name: 'Reason', value: reason });
     }
 
-    await logChannel.send({embeds: [embed]});
+    await logChannel.send({ embeds: [embed] });
   }
 
   private async logMessageChange(
     message: Message | PartialMessage,
     type: MessageChangeType,
     timestamp: Date | number | null,
-    executor?: User
+    executor?: User,
+    newMessage?: Message | PartialMessage
   ) {
     if (message.partial || message.author.bot || !message.inGuild()) {
       return;
@@ -96,8 +99,14 @@ export class MessageLogger {
 
     const executorString = executor ? ` by ${executor}` : '';
 
+    const messageFields = [{ name: 'Original Message', value: message.content }]
+
+    if (newMessage && !newMessage.partial) {
+      messageFields.push({ name: 'Updated Message', value: newMessage.content })
+    }
+
     await logChannel.send({
-      files: message.attachments.map(({proxyURL}) => proxyURL),
+      files: message.attachments.map(({ proxyURL }) => proxyURL),
       embeds: [
         new EmbedBuilder()
           .setColor(this.messageChangeColor(type))
@@ -106,14 +115,8 @@ export class MessageLogger {
             url: userUrl(message.author.id),
             iconURL: (message.member ?? message.author).displayAvatarURL(),
           })
-          .setDescription(
-            [
-              bold(
-                `Message by ${message.author} ${type}${executorString} in ${message.channel}`
-              ),
-              message.content,
-            ].join('\n')
-          )
+          .setDescription(bold(`Message by ${message.author} ${type}${executorString} in ${message.channel}`))
+          .addFields(messageFields)
           .setFooter({
             text: [
               `User ID: ${message.author.id}`,
