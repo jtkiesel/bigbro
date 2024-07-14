@@ -7,18 +7,19 @@ import {
   EmbedBuilder,
   time,
   TimestampStyles,
+  type ThreadChannel,
   type Guild,
   type GuildMember,
   type Message,
   type PartialMessage,
   type User,
 } from 'discord.js';
-import {Color} from './embeds';
-import type {SettingsManager} from './settings';
-import {userUrl} from './user';
+import { Color } from './embeds';
+import type { SettingsManager } from './settings';
+import { userUrl } from './user';
 
 export class MessageLogger {
-  public constructor(private readonly settingsManager: SettingsManager) {}
+  public constructor(private readonly settingsManager: SettingsManager) { }
 
   public async logMessageDelete(
     message: Message | PartialMessage,
@@ -61,22 +62,22 @@ export class MessageLogger {
       .setColor(Color.Red)
       .setTitle('Member Timed Out')
       .addFields(
-        {name: 'Member', value: `${member} (${member.user.tag})`},
-        {name: 'Performed By', value: `${executor}`, inline: true},
-        {name: 'Duration', value: readableDuration},
+        { name: 'Member', value: `${member} (${member.user.tag})` },
+        { name: 'Performed By', value: `${executor}`, inline: true },
+        { name: 'Duration', value: readableDuration },
         {
           name: 'Expiration',
           value: time(expiration, TimestampStyles.RelativeTime),
           inline: true,
         }
       )
-      .setFooter({text: `User ID: ${member.id}`})
+      .setFooter({ text: `User ID: ${member.id}` })
       .setTimestamp(executedTimestamp);
     if (reason) {
-      embed.addFields({name: 'Reason', value: reason});
+      embed.addFields({ name: 'Reason', value: reason });
     }
 
-    await logChannel.send({embeds: [embed]});
+    await logChannel.send({ embeds: [embed] });
   }
 
   private async logMessageChange(
@@ -97,7 +98,7 @@ export class MessageLogger {
     const executorString = executor ? ` by ${executor}` : '';
 
     await logChannel.send({
-      files: message.attachments.map(({proxyURL}) => proxyURL),
+      files: message.attachments.map(({ proxyURL }) => proxyURL),
       embeds: [
         new EmbedBuilder()
           .setColor(this.messageChangeColor(type))
@@ -131,6 +132,73 @@ export class MessageLogger {
         ),
       ],
     });
+  }
+
+  public async logTicketCreation(
+    member: GuildMember,
+    thread: ThreadChannel,
+    title: string,
+    ID: string,
+    description: string,
+    executedTimestamp: number
+  ) {
+    const logChannel = await this.channelForGuild(member.guild);
+    if (!logChannel) {
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(Color.Yellow)
+      .setTitle('Member Created a Ticket')
+      .addFields(
+        { name: 'Member', value: `${member} (${member.user.tag})` },
+        { name: 'Title', value: `${title} - ${ID}` },
+        { name: 'Reason', value: description },
+      )
+      .setFooter({ text: `User ID: ${member.id}` })
+      .setTimestamp(executedTimestamp);
+
+    const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
+        .setLabel('Ticket')
+        .setURL(thread.url)
+    )
+
+    await logChannel.send({ embeds: [embed], components: [component] });
+  }
+
+  public async logTicketClose(
+    member: GuildMember,
+    thread: ThreadChannel,
+    title: string,
+    description: string,
+    executedTimestamp: number
+  ) {
+    const logChannel = await this.channelForGuild(member.guild);
+    if (!logChannel) {
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(Color.Red)
+      .setTitle('Member Closed a Ticket')
+      .addFields(
+        { name: 'Member', value: `${member} (${member.user.tag})` },
+        { name: 'Title', value: title },
+        { name: 'Reason', value: description },
+      )
+      .setFooter({ text: `User ID: ${member.id}` })
+      .setTimestamp(executedTimestamp);
+
+    const component = new ActionRowBuilder<ButtonBuilder>().setComponents(
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
+        .setLabel('Ticket')
+        .setURL(thread.url)
+    )
+
+    await logChannel.send({ embeds: [embed], components: [component] });
   }
 
   private async channelForGuild(guild: Guild) {

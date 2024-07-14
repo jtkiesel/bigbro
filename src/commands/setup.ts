@@ -1,6 +1,6 @@
-import {ApplyOptions} from '@sapphire/decorators';
-import {Command, CommandOptionsRunTypeEnum} from '@sapphire/framework';
-import {Subcommand} from '@sapphire/plugin-subcommands';
+import { ApplyOptions } from '@sapphire/decorators';
+import { Command, CommandOptionsRunTypeEnum } from '@sapphire/framework';
+import { Subcommand } from '@sapphire/plugin-subcommands';
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -10,13 +10,15 @@ import {
   PermissionsBitField,
   type ChatInputCommandInteraction,
 } from 'discord.js';
-import {settingsManager} from '..';
-import {Color} from '../lib/embeds';
-import {ButtonId} from '../lib/verification';
+import { settingsManager } from '..';
+import { Color } from '../lib/embeds';
+import { ButtonId } from '../lib/verification';
+import { TButtonId } from '../lib/ticket';
 
 enum SubcommandName {
   Logging = 'logging',
   Verification = 'verification',
+  Ticket = 'ticket',
 }
 
 const error = (interaction: ChatInputCommandInteraction, content: string) => {
@@ -34,7 +36,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
     {
       name: SubcommandName.Logging,
       chatInputRun: async (interaction: ChatInputCommandInteraction) => {
-        await interaction.deferReply({ephemeral: true});
+        await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.inGuild()) {
           await error(interaction, 'Command only available in servers');
@@ -77,7 +79,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
           return;
         }
 
-        await settingsManager.set(guild.id, {loggingChannel: channel.id});
+        await settingsManager.set(guild.id, { loggingChannel: channel.id });
 
         await interaction.followUp({
           embeds: [
@@ -92,7 +94,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
     {
       name: SubcommandName.Verification,
       chatInputRun: async (interaction: ChatInputCommandInteraction) => {
-        await interaction.deferReply({ephemeral: true});
+        await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.inGuild()) {
           await error(interaction, 'Command only available in servers');
@@ -232,14 +234,97 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
               .setColor(Color.Green)
               .setTitle('Member verification setup')
               .setFields(
-                {name: 'Verification channel', value: `${verificationChannel}`},
-                {name: 'Verified role', value: `${verifiedRole}`},
+                { name: 'Verification channel', value: `${verificationChannel}` },
+                { name: 'Verified role', value: `${verifiedRole}` },
                 {
                   name: 'Verified channel',
                   value: `${verifiedChannel}`,
                   inline: true,
                 }
               ),
+          ],
+          ephemeral: true,
+        });
+      },
+    },
+    {
+      name: SubcommandName.Ticket,
+      chatInputRun: async (interaction: ChatInputCommandInteraction) => {
+        await interaction.deferReply({ ephemeral: true });
+
+        if (!interaction.inGuild()) {
+          await error(interaction, 'Command only available in servers');
+          return;
+        }
+
+        const guild = await interaction.client.guilds.fetch(
+          interaction.guildId
+        );
+        if (!guild.members.me) {
+          await error(interaction, 'I am not a member of this server');
+          return;
+        }
+
+        const ticketChannel = await guild.channels.fetch(
+          interaction.options.getChannel(TicketOption.Channel, true).id
+        );
+
+        if (!ticketChannel) {
+          await error(interaction, `Could not find ${ticketChannel} in this server`);
+          return;
+        }
+        if (!ticketChannel.isTextBased()) {
+          await error(interaction, `${ticketChannel} is not a text channel`);
+          return;
+        }
+
+        const missingChannelPermissions = guild.members.me
+          .permissionsIn(ticketChannel)
+          .missing([
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages,
+            PermissionsBitField.Flags.EmbedLinks,
+            PermissionsBitField.Flags.AttachFiles,
+            PermissionsBitField.Flags.ManageChannels,
+            PermissionsBitField.Flags.ManageThreads,
+          ]);
+        if (missingChannelPermissions.length) {
+          await error(
+            interaction,
+            `I am missing the following permissions in ${ticketChannel}: ${missingChannelPermissions}`
+          );
+          return;
+        }
+
+        await settingsManager.set(guild.id, {
+          ticketChannel: ticketChannel.id
+        });
+
+        await ticketChannel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(Color.Yellow)
+              .setTitle('Staff Tickets')
+              .setDescription(
+                'Speak privately with the staff. Press the button below to start!'
+              ),
+          ],
+          components: [
+            new ActionRowBuilder<ButtonBuilder>().setComponents(
+              new ButtonBuilder()
+                .setCustomId(TButtonId.Ticket)
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji('🎫')
+                .setLabel('Create a Ticket')
+            ),
+          ],
+        });
+
+        await interaction.followUp({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(Color.Green)
+              .setDescription(`Ticket channel setup in ${ticketChannel}`),
           ],
           ephemeral: true,
         });
@@ -293,8 +378,21 @@ export class SetupCommand extends Subcommand {
                   )
                   .setRequired(true)
               )
+          )
+          .addSubcommand(ticket =>
+            ticket
+              .setName(SubcommandName.Ticket)
+              .setDescription('Setup ticket system for this server')
+              .addChannelOption(ticketChannel =>
+                ticketChannel
+                  .setName(TicketOption.Channel)
+                  .setDescription(
+                    'The text channel in which users will begin the ticket creation process'
+                  )
+                  .setRequired(true)
+              )
           ),
-      {idHints: ['988533666722488380', '985249852550168646']}
+      { idHints: ['988533666722488380', '985249852550168646'] }
     );
   }
 }
@@ -307,4 +405,8 @@ enum VerificationOption {
   VerificationChannel = 'verification-channel',
   VerifiedRole = 'verified-role',
   VerifiedChannel = 'verified-channel',
+}
+
+enum TicketOption {
+  Channel = 'channel',
 }
