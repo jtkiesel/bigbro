@@ -48,9 +48,12 @@ export class InteractionCreateListener extends Listener<
             );
         }
 
-        const guildSettingsManager = await settingsManager.get(interaction.guildId);
+        const guildSettings = await settingsManager.increment(
+            interaction.guildId,
+            { lastTicketNumber: 1 }
+        );
 
-        const ticketChannelId = guildSettingsManager?.ticketChannel;
+        const ticketChannelId = guildSettings?.ticketChannel;
         if (!ticketChannelId) {
             return;
         }
@@ -61,13 +64,7 @@ export class InteractionCreateListener extends Listener<
             return;
         }
 
-        if (!guildSettingsManager.lastTicketNumber) {
-            guildSettingsManager.lastTicketNumber = 1;
-        } else {
-            guildSettingsManager.lastTicketNumber += 1;
-        }
-
-        const ticketID = String(guildSettingsManager.lastTicketNumber).padStart(6, '0');
+        const ticketID = String(guildSettings.lastTicketNumber).padStart(6, '0');
 
         const threadName = `${title} - #${ticketID}`;
 
