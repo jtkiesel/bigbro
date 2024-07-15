@@ -35,12 +35,14 @@ export class MessageLogger {
 
   public async logMessageUpdate(
     oldMessage: Message | PartialMessage,
-    timestamp: Date | number | null
+    newMessage: Message | PartialMessage,
   ) {
     await this.logMessageChange(
       oldMessage,
       MessageChangeType.Updated,
-      timestamp
+      newMessage.editedAt,
+      undefined,
+      newMessage
     );
   }
 
@@ -84,7 +86,8 @@ export class MessageLogger {
     message: Message | PartialMessage,
     type: MessageChangeType,
     timestamp: Date | number | null,
-    executor?: User
+    executor?: User,
+    newMessage?: Message | PartialMessage
   ) {
     if (message.partial || message.author.bot || !message.inGuild()) {
       return;
@@ -97,6 +100,12 @@ export class MessageLogger {
 
     const executorString = executor ? ` by ${executor}` : '';
 
+    const messageFields = [{ name: 'Original Message', value: message.content }]
+
+    if (newMessage && !newMessage.partial) {
+      messageFields.push({ name: 'Updated Message', value: newMessage.content })
+    }
+
     await logChannel.send({
       files: message.attachments.map(({ proxyURL }) => proxyURL),
       embeds: [
@@ -107,14 +116,8 @@ export class MessageLogger {
             url: userUrl(message.author.id),
             iconURL: (message.member ?? message.author).displayAvatarURL(),
           })
-          .setDescription(
-            [
-              bold(
-                `Message by ${message.author} ${type}${executorString} in ${message.channel}`
-              ),
-              message.content,
-            ].join('\n')
-          )
+          .setDescription(bold(`Message by ${message.author} ${type}${executorString} in ${message.channel}`))
+          .addFields(messageFields)
           .setFooter({
             text: [
               `User ID: ${message.author.id}`,
