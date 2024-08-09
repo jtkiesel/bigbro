@@ -1,9 +1,9 @@
-import {ApplyOptions} from '@sapphire/decorators';
-import {Events, Listener} from '@sapphire/framework';
-import type {Message} from 'discord.js';
-import {messageCounter} from '../..';
+import { ApplyOptions } from "@sapphire/decorators";
+import { Events, Listener } from "@sapphire/framework";
+import type { Message } from "discord.js";
+import { messageCounter } from "../../index.js";
 
-@ApplyOptions<Listener.Options>({event: Events.MessageCreate})
+@ApplyOptions<Listener.Options>({ event: Events.MessageCreate })
 export class MessageCreateListener extends Listener<
   typeof Events.MessageCreate
 > {

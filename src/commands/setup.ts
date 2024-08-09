@@ -1,6 +1,6 @@
-import { ApplyOptions } from '@sapphire/decorators';
-import { Command, CommandOptionsRunTypeEnum } from '@sapphire/framework';
-import { Subcommand } from '@sapphire/plugin-subcommands';
+import { ApplyOptions } from "@sapphire/decorators";
+import { Command, CommandOptionsRunTypeEnum } from "@sapphire/framework";
+import { Subcommand } from "@sapphire/plugin-subcommands";
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -9,16 +9,16 @@ import {
   EmbedBuilder,
   PermissionsBitField,
   type ChatInputCommandInteraction,
-} from 'discord.js';
-import { settingsManager } from '..';
-import { Color } from '../lib/embeds';
-import { ButtonId } from '../lib/verification';
-import { TButtonId } from '../lib/ticket';
+} from "discord.js";
+import { settingsManager } from "../index.js";
+import { Color } from "../lib/embeds.js";
+import { TButtonId } from "../lib/ticket.js";
+import { ButtonId } from "../lib/verification.js";
 
 enum SubcommandName {
-  Logging = 'logging',
-  Verification = 'verification',
-  Ticket = 'ticket',
+  Logging = "logging",
+  Verification = "verification",
+  Ticket = "ticket",
 }
 
 const error = (interaction: ChatInputCommandInteraction, content: string) => {
@@ -29,7 +29,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
 };
 
 @ApplyOptions<Subcommand.Options>({
-  description: 'Setup features for this server',
+  description: "Setup features for this server",
   requiredUserPermissions: [PermissionsBitField.Flags.ManageGuild],
   runIn: [CommandOptionsRunTypeEnum.GuildAny],
   subcommands: [
@@ -39,20 +39,20 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
         await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.inGuild()) {
-          await error(interaction, 'Command only available in servers');
+          await error(interaction, "Command only available in servers");
           return;
         }
 
         const guild = await interaction.client.guilds.fetch(
-          interaction.guildId
+          interaction.guildId,
         );
         if (!guild.members.me) {
-          await error(interaction, 'I am not a member of this server');
+          await error(interaction, "I am not a member of this server");
           return;
         }
 
         const channel = await guild.channels.fetch(
-          interaction.options.getChannel(LoggingOption.Channel, true).id
+          interaction.options.getChannel(LoggingOption.Channel, true).id,
         );
         if (!channel) {
           await error(interaction, `Could not find ${channel} in this server`);
@@ -74,7 +74,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
         if (missingChannelPermissions.length) {
           await error(
             interaction,
-            `I am missing the following permissions in ${channel}: ${missingChannelPermissions}`
+            `I am missing the following permissions in ${channel}: ${missingChannelPermissions}`,
           );
           return;
         }
@@ -97,15 +97,15 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
         await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.inGuild()) {
-          await error(interaction, 'Command only available in servers');
+          await error(interaction, "Command only available in servers");
           return;
         }
 
         const guild = await interaction.client.guilds.fetch(
-          interaction.guildId
+          interaction.guildId,
         );
         if (!guild.members.me) {
-          await error(interaction, 'I am not a member of this server');
+          await error(interaction, "I am not a member of this server");
           return;
         }
 
@@ -116,29 +116,29 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
         if (missingPermissions.length) {
           await error(
             interaction,
-            `I am missing the following permissions: ${missingPermissions}`
+            `I am missing the following permissions: ${missingPermissions}`,
           );
           return;
         }
 
         const verificationChannelId = interaction.options.getChannel(
           VerificationOption.VerificationChannel,
-          true
+          true,
         ).id;
         const verificationChannel = await guild.channels.fetch(
-          verificationChannelId
+          verificationChannelId,
         );
         if (!verificationChannel) {
           await error(
             interaction,
-            `Could not find ${verificationChannel} in this server`
+            `Could not find ${verificationChannel} in this server`,
           );
           return;
         }
         if (verificationChannel.type !== ChannelType.GuildText) {
           await error(
             interaction,
-            `${verificationChannel} is not a text channel`
+            `${verificationChannel} is not a text channel`,
           );
           return;
         }
@@ -153,34 +153,34 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
         if (missingVerificationChannelPermissions.length) {
           await error(
             interaction,
-            `I am missing the following permissions in ${verificationChannel}: ${missingVerificationChannelPermissions}`
+            `I am missing the following permissions in ${verificationChannel}: ${missingVerificationChannelPermissions}`,
           );
           return;
         }
 
         const verifiedRole = interaction.options.getRole(
           VerificationOption.VerifiedRole,
-          true
+          true,
         );
         if (
           guild.members.me.roles.highest.comparePositionTo(verifiedRole.id) <= 0
         ) {
           await error(
             interaction,
-            `I do not have permission to assign ${verifiedRole} to users`
+            `I do not have permission to assign ${verifiedRole} to users`,
           );
           return;
         }
 
         const verifiedChannelId = interaction.options.getChannel(
           VerificationOption.VerifiedChannel,
-          true
+          true,
         ).id;
         const verifiedChannel = await guild.channels.fetch(verifiedChannelId);
         if (!verifiedChannel) {
           await error(
             interaction,
-            `Could not find ${verifiedChannel} in this server`
+            `Could not find ${verifiedChannel} in this server`,
           );
           return;
         }
@@ -198,7 +198,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
         if (missingVerifiedChannelPermissions.length) {
           await error(
             interaction,
-            `I am missing the following permissions in ${verifiedChannel}: ${missingVerifiedChannelPermissions}`
+            `I am missing the following permissions in ${verifiedChannel}: ${missingVerifiedChannelPermissions}`,
           );
           return;
         }
@@ -213,9 +213,9 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
           embeds: [
             new EmbedBuilder()
               .setColor(Color.Blue)
-              .setTitle('Verification Required')
+              .setTitle("Verification Required")
               .setDescription(
-                'To access this server, your robotics competition information must be verified. Press the button below to get started!'
+                "To access this server, your robotics competition information must be verified. Press the button below to get started!",
               ),
           ],
           components: [
@@ -223,7 +223,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
               new ButtonBuilder()
                 .setCustomId(ButtonId.Verify)
                 .setStyle(ButtonStyle.Success)
-                .setLabel('Verify')
+                .setLabel("Verify"),
             ),
           ],
         });
@@ -232,15 +232,18 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
           embeds: [
             new EmbedBuilder()
               .setColor(Color.Green)
-              .setTitle('Member verification setup')
+              .setTitle("Member verification setup")
               .setFields(
-                { name: 'Verification channel', value: `${verificationChannel}` },
-                { name: 'Verified role', value: `${verifiedRole}` },
                 {
-                  name: 'Verified channel',
+                  name: "Verification channel",
+                  value: `${verificationChannel}`,
+                },
+                { name: "Verified role", value: `${verifiedRole}` },
+                {
+                  name: "Verified channel",
                   value: `${verifiedChannel}`,
                   inline: true,
-                }
+                },
               ),
           ],
           ephemeral: true,
@@ -253,24 +256,27 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
         await interaction.deferReply({ ephemeral: true });
 
         if (!interaction.inGuild()) {
-          await error(interaction, 'Command only available in servers');
+          await error(interaction, "Command only available in servers");
           return;
         }
 
         const guild = await interaction.client.guilds.fetch(
-          interaction.guildId
+          interaction.guildId,
         );
         if (!guild.members.me) {
-          await error(interaction, 'I am not a member of this server');
+          await error(interaction, "I am not a member of this server");
           return;
         }
 
         const ticketChannel = await guild.channels.fetch(
-          interaction.options.getChannel(TicketOption.Channel, true).id
+          interaction.options.getChannel(TicketOption.Channel, true).id,
         );
 
         if (!ticketChannel) {
-          await error(interaction, `Could not find ${ticketChannel} in this server`);
+          await error(
+            interaction,
+            `Could not find ${ticketChannel} in this server`,
+          );
           return;
         }
         if (!ticketChannel.isTextBased()) {
@@ -291,22 +297,22 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
         if (missingChannelPermissions.length) {
           await error(
             interaction,
-            `I am missing the following permissions in ${ticketChannel}: ${missingChannelPermissions}`
+            `I am missing the following permissions in ${ticketChannel}: ${missingChannelPermissions}`,
           );
           return;
         }
 
         await settingsManager.set(guild.id, {
-          ticketChannel: ticketChannel.id
+          ticketChannel: ticketChannel.id,
         });
 
         await ticketChannel.send({
           embeds: [
             new EmbedBuilder()
               .setColor(Color.Yellow)
-              .setTitle('Staff Tickets')
+              .setTitle("Staff Tickets")
               .setDescription(
-                'Speak privately with the staff. Press the button below to start!'
+                "Speak privately with the staff. Press the button below to start!",
               ),
           ],
           components: [
@@ -314,8 +320,8 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
               new ButtonBuilder()
                 .setCustomId(TButtonId.Ticket)
                 .setStyle(ButtonStyle.Primary)
-                .setEmoji('🎫')
-                .setLabel('Create a Ticket')
+                .setEmoji("🎫")
+                .setLabel("Create a Ticket"),
             ),
           ],
         });
@@ -335,78 +341,78 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
 export class SetupCommand extends Subcommand {
   public override registerApplicationCommands(registry: Command.Registry) {
     registry.registerChatInputCommand(
-      command =>
+      (command) =>
         command
           .setName(this.name)
           .setDescription(this.description)
-          .addSubcommand(logging =>
+          .addSubcommand((logging) =>
             logging
               .setName(SubcommandName.Logging)
-              .setDescription('Setup action logging for this server')
-              .addChannelOption(channel =>
+              .setDescription("Setup action logging for this server")
+              .addChannelOption((channel) =>
                 channel
                   .setName(LoggingOption.Channel)
                   .setDescription(
-                    'The channel in which action logs will be sent'
+                    "The channel in which action logs will be sent",
                   )
-                  .setRequired(true)
-              )
+                  .setRequired(true),
+              ),
           )
-          .addSubcommand(verification =>
+          .addSubcommand((verification) =>
             verification
               .setName(SubcommandName.Verification)
-              .setDescription('Setup member verification for this server')
-              .addChannelOption(verificationChannel =>
+              .setDescription("Setup member verification for this server")
+              .addChannelOption((verificationChannel) =>
                 verificationChannel
                   .setName(VerificationOption.VerificationChannel)
                   .setDescription(
-                    'The text channel in which users will begin the verification process'
+                    "The text channel in which users will begin the verification process",
                   )
-                  .setRequired(true)
+                  .setRequired(true),
               )
-              .addRoleOption(verifiedRole =>
+              .addRoleOption((verifiedRole) =>
                 verifiedRole
                   .setName(VerificationOption.VerifiedRole)
-                  .setDescription('The role to assign to verified users')
-                  .setRequired(true)
+                  .setDescription("The role to assign to verified users")
+                  .setRequired(true),
               )
-              .addChannelOption(verifiedChannel =>
+              .addChannelOption((verifiedChannel) =>
                 verifiedChannel
                   .setName(VerificationOption.VerifiedChannel)
                   .setDescription(
-                    'The text channel to which users will be redirected after having been verified'
+                    "The text channel to which users will be redirected after having been verified",
                   )
-                  .setRequired(true)
-              )
+                  .setRequired(true),
+              ),
           )
-          .addSubcommand(ticket =>
+          .addSubcommand((ticket) =>
             ticket
               .setName(SubcommandName.Ticket)
-              .setDescription('Setup ticket system for this server')
-              .addChannelOption(ticketChannel =>
+              .setDescription("Setup ticket system for this server")
+              .addChannelOption((ticketChannel) =>
                 ticketChannel
                   .setName(TicketOption.Channel)
                   .setDescription(
-                    'The text channel in which users will begin the ticket creation process'
+                    "The text channel in which users will begin the ticket creation process",
                   )
-                  .setRequired(true)
-              )
+                  .setRequired(true),
+              ),
           ),
-      { idHints: ['988533666722488380', '985249852550168646'] }
+      { idHints: ["988533666722488380", "985249852550168646"] },
     );
   }
 }
 
 enum LoggingOption {
-  Channel = 'channel',
+  Channel = "channel",
 }
 
 enum VerificationOption {
-  VerificationChannel = 'verification-channel',
-  VerifiedRole = 'verified-role',
-  VerifiedChannel = 'verified-channel',
+  VerificationChannel = "verification-channel",
+  VerifiedRole = "verified-role",
+  VerifiedChannel = "verified-channel",
 }
 
 enum TicketOption {
-  Channel = 'channel',
+  Channel = "channel",
 }

@@ -1,34 +1,34 @@
-import { SapphireClient } from '@sapphire/framework';
-import '@sapphire/plugin-logger/register';
-import { GatewayIntentBits, Options, Partials } from 'discord.js';
-import { MongoClient } from 'mongodb';
-import { logLevel, messageCacheSize, mongoUrl } from './lib/config';
+import { SapphireClient } from "@sapphire/framework";
+import "@sapphire/plugin-logger/register";
+import { GatewayIntentBits, Options, Partials } from "discord.js";
+import { MongoClient } from "mongodb";
+import { logLevel, messageCacheSize, mongoUrl } from "./lib/config.js";
 import {
   MessageCounter,
   type ChannelMessages,
   type MessageCount,
-} from './lib/leaderboard';
-import { MessageLogger } from './lib/logging';
-import { SettingsManager, type GuildSettings } from './lib/settings';
-import type { VerifiedMember } from './lib/verification';
+} from "./lib/leaderboard.js";
+import { MessageLogger } from "./lib/logging.js";
+import { SettingsManager, type GuildSettings } from "./lib/settings.js";
+import type { VerifiedMember } from "./lib/verification.js";
 
 const mongoClient = new MongoClient(mongoUrl);
 const database = mongoClient.db();
 
-const channelMessages = database.collection<ChannelMessages>('channels');
-const guildSettings = database.collection<GuildSettings>('settings');
-export const messageCounts = database.collection<MessageCount>('messages');
-export const verifiedMembers = database.collection<VerifiedMember>('members');
+const channelMessages = database.collection<ChannelMessages>("channels");
+const guildSettings = database.collection<GuildSettings>("settings");
+export const messageCounts = database.collection<MessageCount>("messages");
+export const verifiedMembers = database.collection<VerifiedMember>("members");
 
 export const messageCounter = new MessageCounter(
   channelMessages,
-  messageCounts
+  messageCounts,
 );
 export const settingsManager = new SettingsManager(guildSettings);
 export const messageLogger = new MessageLogger(settingsManager);
 
 const discordClient = new SapphireClient({
-  shards: 'auto',
+  shards: "auto",
   partials: [Partials.GuildMember, Partials.Message],
   intents: [
     GatewayIntentBits.Guilds,
@@ -60,20 +60,20 @@ const discordClient = new SapphireClient({
 
 const main = async () => {
   try {
-    discordClient.logger.info('Connecting to database');
+    discordClient.logger.info("Connecting to database");
     await mongoClient.connect();
-    discordClient.logger.info('Connected to database');
+    discordClient.logger.info("Connected to database");
 
-    discordClient.logger.info('Logging in to Discord');
+    discordClient.logger.info("Logging in to Discord");
     await discordClient.login();
-    discordClient.logger.info('Logged in to Discord');
+    discordClient.logger.info("Logged in to Discord");
   } catch (error) {
     discordClient.logger.fatal(error);
     throw error;
   }
 };
 
-process.on('SIGTERM', async () => {
+process.on("SIGTERM", async () => {
   discordClient.destroy();
   await mongoClient.close();
 });

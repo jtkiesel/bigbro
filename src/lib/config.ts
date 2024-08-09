@@ -1,12 +1,12 @@
-import {LogLevel} from '@sapphire/framework';
-import {config} from 'dotenv';
+import { LogLevel } from "@sapphire/framework";
+import { config } from "dotenv";
 
 config();
 
 class Config<T> {
   private constructor(
     private readonly name: string,
-    private readonly value?: T
+    private readonly value?: T,
   ) {}
 
   public static string(name: string) {
@@ -35,19 +35,19 @@ class Config<T> {
 
   private static parseLogLevel(value?: string) {
     switch (value?.toLowerCase()) {
-      case 'trace':
+      case "trace":
         return LogLevel.Trace;
-      case 'debug':
+      case "debug":
         return LogLevel.Debug;
-      case 'info':
+      case "info":
         return LogLevel.Info;
-      case 'warn':
+      case "warn":
         return LogLevel.Warn;
-      case 'error':
+      case "error":
         return LogLevel.Error;
-      case 'fatal':
+      case "fatal":
         return LogLevel.Fatal;
-      case 'none':
+      case "none":
         return LogLevel.None;
       case undefined:
         return undefined;
@@ -57,11 +57,11 @@ class Config<T> {
   }
 }
 
-export const logLevel = Config.logLevel('LOG_LEVEL').orElse(LogLevel.Info);
-export const messageCacheSize = Config.number('MESSAGE_CACHE_SIZE').orElse(250);
-export const mongoUrl = Config.string('MONGO_URL').orElse(
-  'mongodb://localhost:27017/bigbro'
+export const logLevel = Config.logLevel("LOG_LEVEL").orElse(LogLevel.Info);
+export const messageCacheSize = Config.number("MESSAGE_CACHE_SIZE").orElse(250);
+export const mongoUrl = Config.string("MONGO_URL").orElse(
+  "mongodb://localhost:27017/bigbro",
 );
-export const nodeEnv = Config.string('NODE_ENV').orElse('development');
+export const nodeEnv = Config.string("NODE_ENV").orElse("development");
 export const robotEventsToken =
-  Config.string('ROBOT_EVENTS_TOKEN').orElseThrow();
+  Config.string("ROBOT_EVENTS_TOKEN").orElseThrow();

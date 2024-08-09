@@ -1,15 +1,15 @@
-import {ApplyOptions} from '@sapphire/decorators';
-import {Events, Listener} from '@sapphire/framework';
+import { ApplyOptions } from "@sapphire/decorators";
+import { Events, Listener } from "@sapphire/framework";
 import {
   ActionRowBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
   type Interaction,
-} from 'discord.js';
-import {TButtonId, InputId, ModalId} from '../../lib/ticket';
+} from "discord.js";
+import { InputId, ModalId, TButtonId } from "../../lib/ticket.js";
 
-@ApplyOptions<Listener.Options>({event: Events.InteractionCreate})
+@ApplyOptions<Listener.Options>({ event: Events.InteractionCreate })
 export class InteractionCreateListener extends Listener<
   typeof Events.InteractionCreate
 > {
@@ -24,17 +24,17 @@ export class InteractionCreateListener extends Listener<
 
     const closeModal = new ModalBuilder()
       .setCustomId(ModalId.Close)
-      .setTitle('Enter your information for verification')
+      .setTitle("Enter your information for verification")
       .setComponents(
         new ActionRowBuilder<TextInputBuilder>().setComponents(
           new TextInputBuilder()
             .setCustomId(InputId.Resolution)
-            .setLabel('Resolution')
+            .setLabel("Resolution")
             .setStyle(TextInputStyle.Paragraph)
             .setPlaceholder(
-                'Provide a reason to why you are closing this ticket.'
+              "Provide a reason to why you are closing this ticket.",
             )
-            .setRequired(true)
+            .setRequired(true),
         ),
       );
     await interaction.showModal(closeModal);

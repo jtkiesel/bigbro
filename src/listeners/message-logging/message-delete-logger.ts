@@ -1,9 +1,9 @@
-import {ApplyOptions} from '@sapphire/decorators';
-import {Events, Listener} from '@sapphire/framework';
-import {AuditLogEvent, type Message, type PartialMessage} from 'discord.js';
-import {messageLogger} from '../..';
+import { ApplyOptions } from "@sapphire/decorators";
+import { Events, Listener } from "@sapphire/framework";
+import { AuditLogEvent, type Message, type PartialMessage } from "discord.js";
+import { messageLogger } from "../../index.js";
 
-@ApplyOptions<Listener.Options>({event: Events.MessageDelete})
+@ApplyOptions<Listener.Options>({ event: Events.MessageDelete })
 export class MessageDeleteListener extends Listener<
   typeof Events.MessageDelete
 > {
@@ -14,7 +14,7 @@ export class MessageDeleteListener extends Listener<
 
   private async executor(
     message: Message | PartialMessage,
-    deletedTimestamp: number
+    deletedTimestamp: number,
   ) {
     const auditLogs = await message.guild?.fetchAuditLogs({
       limit: 1,

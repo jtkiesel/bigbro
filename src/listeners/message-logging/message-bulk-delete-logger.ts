@@ -1,19 +1,19 @@
-import {ApplyOptions} from '@sapphire/decorators';
-import {Events, Listener} from '@sapphire/framework';
+import { ApplyOptions } from "@sapphire/decorators";
+import { Events, Listener } from "@sapphire/framework";
 import {
   AuditLogEvent,
   type Collection,
   type Message,
   type PartialMessage,
-} from 'discord.js';
-import {messageLogger} from '../..';
+} from "discord.js";
+import { messageLogger } from "../../index.js";
 
-@ApplyOptions<Listener.Options>({event: Events.MessageBulkDelete})
+@ApplyOptions<Listener.Options>({ event: Events.MessageBulkDelete })
 export class MessageBulkDeleteListener extends Listener<
   typeof Events.MessageBulkDelete
 > {
   public override async run(
-    messages: Collection<string, Message | PartialMessage>
+    messages: Collection<string, Message | PartialMessage>,
   ) {
     const executor = await this.executor(messages.first()!, Date.now());
     for (const message of messages.values()) {
@@ -23,7 +23,7 @@ export class MessageBulkDeleteListener extends Listener<
 
   private async executor(
     message: Message | PartialMessage,
-    deletedTimestamp: number
+    deletedTimestamp: number,
   ) {
     const auditLogs = await message.guild?.fetchAuditLogs({
       limit: 1,

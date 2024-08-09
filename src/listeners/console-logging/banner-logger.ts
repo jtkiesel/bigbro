@@ -1,6 +1,5 @@
-import {ApplyOptions} from '@sapphire/decorators';
-import {Listener, type Piece, type Store} from '@sapphire/framework';
-import {Events} from 'discord.js';
+import { ApplyOptions } from "@sapphire/decorators";
+import { Listener, type Piece, type Store } from "@sapphire/framework";
 import {
   blue,
   gray,
@@ -9,14 +8,13 @@ import {
   magentaBright,
   white,
   yellow,
-} from 'colorette';
-import {nodeEnv} from '../../lib/config';
+} from "colorette";
+import { Events } from "discord.js";
+import { nodeEnv } from "../../lib/config.js";
 
-const {version} = require('../../../package.json');
+const dev = nodeEnv === "development";
 
-const dev = nodeEnv === 'development';
-
-@ApplyOptions<Listener.Options>({event: Events.ClientReady, once: true})
+@ApplyOptions<Listener.Options>({ event: Events.ClientReady, once: true })
 export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
   private readonly style = dev ? yellow : blue;
 
@@ -26,28 +24,27 @@ export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
   }
 
   private printBanner() {
-    const {logger} = this.container;
+    const { logger } = this.container;
     const llc = dev ? magentaBright : white;
     const blc = dev ? magenta : blue;
-    logger.info(blc(version));
-    logger.info(`[${green('+')}] Gateway`);
+    logger.info(`[${green("+")}] Gateway`);
 
     if (dev) {
       logger.info(
-        `${blc('<')}${llc('/')}${blc('>')} ${llc('DEVELOPMENT MODE')}`
+        `${blc("<")}${llc("/")}${blc(">")} ${llc("DEVELOPMENT MODE")}`,
       );
     }
   }
 
   private printStoreDebugInformation() {
-    const {client, logger} = this.container;
+    const { client, logger } = this.container;
     const stores = [...client.stores.values()];
-    stores.map(this.styleStore, this).forEach(store => logger.info(store));
+    stores.map(this.styleStore, this).forEach((store) => logger.info(store));
   }
 
   private styleStore(store: Store<Piece>, index: number, all: Store<Piece>[]) {
     const last = index === all.length - 1;
-    const size = this.style(`${store.size}`.padEnd(3, ' '));
-    return gray(`${last ? '└─' : '├─'} Loaded ${size} ${store.name}.`);
+    const size = this.style(`${store.size}`.padEnd(3, " "));
+    return gray(`${last ? "└─" : "├─"} Loaded ${size} ${store.name}.`);
   }
 }
