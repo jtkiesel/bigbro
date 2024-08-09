@@ -4,10 +4,10 @@ export interface Coordinates {
 }
 
 export enum Grade {
-  COLLEGE = 'College',
-  HIGH_SCHOOL = 'High School',
-  MIDDLE_SCHOOL = 'Middle School',
-  ELEMENTARY_SCHOOL = 'Elementary School',
+  COLLEGE = "College",
+  HIGH_SCHOOL = "High School",
+  MIDDLE_SCHOOL = "Middle School",
+  ELEMENTARY_SCHOOL = "Elementary School",
 }
 
 export interface IdInfo {

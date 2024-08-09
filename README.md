@@ -9,7 +9,6 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/)
-- [Yarn](https://yarnpkg.com/)
 
 ### Environment Variables
 
@@ -20,51 +19,41 @@ These instructions will get you a copy of the project up and running on your loc
 | `ROBOT_EVENTS_TOKEN` |    ✓     |                                    |                         Robot Events API token                         |
 |     `LOG_LEVEL`      |          |               `INFO`               |                           Minimum log level                            |
 | `MESSAGE_CACHE_SIZE` |          |               `250`                | Maximum number of messages (including all pinned) to cache per channel |
-|      `NODE_ENV`      |          |           `development`            |                    Node.JS application environment                     |
+|      `NODE_ENV`      |          |           `development`            |                    Node.js application environment                     |
 
 ### Installing
 
 Install dependencies
 
-```sh-session
-yarn install
+```sh
+npm install
 ```
 
 Start the bot
 
-```sh-session
-yarn dev
-```
-
-## Running the tests
-
-```sh-session
-yarn test
+```sh
+npm run dev
 ```
 
 ## Deployment
 
 Install dependencies
 
-```sh-session
-yarn install
+```sh
+npm install
 ```
 
 Compile source
 
-```sh-session
-yarn build
+```sh
+npm run build
 ```
 
 Start the bot
 
-```sh-session
-yarn start
+```sh
+npm start
 ```
-
-## Versioning
-
-We use [SemVer](https://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/jtkiesel/vexibot/tags).
 
 ## Authors
 

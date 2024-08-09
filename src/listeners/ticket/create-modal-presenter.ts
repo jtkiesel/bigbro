@@ -1,8 +1,8 @@
-import { ApplyOptions } from '@sapphire/decorators';
-import { Events, Listener } from '@sapphire/framework';
-import type { Interaction } from 'discord.js';
-import { settingsManager } from '../..';
-import { TButtonId, ticketModal } from '../../lib/ticket';
+import { ApplyOptions } from "@sapphire/decorators";
+import { Events, Listener } from "@sapphire/framework";
+import type { Interaction } from "discord.js";
+import { settingsManager } from "../../index.js";
+import { TButtonId, ticketModal } from "../../lib/ticket.js";
 
 @ApplyOptions<Listener.Options>({ event: Events.InteractionCreate })
 export class InteractionCreateListener extends Listener<
@@ -22,7 +22,6 @@ export class InteractionCreateListener extends Listener<
     if (interaction.channelId !== ticketChannelId) {
       return;
     }
-
 
     await interaction.showModal(ticketModal);
   }

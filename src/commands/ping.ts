@@ -1,13 +1,13 @@
-import {ApplyOptions} from '@sapphire/decorators';
-import {Command} from '@sapphire/framework';
+import { ApplyOptions } from "@sapphire/decorators";
+import { Command } from "@sapphire/framework";
 import {
   EmbedBuilder,
   inlineCode,
   type ChatInputCommandInteraction,
-} from 'discord.js';
-import {Color} from '../lib/embeds';
+} from "discord.js";
+import { Color } from "../lib/embeds.js";
 
-@ApplyOptions<Command.Options>({description: 'Test connection to Discord'})
+@ApplyOptions<Command.Options>({ description: "Test connection to Discord" })
 export class PingCommand extends Command {
   public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     const interactionReceived = Date.now();
@@ -30,13 +30,13 @@ export class PingCommand extends Command {
           .setColor(Color.Blue)
           .setDescription(
             [
-              'Pong! 🏓',
-              '🐌 Latency:',
-              `┣ Discord -> ${client}: ${inlineCode(fromDiscord + 'ms')}`,
-              `┣ ${client} -> Discord: ${inlineCode(toDiscord + 'ms')}`,
-              `┗ Round trip: ${inlineCode(roundTrip + 'ms')}`,
-              `💓 Gateway heartbeat: ${inlineCode(gatewayHeartbeat + 'ms')}`,
-            ].join('\n')
+              "Pong! 🏓",
+              "🐌 Latency:",
+              `┣ Discord -> ${client}: ${inlineCode(fromDiscord + "ms")}`,
+              `┣ ${client} -> Discord: ${inlineCode(toDiscord + "ms")}`,
+              `┗ Round trip: ${inlineCode(roundTrip + "ms")}`,
+              `💓 Gateway heartbeat: ${inlineCode(gatewayHeartbeat + "ms")}`,
+            ].join("\n"),
           ),
       ],
     });
@@ -44,8 +44,8 @@ export class PingCommand extends Command {
 
   public override registerApplicationCommands(registry: Command.Registry) {
     registry.registerChatInputCommand(
-      command => command.setName(this.name).setDescription(this.description),
-      {idHints: ['983911170203324447']}
+      (command) => command.setName(this.name).setDescription(this.description),
+      { idHints: ["983911170203324447"] },
     );
   }
 }

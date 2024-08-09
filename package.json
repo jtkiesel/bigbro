@@ -1,50 +1,44 @@
 {
   "name": "bigbro",
-  "version": "2.1.0",
-  "description": "Discord bot that assists with moderation duties for the VEX Robotics Competition server.",
-  "keywords": [
-    "Discord",
-    "bot",
-    "moderation",
-    "log"
-  ],
-  "homepage": "https://github.com/jtkiesel/bigbro#readme",
-  "bugs": "https://github.com/jtkiesel/bigbro/issues",
+  "version": "0.0.0",
+  "private": true,
   "license": "MIT",
-  "author": {
-    "name": "Jordan Kiesel",
-    "url": "https://github.com/jtkiesel"
-  },
+  "type": "module",
   "main": "dist/index.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jtkiesel/bigbro.git"
-  },
   "scripts": {
     "build": "tsc",
-    "clean": "rm -fr dist",
-    "dev": "tsc-watch --onSuccess \"yarn start\"",
+    "dev": "tsc-watch --onSuccess \"npm start\"",
+    "format": "prettier --write .",
+    "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
     "start": "node dist"
   },
   "dependencies": {
-    "@sapphire/decorators": "^6.0.0",
-    "@sapphire/framework": "^4.2.2",
-    "@sapphire/plugin-logger": "^3.0.1",
-    "@sapphire/plugin-subcommands": "^4.0.0",
-    "axios": "^1.3.4",
-    "colorette": "^2.0.19",
-    "discord.js": "^14.8.0",
-    "dotenv": "^16.0.3",
-    "lru-cache": "^8.0.4",
-    "mongodb": "^5.1.0"
+    "@sapphire/decorators": "6.1.0",
+    "@sapphire/framework": "5.2.1",
+    "@sapphire/plugin-logger": "4.0.2",
+    "@sapphire/plugin-subcommands": "6.0.3",
+    "axios": "1.7.3",
+    "colorette": "2.0.20",
+    "discord.js": "14.15.3",
+    "dotenv": "16.4.5",
+    "lru-cache": "11.0.0",
+    "mongodb": "6.8.0"
   },
   "devDependencies": {
-    "@sapphire/ts-config": "^3.3.4",
-    "tsc-watch": "^6.0.0",
-    "typescript": "^5.0.3"
+    "@eslint/js": "9.8.0",
+    "@sapphire/ts-config": "5.0.1",
+    "eslint": "9.8.0",
+    "eslint-config-prettier": "9.1.0",
+    "globals": "15.9.0",
+    "prettier": "3.3.3",
+    "prettier-plugin-packagejson": "2.5.1",
+    "prettier-plugin-sort-imports": "1.8.6",
+    "tsc-watch": "6.2.0",
+    "typescript": "5.5.4",
+    "typescript-eslint": "8.0.1"
   },
   "engines": {
-    "node": ">=16.9.0"
-  },
-  "packageManager": "yarn@3.5.0"
+    "node": "20 || >=22"
+  }
 }

@@ -1,3 +1,9 @@
-singleQuote: true
-bracketSpacing: false
-arrowParens: avoid
+plugins:
+  - prettier-plugin-packagejson
+  - prettier-plugin-sort-imports
+
+sortingMethod: alphabetical
+stripNewlines: true
+importTypeOrder:
+  - NPMPackages
+  - localImports

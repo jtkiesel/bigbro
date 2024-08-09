@@ -1,10 +1,13 @@
 {
-  "extends": "@sapphire/ts-config",
+  "extends": [
+    "@sapphire/ts-config",
+    "@sapphire/ts-config/extra-strict",
+    "@sapphire/ts-config/decorators",
+    "@sapphire/ts-config/verbatim"
+  ],
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
-    "rootDir": "src",
+    "module": "NodeNext",
     "outDir": "dist",
-    "tsBuildInfoFile": "dist/.tsbuildinfo"
-  },
-  "include": ["src"]
+    "skipLibCheck": true
+  }
 }
