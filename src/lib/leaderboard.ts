@@ -98,7 +98,7 @@ export class MessageCounter {
     const channelMessages = await this.channels.findOne({
       _id: { guild: channel.guildId, channel: channel.id },
     });
-    let firstMessage = channelMessages
+    const firstMessage = channelMessages
       ? this.snowflakeFromLong(channelMessages.first)
       : undefined;
     await this.countMessagesInChannelBetween(channel, firstMessage);
@@ -123,11 +123,12 @@ export class MessageCounter {
         })
       ).filter(({ id }) => !after || this.longFromSnowflake(id).gt(after));
       firstMessage = messages.lastKey();
-      if (!firstMessage) {
+      const lastMessage = messages.firstKey();
+      if (!firstMessage || !lastMessage) {
         break;
       }
       if (!lastMessageLong) {
-        lastMessageLong = this.longFromSnowflake(messages.firstKey()!);
+        lastMessageLong = this.longFromSnowflake(lastMessage);
       }
       const firstMessageLong = this.longFromSnowflake(firstMessage);
       const countsByUser = messages

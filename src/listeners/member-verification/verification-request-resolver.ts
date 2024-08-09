@@ -57,28 +57,41 @@ export class InteractionCreateListener extends Listener<
     const messageId = interaction.message.id;
     const message = await channel.messages.fetch(messageId);
     const fields = message.embeds[0].fields;
-    const userId = fields.find(({ name }) => name === FieldName.UserId)!.value;
+    const userId = fields.find(({ name }) => name === FieldName.UserId)?.value;
+    if (!userId) {
+      await interaction.followUp({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(Color.Red)
+            .setDescription("Error: User ID is missing"),
+        ],
+      });
+      return;
+    }
 
     if (interaction.customId === ButtonId.Approve) {
       const member = await guild.members.fetch(userId);
+      const reason = `Verification request approved by ${interaction.user.tag}`;
+      member.roles.add([verifiedRoleId, Program.None.role], reason);
+
       const nickname = fields.find(
         ({ name }) => name === FieldName.Nickname,
-      )!.value;
-      const reason = `Verification request approved by ${interaction.user.tag}`;
+      )?.value;
+      if (!nickname) {
+        await interaction.followUp({ content: "Nickname is missing" });
+        return;
+      }
       member.setNickname(nickname, reason);
-      member.roles.add([verifiedRoleId, Program.None.role]);
 
       const verifiedChannelId = guildSettings.verifiedChannel;
       if (!verifiedChannelId) {
-        await interaction.followUp({
-          content: "No verified channel set up.",
-        });
+        await interaction.followUp({ content: "No verified channel set up" });
         return;
       }
       const verifiedChannel = await guild.channels.fetch(verifiedChannelId);
       if (verifiedChannel?.type !== ChannelType.GuildText) {
         await interaction.followUp({
-          content: "Verified channel is not a text channel.",
+          content: "Verified channel is not a text channel",
         });
         return;
       }
