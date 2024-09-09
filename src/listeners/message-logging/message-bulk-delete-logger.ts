@@ -2,9 +2,9 @@ import { ApplyOptions } from "@sapphire/decorators";
 import { Events, Listener } from "@sapphire/framework";
 import {
   AuditLogEvent,
-  type Collection,
   type Message,
   type PartialMessage,
+  type ReadonlyCollection,
 } from "discord.js";
 import { messageLogger } from "../../index.js";
 
@@ -13,7 +13,7 @@ export class MessageBulkDeleteListener extends Listener<
   typeof Events.MessageBulkDelete
 > {
   public override async run(
-    messages: Collection<string, Message | PartialMessage>,
+    messages: ReadonlyCollection<string, Message | PartialMessage>,
   ) {
     const executor = await this.executor(messages, Date.now());
     for (const message of messages.values()) {
@@ -22,7 +22,7 @@ export class MessageBulkDeleteListener extends Listener<
   }
 
   private async executor(
-    messages: Collection<string, Message | PartialMessage>,
+    messages: ReadonlyCollection<string, Message | PartialMessage>,
     deletedTimestamp: number,
   ) {
     const firstMessage = messages.first();
