@@ -11,33 +11,30 @@
     "format": "prettier --write .",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
-    "start": "node dist"
+    "start": "node --enable-source-maps dist"
   },
   "dependencies": {
     "@sapphire/decorators": "6.1.0",
     "@sapphire/framework": "5.2.1",
     "@sapphire/plugin-logger": "4.0.2",
-    "@sapphire/plugin-subcommands": "6.0.3",
+    "@sapphire/plugin-subcommands": "7.0.0",
     "colorette": "2.0.20",
-    "discord.js": "14.15.3",
-    "lru-cache": "11.0.0",
-    "mongodb": "6.8.0"
+    "discord.js": "14.16.1",
+    "lru-cache": "11.0.1",
+    "mongodb": "6.8.1"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "1.14.0",
-    "@eslint/js": "9.8.0",
+    "@eslint/js": "9.10.0",
     "@sapphire/ts-config": "5.0.1",
-    "eslint": "9.8.0",
+    "eslint": "9.10.0",
     "eslint-config-prettier": "9.1.0",
     "globals": "15.9.0",
     "prettier": "3.3.3",
-    "prettier-plugin-packagejson": "2.5.1",
+    "prettier-plugin-packagejson": "2.5.2",
     "prettier-plugin-sort-imports": "1.8.6",
     "tsc-watch": "6.2.0",
     "typescript": "5.5.4",
-    "typescript-eslint": "8.0.1"
-  },
-  "engines": {
-    "node": "20 || >=22"
+    "typescript-eslint": "8.4.0"
   }
 }
