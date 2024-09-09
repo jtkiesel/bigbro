@@ -18,7 +18,6 @@
     "@sapphire/framework": "5.2.1",
     "@sapphire/plugin-logger": "4.0.2",
     "@sapphire/plugin-subcommands": "6.0.3",
-    "axios": "1.7.3",
     "colorette": "2.0.20",
     "discord.js": "14.15.3",
     "dotenv": "16.4.5",
