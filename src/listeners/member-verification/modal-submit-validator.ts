@@ -1,6 +1,5 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { Events, Listener } from "@sapphire/framework";
-import axios from "axios";
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -32,11 +31,6 @@ import {
 export class InteractionCreateListener extends Listener<
   typeof Events.InteractionCreate
 > {
-  private readonly axiosInstance = axios.create({
-    baseURL: "https://robotevents.com/api/v2",
-    headers: { Authorization: `Bearer ${robotEventsToken}` },
-  });
-
   public override async run(interaction: Interaction) {
     if (
       !interaction.isModalSubmit() ||
@@ -50,13 +44,13 @@ export class InteractionCreateListener extends Listener<
 
     const name = interaction.fields.getTextInputValue(InputId.Name).trim();
     if (!name) {
-      return this.sendValidationFailure(
+      return this.sendError(
         interaction,
         "Name or preferred nickname must contain at least 1 non-whitespace character",
       );
     }
     if (!/^[ -{}~]*$/.test(name)) {
-      return this.sendValidationFailure(
+      return this.sendError(
         interaction,
         "Name or preferred nickname may contain only the following non-alphanumeric characters: `` !\"#$%&'()*+,-./:;<=>?@[\\]^_`{}~``",
       );
@@ -69,7 +63,7 @@ export class InteractionCreateListener extends Listener<
       ({ name }) => name.toLowerCase() === programName.toLowerCase(),
     );
     if (!program) {
-      return this.sendValidationFailure(
+      return this.sendError(
         interaction,
         `Robotics competition program must be one of: ${Program.values()
           .map(({ name }) => inlineCode(name))
@@ -82,7 +76,7 @@ export class InteractionCreateListener extends Listener<
       .trim()
       .toUpperCase();
     if (program.teamRegExp && !program.teamRegExp.test(teamNumber)) {
-      return this.sendValidationFailure(
+      return this.sendError(
         interaction,
         `Robotics competition team ID# must be a valid ${
           program.name
@@ -94,13 +88,26 @@ export class InteractionCreateListener extends Listener<
 
     let teamObject: Team[] = [];
     if (program.ids.length) {
-      const {
-        data: { data: teams },
-      } = await this.axiosInstance.get<{ data: Team[] }>("/teams", {
-        params: { program: program.ids, number: [teamNumber] },
-      });
+      const parameters = new URLSearchParams({ "number[]": teamNumber });
+      program.ids.forEach((id) =>
+        parameters.append("program[]", id.toString()),
+      );
+      const response = await fetch(
+        `https://www.robotevents.com/api/v2/teams?${parameters}`,
+        { headers: { Authorization: `Bearer ${robotEventsToken}` } },
+      );
+      if (!response.ok) {
+        await this.sendError(
+          interaction,
+          "Failed to obtain team information from Robot Events",
+        );
+        throw new Error(
+          `Failed to fetch teams from Robot Events: ${response.status}`,
+        );
+      }
+      const { data: teams } = (await response.json()) as { data: Team[] };
       if (!teams.length) {
-        return this.sendValidationFailure(
+        return this.sendError(
           interaction,
           `No ${program.name} team with ID# ${teamNumber} has ever been registered`,
         );
@@ -138,7 +145,7 @@ export class InteractionCreateListener extends Listener<
         .getTextInputValue(InputId.Explanation)
         .trim();
       if (!explanation) {
-        return this.sendValidationFailure(
+        return this.sendError(
           interaction,
           `By entering a robotics competition program of ${inlineCode(
             Program.None.name,
@@ -302,7 +309,7 @@ export class InteractionCreateListener extends Listener<
     return [name, team].join("│");
   }
 
-  private async sendValidationFailure(
+  private async sendError(
     interaction: ModalSubmitInteraction,
     description: string,
   ) {
