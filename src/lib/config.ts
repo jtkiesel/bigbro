@@ -1,7 +1,4 @@
 import { LogLevel } from "@sapphire/framework";
-import { config } from "dotenv";
-
-config();
 
 class Config<T> {
   private constructor(
@@ -13,9 +10,9 @@ class Config<T> {
     return new Config(name, process.env[name]);
   }
 
-  public static number(name: string) {
+  public static integer(name: string) {
     const value = process.env[name];
-    return new Config(name, value ? parseFloat(value) : undefined);
+    return new Config(name, Config.parseInteger(value));
   }
 
   public static logLevel(name: string) {
@@ -31,6 +28,15 @@ class Config<T> {
       throw new Error(`Required environment variable not set: ${this.name}`);
     }
     return this.value;
+  }
+
+  private static parseInteger(value?: string) {
+    if (!value?.length) {
+      return undefined;
+    } else if (!/\d+/.test(value)) {
+      throw new Error(`Invalid integer: ${value}`);
+    }
+    return Number(value);
   }
 
   private static parseLogLevel(value?: string) {
@@ -57,8 +63,10 @@ class Config<T> {
   }
 }
 
+export const discordToken = Config.string("DISCORD_TOKEN").orElseThrow();
 export const logLevel = Config.logLevel("LOG_LEVEL").orElse(LogLevel.Info);
-export const messageCacheSize = Config.number("MESSAGE_CACHE_SIZE").orElse(250);
+export const messageCacheSize =
+  Config.integer("MESSAGE_CACHE_SIZE").orElse(250);
 export const mongoUrl = Config.string("MONGO_URL").orElse(
   "mongodb://localhost:27017/bigbro",
 );

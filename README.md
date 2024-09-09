@@ -15,10 +15,10 @@ These instructions will get you a copy of the project up and running on your loc
 |       Variable       | Required |              Default               |                              Description                               |
 | :------------------: | :------: | :--------------------------------: | :--------------------------------------------------------------------: |
 |   `DISCORD_TOKEN`    |    ✓     |                                    |              Token of the Discord account to log in with               |
-|     `MONGO_URL`      |          | `mongodb://localhost:27017/bigbro` |                     MongoDB server connection URI                      |
 | `ROBOT_EVENTS_TOKEN` |    ✓     |                                    |                         Robot Events API token                         |
-|     `LOG_LEVEL`      |          |               `INFO`               |                           Minimum log level                            |
+|     `LOG_LEVEL`      |          |               `info`               |                           Minimum log level                            |
 | `MESSAGE_CACHE_SIZE` |          |               `250`                | Maximum number of messages (including all pinned) to cache per channel |
+|     `MONGO_URL`      |          | `mongodb://localhost:27017/bigbro` |                     MongoDB server connection URI                      |
 |      `NODE_ENV`      |          |           `development`            |                    Node.js application environment                     |
 
 ### Installing
