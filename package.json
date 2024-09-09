@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc-watch --onSuccess \"npm start\"",
+    "dev": "tsc-watch --onSuccess \"dotenvx run -- npm start\"",
     "format": "prettier --write .",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src",
@@ -20,11 +20,11 @@
     "@sapphire/plugin-subcommands": "6.0.3",
     "colorette": "2.0.20",
     "discord.js": "14.15.3",
-    "dotenv": "16.4.5",
     "lru-cache": "11.0.0",
     "mongodb": "6.8.0"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "1.14.0",
     "@eslint/js": "9.8.0",
     "@sapphire/ts-config": "5.0.1",
     "eslint": "9.8.0",
