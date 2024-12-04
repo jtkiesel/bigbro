@@ -2,10 +2,15 @@ import { ApplyOptions } from "@sapphire/decorators";
 import { Command, CommandOptionsRunTypeEnum } from "@sapphire/framework";
 import {
   PermissionFlagsBits,
+  EmbedBuilder,
+  time,
+  TimestampStyles,
   type ChatInputCommandInteraction,
 } from "discord.js";
-import { messageLogger } from "../index.js";
+import { Color } from '../lib/embeds.js';
+import { messageLogger, moderationLogs } from "../index.js";
 import { DurationUnit } from "../lib/duration.js";
+import type { timeoutLog } from '../lib/moderation.js';
 
 @ApplyOptions<Command.Options>({
   description: "Timeout user",
@@ -54,14 +59,63 @@ export class TimeoutCommand extends Command {
       return;
     }
 
+    if (!reason) {
+      await interaction.reply({
+        content: `Error: Timeouts require a reason.`,
+        ephemeral: true,
+      });
+      return;
+    }
+
+    const filter = { '_id.guild': interaction.guildId!, '_id.user': member.id };
+
+    const userTimeout: timeoutLog = {
+      date: new Date(),
+      duration: readableDuration,
+      user: interaction.user.id,
+      reason: reason
+    };
+
+    const update = {
+      $push: {
+        timeout: userTimeout
+      }
+    };
+
+    const options = { upsert: true };
+
+    moderationLogs.findOneAndUpdate(filter, update, options);
+
     await member.timeout(durationMilliseconds, reason ?? undefined);
+    const expiration = new Date(interaction.createdTimestamp + durationMilliseconds);
+
+    const embed = new EmbedBuilder()
+      .setColor(Color.Red)
+      .setTitle('You Have Been Timed Out')
+      .addFields(
+        { name: 'Server', value: `${guild.name}` },
+        { name: 'Reason', value: reason },
+        { name: 'Duration', value: readableDuration },
+        {
+          name: 'Expiration',
+          value: time(expiration, TimestampStyles.RelativeTime),
+          inline: true,
+        },
+      )
+      .setTimestamp(interaction.createdTimestamp);
+
+    await member.send({ embeds: [embed] });
+
+    const ephemeralEmbed = new EmbedBuilder()
+      .setColor(Color.Red)
+      .setDescription(`${user.tag} timed out for ${readableDuration}`);
 
     await interaction.reply({
-      content: `${user.tag} timed out for ${readableDuration}`,
+      embeds: [ephemeralEmbed],
       ephemeral: true,
     });
 
-    await messageLogger.logMemberTimeout(
+    messageLogger.logMemberTimeout(
       member,
       interaction.user,
       durationMilliseconds,
@@ -105,7 +159,8 @@ export class TimeoutCommand extends Command {
           .addStringOption((reason) =>
             reason
               .setName(Option.Reason)
-              .setDescription("The reason for timing them out, if any"),
+              .setDescription("The reason for timing them out, if any")
+              .setRequired(true),
           ),
       { idHints: ["988533580663779369", "984094351170883605"] },
     );
