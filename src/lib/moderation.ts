@@ -22,7 +22,7 @@ export interface ModerationLog {
         guild: string;
         user: string;
     };
-    warning?: [warnLog];
-    timeout?: [timeoutLog];
-    ban?: [banLog];
+    warnings?: [warnLog];
+    timeouts?: [timeoutLog];
+    bans?: [banLog];
 }
