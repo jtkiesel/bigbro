@@ -24,5 +24,5 @@ export interface ModerationLog {
     };
     warning?: [warnLog];
     timeout?: [timeoutLog];
-    ban?: [bans: banLog];
+    ban?: [banLog];
 }
