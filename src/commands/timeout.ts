@@ -67,7 +67,7 @@ export class TimeoutCommand extends Command {
       return;
     }
 
-    const filter = { '_id.guild': interaction.guildId!, '_id.user': member.id };
+    const filter = { '_id.guild': interaction.guildId, '_id.user': member.id };
 
     const userTimeout: timeoutLog = {
       date: new Date(),

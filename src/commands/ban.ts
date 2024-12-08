@@ -24,7 +24,7 @@ export class BanCommand extends Command {
     }
     const user = interaction.options.getUser(Option.User, true);
     const reason = interaction.options.getString(Option.Reason);
-    let purge = interaction.options.getBoolean(Option.Purge);
+    const purge = interaction.options.getBoolean(Option.Purge);
 
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const member = await guild.members.fetch(user);
@@ -43,10 +43,9 @@ export class BanCommand extends Command {
       });
       return;
     }
-    let purgeTime: number;
-    purgeTime = (!purge) ? 0 : 604800;
+    const purgeTime = (!purge) ? 0 : 604800;
 
-    const filter = { '_id.guild': interaction.guildId!, '_id.user': member.id };
+    const filter = { '_id.guild': interaction.guildId, '_id.user': member.id };
 
     const userBan: banLog = {
       date: new Date(),

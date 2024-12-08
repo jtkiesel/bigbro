@@ -43,7 +43,7 @@ export class WarnCommand extends Command {
             return;
         }
 
-        const filter = { '_id.guild': interaction.guildId!, '_id.user': member.id };
+        const filter = { '_id.guild': interaction.guildId, '_id.user': member.id };
 
         const userWarning: warnLog = {
             date: new Date(),
