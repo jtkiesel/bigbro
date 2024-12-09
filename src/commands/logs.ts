@@ -211,6 +211,8 @@ export class LogsCommand extends Command {
                 `<@${userLog.timeouts[index].user}>`,
                 bold('Date'),
                 userLog.timeouts[index].date,
+                bold('Duration'),
+                userLog.timeouts[index].duration,
                 bold('Reason'),
                 userLog.timeouts[index].reason,
             ].join('\n');
