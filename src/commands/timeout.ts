@@ -78,7 +78,7 @@ export class TimeoutCommand extends Command {
 
     const update = {
       $push: {
-        timeout: userTimeout
+        timeouts: userTimeout
       }
     };
 

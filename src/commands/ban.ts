@@ -55,7 +55,7 @@ export class BanCommand extends Command {
 
     const update = {
       $push: {
-        ban: userBan
+        bans: userBan
       }
     };
 
