@@ -13,7 +13,6 @@ import {
   type ModalSubmitInteraction,
   type ThreadChannel,
 } from "discord.js";
-import regionRolesByName from "../../config/region-roles-by-name.json" with { type: "json" };
 import { settingsManager } from "../../index.js";
 import { robotEventsToken } from "../../lib/config.js";
 import { Color } from "../../lib/embeds.js";
@@ -78,8 +77,7 @@ export class InteractionCreateListener extends Listener<
     if (program.teamRegExp && !program.teamRegExp.test(teamNumber)) {
       return this.sendError(
         interaction,
-        `Robotics competition team ID# must be a valid ${
-          program.name
+        `Robotics competition team ID# must be a valid ${program.name
         } team ID#, for example: ${program.teamExamples
           .map((example) => inlineCode(example))
           .join(", ")}`,
@@ -116,20 +114,23 @@ export class InteractionCreateListener extends Listener<
     }
 
     let locationRole = "";
+    const rolesDictionary = Object.fromEntries(
+      interaction.guild?.roles.cache.map(role => [role.name.toLowerCase(), role.id]) ?? []
+    );
     if (program.ids.length) {
       const [{ location }] = teamObject;
       const region = location.region?.toLowerCase();
       const regionRole =
-        region && region in regionRolesByName
-          ? regionRolesByName[region as keyof typeof regionRolesByName]
+        region && region in rolesDictionary
+          ? rolesDictionary[region as keyof typeof rolesDictionary]
           : undefined;
       if (regionRole !== undefined) {
         locationRole = regionRole;
       } else {
         const country = location.country.toLowerCase();
         const countryRole =
-          country in regionRolesByName
-            ? regionRolesByName[country as keyof typeof regionRolesByName]
+          country in rolesDictionary
+            ? rolesDictionary[country as keyof typeof rolesDictionary]
             : undefined;
         if (countryRole !== undefined) {
           locationRole = countryRole;
