@@ -63,7 +63,8 @@ export class InteractionCreateListener extends Listener<
             .setLabel("Robotics competition team ID#")
             .setStyle(TextInputStyle.Short)
             .setMinLength(1)
-            .setMaxLength(7),
+            .setMaxLength(7)
+            .setRequired(false),
         ),
         new ActionRowBuilder<TextInputBuilder>().setComponents(
           new TextInputBuilder()
@@ -72,7 +73,8 @@ export class InteractionCreateListener extends Listener<
             .setStyle(TextInputStyle.Paragraph)
             .setPlaceholder(
               "If program is None, explain how you are involved with VEX Robotics or why you joined the server",
-            ),
+            )
+            .setRequired(false),
         ),
       );
     await interaction.showModal(modal);

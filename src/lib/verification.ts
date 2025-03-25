@@ -14,6 +14,8 @@ export enum ButtonId {
 export enum FieldName {
   Nickname = "Nickname",
   UserId = "User ID",
+  Program = "Program",
+  Team = "Team Number",
 }
 
 export enum ModalId {
