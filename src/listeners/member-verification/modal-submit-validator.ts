@@ -75,7 +75,7 @@ export class InteractionCreateListener extends Listener<
     const teamNumber = interaction.fields
       .getTextInputValue(InputId.Team)
       .trim()
-      .toUpperCase();
+      .toUpperCase() || "N/A";
     if (program.teamRegExp && !program.teamRegExp.test(teamNumber)) {
       return this.sendError(
         interaction,
@@ -198,11 +198,9 @@ export class InteractionCreateListener extends Listener<
       const embedFields: Array<{ name: FieldName | string, value: string }> = [
         { name: FieldName.Nickname, value: name },
         { name: FieldName.UserId, value: interaction.user.id },
+        { name: FieldName.Program, value: program.name },
+        { name: FieldName.Team, value: teamNumber },
       ];
-
-      if (program === Program.Viqc) {
-        embedFields.unshift({ name: `VIQRC Team Number`, value: teamNumber });
-      }
 
       const verificationRequest = await thread.send({
         embeds: [
