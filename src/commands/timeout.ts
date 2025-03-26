@@ -70,7 +70,7 @@ export class TimeoutCommand extends Command {
 
     const update = {
       $push: {
-        timeouts: userTimeout
+        timeouts: { $each: [userTimeout], $position: 0 }
       }
     };
 

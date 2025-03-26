@@ -52,10 +52,6 @@ export class ModLogsCommand extends Command {
             return;
         }
 
-        userLog.warnings?.reverse();
-        userLog.timeouts?.reverse();
-        userLog.bans?.reverse();
-
         await interaction.deferReply({ ephemeral: true });
 
         const cachedPages: CachedPages = { user: [], warnings: [], timeouts: [], bans: [] };

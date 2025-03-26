@@ -48,7 +48,7 @@ export class BanCommand extends Command {
 
     const update = {
       $push: {
-        bans: userBan
+        bans: { $each: [userBan], $position: 0 }
       }
     };
 

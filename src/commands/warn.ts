@@ -52,7 +52,7 @@ export class WarnCommand extends Command {
 
         const update = {
             $push: {
-                warnings: userWarning
+                warnings: { $each: [userWarning], $position: 0 }
             }
         };
 
