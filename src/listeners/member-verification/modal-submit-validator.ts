@@ -113,9 +113,19 @@ export class InteractionCreateListener extends Listener<
       teamObject = teams;
     }
 
+    const guildSettings = await settingsManager.get(interaction.guildId);
+    const guild = await interaction.client.guilds.fetch(interaction.guildId);
+
+    if (!guildSettings?.verifiedRole) {
+      return;
+    }
+
     let locationRole = "";
+    const verifiedRole = guildSettings?.verifiedRole;
     const rolesDictionary = Object.fromEntries(
-      interaction.guild?.roles.cache.map(role => [role.name.toLowerCase(), role.id]) ?? []
+      interaction.guild?.roles.cache
+        .filter(role => role.position < (guild.roles.cache.get(verifiedRole)?.position ?? 0))
+        .map(role => [role.name.toLowerCase(), role.id]) ?? []
     );
     if (program.ids.length) {
       const [{ location }] = teamObject;
@@ -137,9 +147,6 @@ export class InteractionCreateListener extends Listener<
         }
       }
     }
-
-    const guildSettings = await settingsManager.get(interaction.guildId);
-    const guild = await interaction.client.guilds.fetch(interaction.guildId);
 
     if (program === Program.None) {
       const explanation = interaction.fields
@@ -248,10 +255,6 @@ export class InteractionCreateListener extends Listener<
           ),
         ],
       });
-    }
-
-    if (!guildSettings?.verifiedRole) {
-      return;
     }
 
     const member = await guild.members.fetch(interaction.member.user.id);
