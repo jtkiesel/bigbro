@@ -8,6 +8,7 @@ import {
     ButtonStyle,
     EmbedBuilder,
     PermissionFlagsBits,
+    userMention,
     type ChatInputCommandInteraction,
     type InteractionReplyOptions,
 } from 'discord.js';
@@ -16,11 +17,10 @@ import type { ModerationLog } from '../lib/moderation.js';
 
 @ApplyOptions<Command.Options>({
     description: "Get a user's moderation history",
-    requiredClientPermissions: [PermissionFlagsBits.ModerateMembers],
     requiredUserPermissions: [PermissionFlagsBits.ModerateMembers],
     runIn: [CommandOptionsRunTypeEnum.GuildAny],
 })
-export class LogsCommand extends Command {
+export class ModLogsCommand extends Command {
 
     public override async chatInputRun(interaction: ChatInputCommandInteraction) {
         if (!interaction.inGuild()) {
@@ -51,6 +51,10 @@ export class LogsCommand extends Command {
             });
             return;
         }
+
+        userLog.warnings?.reverse();
+        userLog.timeouts?.reverse();
+        userLog.bans?.reverse();
 
         await interaction.deferReply({ ephemeral: true });
 
@@ -178,14 +182,15 @@ export class LogsCommand extends Command {
         if (!userLog.warnings) {
             page = `User has no warnings`;
         } else {
+            const { user, date, reason } = userLog.warnings[index];
             page = [
-                bold(`Warning ${index + 1}\n`),
+                bold(`Warning #${userLog.warnings.length - index}\n`),
                 bold('Moderator:'),
-                `<@${userLog.warnings[index].user}>`,
+                userMention(user),
                 bold('Date'),
-                userLog.warnings[index].date,
+                date,
                 bold('Reason'),
-                userLog.warnings[index].reason,
+                reason,
             ].join('\n');
         }
 
@@ -205,16 +210,17 @@ export class LogsCommand extends Command {
         if (!userLog.timeouts) {
             page = `User has no timeouts`;
         } else {
+            const { user, date, duration, reason } = userLog.timeouts[index];
             page = [
-                bold(`Timeout ${index + 1}\n`),
+                bold(`Timeout #${userLog.timeouts.length - index}\n`),
                 bold('Moderator:'),
-                `<@${userLog.timeouts[index].user}>`,
+                userMention(user),
                 bold('Date'),
-                userLog.timeouts[index].date,
+                date,
                 bold('Duration'),
-                userLog.timeouts[index].duration,
+                duration,
                 bold('Reason'),
-                userLog.timeouts[index].reason,
+                reason,
             ].join('\n');
         }
 
@@ -234,14 +240,15 @@ export class LogsCommand extends Command {
         if (!userLog.bans) {
             page = `User has no bans`;
         } else {
+            const { user, date, reason } = userLog.bans[index];
             page = [
-                bold(`Ban ${index + 1}\n`),
+                bold(`Ban #${userLog.bans.length - index}\n`),
                 bold('Moderator:'),
-                `<@${userLog.bans[index].user}>`,
+                userMention(user),
                 bold('Date'),
-                userLog.bans[index].date,
+                date,
                 bold('Reason'),
-                userLog.bans[index].reason,
+                reason,
             ].join('\n');
         }
 

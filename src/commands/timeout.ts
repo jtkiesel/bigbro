@@ -10,7 +10,7 @@ import {
 import { Color } from '../lib/embeds.js';
 import { messageLogger, moderationLogs } from "../index.js";
 import { DurationUnit } from "../lib/duration.js";
-import type { timeoutLog } from '../lib/moderation.js';
+import type { TimeoutLog } from '../lib/moderation.js';
 
 @ApplyOptions<Command.Options>({
   description: "Timeout user",
@@ -28,7 +28,7 @@ export class TimeoutCommand extends Command {
     const user = interaction.options.getUser(Option.User, true);
     const duration = interaction.options.getNumber(Option.Duration, true);
     const unit = interaction.options.getString(Option.Unit, true);
-    const reason = interaction.options.getString(Option.Reason);
+    const reason = interaction.options.getString(Option.Reason, true);
 
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const member = await guild.members.fetch(user);
@@ -59,17 +59,9 @@ export class TimeoutCommand extends Command {
       return;
     }
 
-    if (!reason) {
-      await interaction.reply({
-        content: `Error: Timeouts require a reason.`,
-        ephemeral: true,
-      });
-      return;
-    }
-
     const filter = { '_id.guild': interaction.guildId, '_id.user': member.id };
 
-    const userTimeout: timeoutLog = {
+    const userTimeout: TimeoutLog = {
       date: new Date(),
       duration: readableDuration,
       user: interaction.user.id,
@@ -93,7 +85,7 @@ export class TimeoutCommand extends Command {
       .setColor(Color.Red)
       .setTitle('You Have Been Timed Out')
       .addFields(
-        { name: 'Server', value: `${guild.name}` },
+        { name: 'Server', value: guild.name },
         { name: 'Reason', value: reason },
         { name: 'Duration', value: readableDuration },
         {
@@ -115,7 +107,7 @@ export class TimeoutCommand extends Command {
       ephemeral: true,
     });
 
-    messageLogger.logMemberTimeout(
+    await messageLogger.logMemberTimeout(
       member,
       interaction.user,
       durationMilliseconds,

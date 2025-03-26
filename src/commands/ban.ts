@@ -7,7 +7,7 @@ import {
 } from 'discord.js';
 import { Color } from '../lib/embeds.js';
 import { messageLogger, moderationLogs } from '../index.js';
-import type { banLog } from '../lib/moderation.js';
+import type { BanLog } from '../lib/moderation.js';
 
 @ApplyOptions<Command.Options>({
   description: 'Ban user',
@@ -17,13 +17,14 @@ import type { banLog } from '../lib/moderation.js';
   runIn: [CommandOptionsRunTypeEnum.GuildAny],
 })
 export class BanCommand extends Command {
+  private static readonly MaxPurgeDuration = 604800; // 7 days
 
   public override async chatInputRun(interaction: ChatInputCommandInteraction) {
     if (!interaction.inGuild()) {
       return;
     }
     const user = interaction.options.getUser(Option.User, true);
-    const reason = interaction.options.getString(Option.Reason);
+    const reason = interaction.options.getString(Option.Reason, true);
     const purge = interaction.options.getBoolean(Option.Purge);
 
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
@@ -35,19 +36,11 @@ export class BanCommand extends Command {
       });
       return;
     }
-
-    if (!reason) {
-      await interaction.reply({
-        content: `Error: Timeouts require a reason.`,
-        ephemeral: true,
-      });
-      return;
-    }
-    const purgeTime = (!purge) ? 0 : 604800;
+    const purgeTime = (!purge) ? 0 : BanCommand.MaxPurgeDuration;
 
     const filter = { '_id.guild': interaction.guildId, '_id.user': member.id };
 
-    const userBan: banLog = {
+    const userBan: BanLog = {
       date: new Date(),
       user: interaction.user.id,
       reason: reason
@@ -67,7 +60,7 @@ export class BanCommand extends Command {
       .setColor(Color.Red)
       .setTitle('You Have Been Banned')
       .addFields(
-        { name: 'Server', value: `${guild.name}` },
+        { name: 'Server', value: guild.name },
         { name: 'Reason', value: reason },
       )
       .setTimestamp(interaction.createdTimestamp);
@@ -102,7 +95,7 @@ export class BanCommand extends Command {
           .addUserOption(user =>
             user
               .setName(Option.User)
-              .setDescription('The user to timeout')
+              .setDescription('The user to ban')
               .setRequired(true)
           )
           .addStringOption(reason =>
@@ -114,7 +107,7 @@ export class BanCommand extends Command {
           .addBooleanOption(purge =>
             purge
               .setName(Option.Purge)
-              .setDescription('Purge their messages?')
+              .setDescription('Purge their messages from the last 7 days?')
           ),
       { idHints: [] }
     );

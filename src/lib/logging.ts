@@ -58,7 +58,7 @@ export class MessageLogger {
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
       .setTitle('Member Warned')
-      .setThumbnail((member ?? member).displayAvatarURL())
+      .setThumbnail(member.displayAvatarURL())
       .addFields(
         { name: 'Member', value: `${member} (${member.user.tag})` },
         { name: 'Performed By', value: `${executor}`, inline: true },
@@ -87,7 +87,7 @@ export class MessageLogger {
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
       .setTitle('Member Timed Out')
-      .setThumbnail((member ?? member).displayAvatarURL())
+      .setThumbnail(member.displayAvatarURL())
       .addFields(
         { name: "Member", value: `${member} (${member.user.tag})` },
         { name: "Performed By", value: `${executor}`, inline: true },
@@ -121,7 +121,7 @@ export class MessageLogger {
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
       .setTitle('Member Banned')
-      .setThumbnail((member ?? member).displayAvatarURL())
+      .setThumbnail(member.displayAvatarURL())
       .addFields(
         { name: 'Member', value: `${member} (${member.user.tag})` },
         { name: 'Performed By', value: `${executor}`, inline: true },

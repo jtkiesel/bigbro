@@ -7,11 +7,10 @@ import {
 } from 'discord.js';
 import { Color } from '../lib/embeds.js';
 import { messageLogger, moderationLogs } from '../index.js';
-import type { warnLog } from '../lib/moderation.js';
+import type { WarnLog } from '../lib/moderation.js';
 
 @ApplyOptions<Command.Options>({
     description: 'Warn user',
-    requiredClientPermissions: [PermissionFlagsBits.ModerateMembers],
     requiredUserPermissions: [PermissionFlagsBits.ModerateMembers],
     runIn: [CommandOptionsRunTypeEnum.GuildAny],
 })
@@ -22,7 +21,7 @@ export class WarnCommand extends Command {
             return;
         }
         const user = interaction.options.getUser(Option.User, true);
-        const reason = interaction.options.getString(Option.Reason);
+        const reason = interaction.options.getString(Option.Reason, true);
 
         const guild = await interaction.client.guilds.fetch(interaction.guildId);
         const member = await guild.members.fetch(user);
@@ -45,7 +44,7 @@ export class WarnCommand extends Command {
 
         const filter = { '_id.guild': interaction.guildId, '_id.user': member.id };
 
-        const userWarning: warnLog = {
+        const userWarning: WarnLog = {
             date: new Date(),
             user: interaction.user.id,
             reason: reason
@@ -74,14 +73,14 @@ export class WarnCommand extends Command {
             .setColor(Color.Red)
             .setTitle('You Have Been Warned')
             .addFields(
-                { name: 'Server', value: `${guild.name}` },
+                { name: 'Server', value: guild.name },
                 { name: 'Reason', value: reason },
             )
             .setTimestamp(interaction.createdTimestamp);
 
         await member.send({ embeds: [embed] });
 
-        messageLogger.logMemberWarning(
+        await messageLogger.logMemberWarning(
             member,
             interaction.user,
             reason,

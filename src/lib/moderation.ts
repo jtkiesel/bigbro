@@ -1,17 +1,17 @@
-export interface warnLog {
+export interface WarnLog {
     date: Date;
     user: string;
     reason: string;
 }
 
-export interface timeoutLog {
+export interface TimeoutLog {
     date: Date;
     duration: string;
     user: string;
     reason: string;
 }
 
-export interface banLog {
+export interface BanLog {
     date: Date;
     user: string;
     reason: string;
@@ -22,7 +22,7 @@ export interface ModerationLog {
         guild: string;
         user: string;
     };
-    warnings?: [warnLog];
-    timeouts?: [timeoutLog];
-    bans?: [banLog];
+    warnings?: [WarnLog];
+    timeouts?: [TimeoutLog];
+    bans?: [BanLog];
 }
