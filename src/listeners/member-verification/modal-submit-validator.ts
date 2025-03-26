@@ -13,7 +13,6 @@ import {
   type ModalSubmitInteraction,
   type ThreadChannel,
 } from "discord.js";
-import regionRolesByName from "../../config/region-roles-by-name.json" with { type: "json" };
 import { settingsManager } from "../../index.js";
 import { robotEventsToken } from "../../lib/config.js";
 import { Color } from "../../lib/embeds.js";
@@ -115,30 +114,42 @@ export class InteractionCreateListener extends Listener<
       teamObject = teams;
     }
 
+    const guildSettings = await settingsManager.get(interaction.guildId);
+    const guild = await interaction.client.guilds.fetch(interaction.guildId);
+
+    const verifiedRole = guildSettings?.verifiedRole;
+    if (!verifiedRole) {
+      return;
+    }
+
+    const verifiedRolePosition = guild.roles.cache.get(verifiedRole)?.position ?? 0;
+
     let locationRole = "";
+    const rolesDictionary = Object.fromEntries(
+      guild.roles.cache
+        .filter(role => role.position < verifiedRolePosition)
+        .map(role => [role.name.toLowerCase(), role.id]) ?? []
+    );
     if (program.ids.length) {
       const [{ location }] = teamObject;
       const region = location.region?.toLowerCase();
       const regionRole =
-        region && region in regionRolesByName
-          ? regionRolesByName[region as keyof typeof regionRolesByName]
+        region && region in rolesDictionary
+          ? rolesDictionary[region as keyof typeof rolesDictionary]
           : undefined;
       if (regionRole !== undefined) {
         locationRole = regionRole;
       } else {
         const country = location.country.toLowerCase();
         const countryRole =
-          country in regionRolesByName
-            ? regionRolesByName[country as keyof typeof regionRolesByName]
+          country in rolesDictionary
+            ? rolesDictionary[country as keyof typeof rolesDictionary]
             : undefined;
         if (countryRole !== undefined) {
           locationRole = countryRole;
         }
       }
     }
-
-    const guildSettings = await settingsManager.get(interaction.guildId);
-    const guild = await interaction.client.guilds.fetch(interaction.guildId);
 
     const illegalTeamNumberCheck = restrictedTeamNumbers.includes(teamNumber);
     if ([Program.None, Program.Viqc].includes(program) || illegalTeamNumberCheck) {
@@ -258,15 +269,11 @@ export class InteractionCreateListener extends Listener<
       });
     }
 
-    if (!guildSettings?.verifiedRole) {
-      return;
-    }
-
     const member = await guild.members.fetch(interaction.member.user.id);
 
     const nickname = this.nickname(name, program, teamNumber);
     const reason = "Automatic verification";
-    const roles = [guildSettings.verifiedRole, program.role];
+    const roles = [verifiedRole, program.role];
 
     if (locationRole !== "") {
       roles.push(locationRole);
