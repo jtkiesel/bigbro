@@ -25,6 +25,7 @@ import {
   InputId,
   ModalId,
 } from "../../lib/verification.js";
+import restrictedTeamNumbers from "../../config/restricted-team-numbers.json" with { type: "json" };
 
 @ApplyOptions<Listener.Options>({ event: Events.InteractionCreate })
 export class InteractionCreateListener extends Listener<
@@ -73,7 +74,7 @@ export class InteractionCreateListener extends Listener<
     const teamNumber = interaction.fields
       .getTextInputValue(InputId.Team)
       .trim()
-      .toUpperCase();
+      .toUpperCase() || "N/A";
     if (program.teamRegExp && !program.teamRegExp.test(teamNumber)) {
       return this.sendError(
         interaction,
@@ -150,16 +151,19 @@ export class InteractionCreateListener extends Listener<
       }
     }
 
-    if (program === Program.None) {
+    const illegalTeamNumberCheck = restrictedTeamNumbers.includes(teamNumber);
+    if ([Program.None, Program.Viqc].includes(program) || illegalTeamNumberCheck) {
       const explanation = interaction.fields
         .getTextInputValue(InputId.Explanation)
         .trim();
       if (!explanation) {
+        let sendErrorMessage = `By entering a robotics competition program of ${inlineCode(program.name,)}, you must provide an explanation`
+        if (illegalTeamNumberCheck) {
+          sendErrorMessage = `By entering a team number of ${inlineCode(teamNumber)}, you must provide an explanation`
+        }
         return this.sendError(
           interaction,
-          `By entering a robotics competition program of ${inlineCode(
-            Program.None.name,
-          )}, you must provide an explanation`,
+          sendErrorMessage,
         );
       }
 
@@ -202,6 +206,13 @@ export class InteractionCreateListener extends Listener<
         );
       }
 
+      const embedFields: Array<{ name: FieldName | string, value: string }> = [
+        { name: FieldName.Nickname, value: name },
+        { name: FieldName.UserId, value: interaction.user.id },
+        { name: FieldName.Program, value: program.name },
+        { name: FieldName.Team, value: teamNumber },
+      ];
+
       const verificationRequest = await thread.send({
         embeds: [
           new EmbedBuilder()
@@ -217,8 +228,7 @@ export class InteractionCreateListener extends Listener<
             .setTitle("Verification request")
             .setDescription(explanation)
             .setFields(
-              { name: FieldName.Nickname, value: name },
-              { name: FieldName.UserId, value: interaction.user.id },
+              embedFields,
             )
             .setTimestamp(interaction.createdTimestamp),
         ],
