@@ -116,12 +116,12 @@ export class InteractionCreateListener extends Listener<
     const guildSettings = await settingsManager.get(interaction.guildId);
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
 
-    if (!guildSettings?.verifiedRole) {
+    const verifiedRole = guildSettings?.verifiedRole;
+    if (!verifiedRole) {
       return;
     }
 
     let locationRole = "";
-    const verifiedRole = guildSettings?.verifiedRole;
     const rolesDictionary = Object.fromEntries(
       interaction.guild?.roles.cache
         .filter(role => role.position < (guild.roles.cache.get(verifiedRole)?.position ?? 0))
@@ -261,7 +261,7 @@ export class InteractionCreateListener extends Listener<
 
     const nickname = this.nickname(name, program, teamNumber);
     const reason = "Automatic verification";
-    const roles = [guildSettings.verifiedRole, program.role];
+    const roles = [verifiedRole, program.role];
 
     if (locationRole !== "") {
       roles.push(locationRole);
