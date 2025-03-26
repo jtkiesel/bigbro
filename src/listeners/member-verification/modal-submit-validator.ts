@@ -121,10 +121,12 @@ export class InteractionCreateListener extends Listener<
       return;
     }
 
+    const verifiedRolePosition = guild.roles.cache.get(verifiedRole)?.position ?? 0;
+
     let locationRole = "";
     const rolesDictionary = Object.fromEntries(
-      interaction.guild?.roles.cache
-        .filter(role => role.position < (guild.roles.cache.get(verifiedRole)?.position ?? 0))
+      guild.roles.cache
+        .filter(role => role.position < verifiedRolePosition)
         .map(role => [role.name.toLowerCase(), role.id]) ?? []
     );
     if (program.ids.length) {
