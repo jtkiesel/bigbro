@@ -19,7 +19,7 @@ import type { SettingsManager } from "./settings.js";
 import { userUrl } from "./user.js";
 
 export class MessageLogger {
-  public constructor(private readonly settingsManager: SettingsManager) {}
+  public constructor(private readonly settingsManager: SettingsManager) { }
 
   public async logMessageDelete(
     message: Message | PartialMessage,
@@ -44,6 +44,32 @@ export class MessageLogger {
     );
   }
 
+  public async logMemberWarning(
+    member: GuildMember,
+    executor: User,
+    reason: string,
+    executedTimestamp: number
+  ) {
+    const logChannel = await this.channelForGuild(member.guild);
+    if (!logChannel) {
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(Color.Red)
+      .setTitle('Member Warned')
+      .setThumbnail(member.displayAvatarURL())
+      .addFields(
+        { name: 'Member', value: `${member} (${member.user.tag})` },
+        { name: 'Performed By', value: `${executor}`, inline: true },
+        { name: 'Warned For', value: reason },
+      )
+      .setFooter({ text: `User ID: ${member.id}` })
+      .setTimestamp(executedTimestamp);
+
+    await logChannel.send({ embeds: [embed] });
+  }
+
   public async logMemberTimeout(
     member: GuildMember,
     executor: User,
@@ -60,7 +86,8 @@ export class MessageLogger {
     const expiration = new Date(executedTimestamp + durationMilliseconds);
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
-      .setTitle("Member Timed Out")
+      .setTitle('Member Timed Out')
+      .setThumbnail(member.displayAvatarURL())
       .addFields(
         { name: "Member", value: `${member} (${member.user.tag})` },
         { name: "Performed By", value: `${executor}`, inline: true },
@@ -76,6 +103,32 @@ export class MessageLogger {
     if (reason) {
       embed.addFields({ name: "Reason", value: reason });
     }
+
+    await logChannel.send({ embeds: [embed] });
+  }
+
+  public async logMemberBan(
+    member: GuildMember,
+    executor: User,
+    reason: string,
+    executedTimestamp: number
+  ) {
+    const logChannel = await this.channelForGuild(member.guild);
+    if (!logChannel) {
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(Color.Red)
+      .setTitle('Member Banned')
+      .setThumbnail(member.displayAvatarURL())
+      .addFields(
+        { name: 'Member', value: `${member} (${member.user.tag})` },
+        { name: 'Performed By', value: `${executor}`, inline: true },
+        { name: 'Reason', value: reason },
+      )
+      .setFooter({ text: `User ID: ${member.id}` })
+      .setTimestamp(executedTimestamp);
 
     await logChannel.send({ embeds: [embed] });
   }
