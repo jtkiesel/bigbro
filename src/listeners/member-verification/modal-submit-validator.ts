@@ -152,7 +152,7 @@ export class InteractionCreateListener extends Listener<
     }
 
     const illegalTeamNumberCheck = restrictedTeamNumbers.includes(teamNumber);
-    if ([Program.None, Program.Viqc].includes(program) || illegalTeamNumberCheck) {
+    if ([Program.None, Program.Viqrc].includes(program) || illegalTeamNumberCheck) {
       const explanation = interaction.fields
         .getTextInputValue(InputId.Explanation)
         .trim();
@@ -315,10 +315,10 @@ export class InteractionCreateListener extends Listener<
   }
 
   private nickname(name: string, program: Program, teamNumber: string) {
-    if (program === Program.Viqc) {
+    if (program === Program.Viqrc) {
       return name;
     }
-    const isCommonProgram = [Program.Vrc, Program.VexU].includes(program);
+    const isCommonProgram = [Program.V5rc, Program.Vurc].includes(program);
     const team = isCommonProgram
       ? teamNumber
       : [program.name, teamNumber].join(" ");

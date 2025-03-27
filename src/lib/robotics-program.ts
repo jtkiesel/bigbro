@@ -1,34 +1,34 @@
 export class Program {
-  public static readonly Vrc = new Program({
-    name: "VRC",
-    description: "VEX Robotics Competition",
+  public static readonly V5rc = new Program({
+    name: "V5RC",
+    description: "VEX V5 Robotics Competition",
     role: "197836716726288387",
     emoji: "464676956428828682",
     teamRegExp: /^\d{1,5}[A-Z]?$/i,
     teamExamples: ["1", "12345A"],
     ids: [1],
   });
-  public static readonly VexU = new Program({
-    name: "VEXU",
-    description: "VEX U college and university competition",
+  public static readonly Vurc = new Program({
+    name: "VURC",
+    description: "VEX U Robotics Competition",
     role: "305392771324313610",
     emoji: "464677474509389831",
     teamRegExp: /^[A-Z]{2,5}\d{0,2}$/i,
     teamExamples: ["AB", "ABCDE12"],
     ids: [4],
   });
-  public static readonly Vaic = new Program({
-    name: "VAIC",
-    description: "VEX AI Competition",
+  public static readonly Vairc = new Program({
+    name: "VAIRC",
+    description: "VEX AI Robotics Competition",
     role: "706299363588177940",
     emoji: "811072718274691073",
     teamRegExp: /^(?:\d{1,5}[A-Z]?|[A-Z]{2,5}\d{0,2})$/i,
     teamExamples: ["1", "12345A", "AB", "ABCDE12"],
     ids: [48, 49],
   });
-  public static readonly Viqc = new Program({
-    name: "VIQC",
-    description: "VEX IQ Competition",
+  public static readonly Viqrc = new Program({
+    name: "VIQRC",
+    description: "VEX IQ Robotics Competition",
     role: "197817210729791489",
     emoji: "464677535461146624",
     teamRegExp: /^\d{1,5}[A-Z]?$/i,
@@ -58,10 +58,10 @@ export class Program {
   });
 
   private static readonly Values = [
-    this.Vrc,
-    this.VexU,
-    this.Vaic,
-    this.Viqc,
+    this.V5rc,
+    this.Vurc,
+    this.Vairc,
+    this.Viqrc,
     this.Frc,
     this.Ftc,
     this.None,

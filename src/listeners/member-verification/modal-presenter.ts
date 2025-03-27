@@ -54,7 +54,7 @@ export class InteractionCreateListener extends Listener<
                 .join(", "),
             )
             .setMinLength(3)
-            .setMaxLength(4)
+            .setMaxLength(5)
             .setRequired(true),
         ),
         new ActionRowBuilder<TextInputBuilder>().setComponents(
