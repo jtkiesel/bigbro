@@ -151,7 +151,7 @@ export class TimeoutCommand extends Command {
           .addStringOption((reason) =>
             reason
               .setName(Option.Reason)
-              .setDescription("The reason for timing them out, if any")
+              .setDescription("The reason for timing them out")
               .setRequired(true),
           ),
       { idHints: ["988533580663779369", "984094351170883605"] },
