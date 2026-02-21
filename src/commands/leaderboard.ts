@@ -9,10 +9,10 @@ import {
   hyperlink,
   inlineCode,
   userMention,
+  type BaseMessageOptions,
   type ChatInputCommandInteraction,
   type Collection,
   type GuildMember,
-  type InteractionReplyOptions,
 } from "discord.js";
 import type { AbstractCursor } from "mongodb";
 import { messageCounts } from "../index.js";
@@ -50,7 +50,7 @@ export class LeaderboardCommand extends Command {
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const cachedPages = new Array<string>();
 
-    const replyOptions = async (): Promise<InteractionReplyOptions> => ({
+    const replyOptions = async (): Promise<BaseMessageOptions> => ({
       embeds: [
         new EmbedBuilder()
           .setColor(Color.Green)
@@ -69,7 +69,7 @@ export class LeaderboardCommand extends Command {
       ],
     });
     const reply = await interaction.followUp({
-      fetchReply: true,
+      withResponse: true,
       ...(await replyOptions()),
     });
 

@@ -7,10 +7,10 @@ import {
   TimestampStyles,
   type ChatInputCommandInteraction,
 } from "discord.js";
-import { Color } from '../lib/embeds.js';
 import { messageLogger, moderationLogs } from "../index.js";
 import { DurationUnit } from "../lib/duration.js";
-import type { TimeoutLog } from '../lib/moderation.js';
+import { Color } from "../lib/embeds.js";
+import type { TimeoutLog } from "../lib/moderation.js";
 
 @ApplyOptions<Command.Options>({
   description: "Timeout user",
@@ -59,19 +59,19 @@ export class TimeoutCommand extends Command {
       return;
     }
 
-    const filter = { '_id.guild': interaction.guildId, '_id.user': member.id };
+    const filter = { "_id.guild": interaction.guildId, "_id.user": member.id };
 
     const userTimeout: TimeoutLog = {
       date: new Date(),
       duration: readableDuration,
       user: interaction.user.id,
-      reason: reason
+      reason: reason,
     };
 
     const update = {
       $push: {
-        timeouts: { $each: [userTimeout], $position: 0 }
-      }
+        timeouts: { $each: [userTimeout], $position: 0 },
+      },
     };
 
     const options = { upsert: true };
@@ -79,17 +79,19 @@ export class TimeoutCommand extends Command {
     moderationLogs.findOneAndUpdate(filter, update, options);
 
     await member.timeout(durationMilliseconds, reason ?? undefined);
-    const expiration = new Date(interaction.createdTimestamp + durationMilliseconds);
+    const expiration = new Date(
+      interaction.createdTimestamp + durationMilliseconds,
+    );
 
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
-      .setTitle('You Have Been Timed Out')
+      .setTitle("You Have Been Timed Out")
       .addFields(
-        { name: 'Server', value: guild.name },
-        { name: 'Reason', value: reason },
-        { name: 'Duration', value: readableDuration },
+        { name: "Server", value: guild.name },
+        { name: "Reason", value: reason },
+        { name: "Duration", value: readableDuration },
         {
-          name: 'Expiration',
+          name: "Expiration",
           value: time(expiration, TimestampStyles.RelativeTime),
           inline: true,
         },

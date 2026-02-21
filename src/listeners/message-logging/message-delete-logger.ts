@@ -22,7 +22,7 @@ export class MessageDeleteListener extends Listener<
     });
     const auditLog = auditLogs?.entries.first();
     if (
-      !auditLog ||
+      !auditLog?.target ||
       Math.abs(auditLog.createdTimestamp - deletedTimestamp) > 250 ||
       auditLog.target.id !== message.author?.id ||
       !auditLog.executor

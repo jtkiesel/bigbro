@@ -6,7 +6,7 @@
     "@sapphire/ts-config/verbatim"
   ],
   "compilerOptions": {
-    "module": "NodeNext",
+    "module": "nodenext",
     "outDir": "dist",
     "skipLibCheck": true
   }
