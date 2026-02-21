@@ -1,7 +1,7 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { Events, Listener } from "@sapphire/framework";
 import {
-  ActionRowBuilder,
+  LabelBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -33,49 +33,53 @@ export class InteractionCreateListener extends Listener<
     const modal = new ModalBuilder()
       .setCustomId(ModalId.Verify)
       .setTitle("Enter your information for verification")
-      .setComponents(
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder()
-            .setCustomId(InputId.Name)
-            .setLabel("Name or preferred nickname")
-            .setStyle(TextInputStyle.Short)
-            .setMinLength(1)
-            .setMaxLength(25)
-            .setRequired(true),
-        ),
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder()
-            .setCustomId(InputId.Program)
-            .setLabel("Primary robotics competition program")
-            .setStyle(TextInputStyle.Short)
-            .setPlaceholder(
-              Program.values()
-                .map(({ name }) => name)
-                .join(", "),
-            )
-            .setMinLength(3)
-            .setMaxLength(5)
-            .setRequired(true),
-        ),
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder()
-            .setCustomId(InputId.Team)
-            .setLabel("Robotics competition team ID#")
-            .setStyle(TextInputStyle.Short)
-            .setMinLength(1)
-            .setMaxLength(7)
-            .setRequired(false),
-        ),
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder()
-            .setCustomId(InputId.Explanation)
-            .setLabel("Explanation")
-            .setStyle(TextInputStyle.Paragraph)
-            .setPlaceholder(
-              "If program is None, explain how you are involved with VEX Robotics or why you joined the server",
-            )
-            .setRequired(false),
-        ),
+      .setLabelComponents(
+        new LabelBuilder()
+          .setLabel("Name or preferred nickname")
+          .setTextInputComponent(
+            new TextInputBuilder()
+              .setCustomId(InputId.Name)
+              .setStyle(TextInputStyle.Short)
+              .setMinLength(1)
+              .setMaxLength(25)
+              .setRequired(true),
+          ),
+        new LabelBuilder()
+          .setLabel("Primary robotics competition program")
+          .setTextInputComponent(
+            new TextInputBuilder()
+              .setCustomId(InputId.Program)
+              .setStyle(TextInputStyle.Short)
+              .setPlaceholder(
+                Program.values()
+                  .map(({ name }) => name)
+                  .join(", "),
+              )
+              .setMinLength(3)
+              .setMaxLength(5)
+              .setRequired(true),
+          ),
+        new LabelBuilder()
+          .setLabel("Robotics competition team ID#")
+          .setTextInputComponent(
+            new TextInputBuilder()
+              .setCustomId(InputId.Team)
+              .setStyle(TextInputStyle.Short)
+              .setMinLength(1)
+              .setMaxLength(7)
+              .setRequired(false),
+          ),
+        new LabelBuilder()
+          .setLabel("Explanation")
+          .setTextInputComponent(
+            new TextInputBuilder()
+              .setCustomId(InputId.Explanation)
+              .setStyle(TextInputStyle.Paragraph)
+              .setPlaceholder(
+                "If program is None, explain how you are involved with VEX Robotics or why you joined the server",
+              )
+              .setRequired(false),
+          ),
       );
     await interaction.showModal(modal);
   }

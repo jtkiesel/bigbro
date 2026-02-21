@@ -43,7 +43,7 @@ export class InteractionCreateListener extends Listener<
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: "Ephemeral" });
 
     if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageThreads)) {
       await interaction.followUp({

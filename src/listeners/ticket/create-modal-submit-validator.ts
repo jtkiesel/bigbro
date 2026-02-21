@@ -29,7 +29,7 @@ export class InteractionCreateListener extends Listener<
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: "Ephemeral" });
 
     const title = interaction.fields.getTextInputValue(InputId.Title).trim();
     if (!title) {

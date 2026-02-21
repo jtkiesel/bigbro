@@ -25,7 +25,7 @@ export class ClientReadyListener extends Listener<typeof Events.ClientReady> {
             ) {
               return;
             }
-            await channel.messages.fetchPinned();
+            await channel.messages.fetchPins();
 
             let firstMessageId: string | undefined;
             while (channel.messages.cache.size < messageCacheSize) {

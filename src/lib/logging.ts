@@ -11,6 +11,7 @@ import {
   type GuildMember,
   type Message,
   type PartialMessage,
+  type PartialUser,
   type ThreadChannel,
   type User,
 } from "discord.js";
@@ -19,11 +20,11 @@ import type { SettingsManager } from "./settings.js";
 import { userUrl } from "./user.js";
 
 export class MessageLogger {
-  public constructor(private readonly settingsManager: SettingsManager) { }
+  public constructor(private readonly settingsManager: SettingsManager) {}
 
   public async logMessageDelete(
     message: Message | PartialMessage,
-    executor?: User,
+    executor?: User | PartialUser,
   ) {
     await this.logMessageChange(
       message,
@@ -48,7 +49,7 @@ export class MessageLogger {
     member: GuildMember,
     executor: User,
     reason: string,
-    executedTimestamp: number
+    executedTimestamp: number,
   ) {
     const logChannel = await this.channelForGuild(member.guild);
     if (!logChannel) {
@@ -57,12 +58,12 @@ export class MessageLogger {
 
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
-      .setTitle('Member Warned')
+      .setTitle("Member Warned")
       .setThumbnail(member.displayAvatarURL())
       .addFields(
-        { name: 'Member', value: `${member} (${member.user.tag})` },
-        { name: 'Performed By', value: `${executor}`, inline: true },
-        { name: 'Warned For', value: reason },
+        { name: "Member", value: `${member} (${member.user.tag})` },
+        { name: "Performed By", value: `${executor}`, inline: true },
+        { name: "Warned For", value: reason },
       )
       .setFooter({ text: `User ID: ${member.id}` })
       .setTimestamp(executedTimestamp);
@@ -86,7 +87,7 @@ export class MessageLogger {
     const expiration = new Date(executedTimestamp + durationMilliseconds);
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
-      .setTitle('Member Timed Out')
+      .setTitle("Member Timed Out")
       .setThumbnail(member.displayAvatarURL())
       .addFields(
         { name: "Member", value: `${member} (${member.user.tag})` },
@@ -111,7 +112,7 @@ export class MessageLogger {
     member: GuildMember,
     executor: User,
     reason: string,
-    executedTimestamp: number
+    executedTimestamp: number,
   ) {
     const logChannel = await this.channelForGuild(member.guild);
     if (!logChannel) {
@@ -120,12 +121,12 @@ export class MessageLogger {
 
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
-      .setTitle('Member Banned')
+      .setTitle("Member Banned")
       .setThumbnail(member.displayAvatarURL())
       .addFields(
-        { name: 'Member', value: `${member} (${member.user.tag})` },
-        { name: 'Performed By', value: `${executor}`, inline: true },
-        { name: 'Reason', value: reason },
+        { name: "Member", value: `${member} (${member.user.tag})` },
+        { name: "Performed By", value: `${executor}`, inline: true },
+        { name: "Reason", value: reason },
       )
       .setFooter({ text: `User ID: ${member.id}` })
       .setTimestamp(executedTimestamp);
@@ -137,7 +138,7 @@ export class MessageLogger {
     message: Message | PartialMessage,
     type: MessageChangeType,
     timestamp: Date | number | null,
-    executor?: User,
+    executor?: User | PartialUser,
   ) {
     if (message.partial || message.author.bot || !message.inGuild()) {
       return;

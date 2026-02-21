@@ -24,7 +24,7 @@ enum SubcommandName {
 const error = (interaction: ChatInputCommandInteraction, content: string) => {
   return interaction.followUp({
     embeds: [new EmbedBuilder().setColor(Color.Red).setDescription(content)],
-    ephemeral: true,
+    flags: "Ephemeral",
   });
 };
 
@@ -36,7 +36,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
     {
       name: SubcommandName.Logging,
       chatInputRun: async (interaction: ChatInputCommandInteraction) => {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: "Ephemeral" });
 
         if (!interaction.inGuild()) {
           await error(interaction, "Command only available in servers");
@@ -87,14 +87,14 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
               .setColor(Color.Green)
               .setDescription(`Action logging setup in ${channel}`),
           ],
-          ephemeral: true,
+          flags: "Ephemeral",
         });
       },
     },
     {
       name: SubcommandName.Verification,
       chatInputRun: async (interaction: ChatInputCommandInteraction) => {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: "Ephemeral" });
 
         if (!interaction.inGuild()) {
           await error(interaction, "Command only available in servers");
@@ -246,14 +246,14 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
                 },
               ),
           ],
-          ephemeral: true,
+          flags: "Ephemeral",
         });
       },
     },
     {
       name: SubcommandName.Ticket,
       chatInputRun: async (interaction: ChatInputCommandInteraction) => {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: "Ephemeral" });
 
         if (!interaction.inGuild()) {
           await error(interaction, "Command only available in servers");
@@ -332,7 +332,7 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
               .setColor(Color.Green)
               .setDescription(`Ticket channel setup in ${ticketChannel}`),
           ],
-          ephemeral: true,
+          flags: "Ephemeral",
         });
       },
     },

@@ -13,10 +13,8 @@ export class PingCommand extends Command {
     const interactionReceived = Date.now();
     const fromDiscord = interactionReceived - interaction.createdTimestamp;
 
-    const reply = await interaction.deferReply({
-      ephemeral: true,
-      fetchReply: true,
-    });
+    await interaction.deferReply({ flags: "Ephemeral" });
+    const reply = await interaction.fetchReply();
 
     const toDiscord = reply.createdTimestamp - interactionReceived;
     const roundTrip = reply.createdTimestamp - interaction.createdTimestamp;

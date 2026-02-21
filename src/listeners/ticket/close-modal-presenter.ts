@@ -1,7 +1,7 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { Events, Listener } from "@sapphire/framework";
 import {
-  ActionRowBuilder,
+  LabelBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -25,17 +25,18 @@ export class InteractionCreateListener extends Listener<
     const closeModal = new ModalBuilder()
       .setCustomId(ModalId.Close)
       .setTitle("Enter your information for verification")
-      .setComponents(
-        new ActionRowBuilder<TextInputBuilder>().setComponents(
-          new TextInputBuilder()
-            .setCustomId(InputId.Resolution)
-            .setLabel("Resolution")
-            .setStyle(TextInputStyle.Paragraph)
-            .setPlaceholder(
-              "Provide a reason to why you are closing this ticket.",
-            )
-            .setRequired(true),
-        ),
+      .setLabelComponents(
+        new LabelBuilder()
+          .setLabel("Resolution")
+          .setTextInputComponent(
+            new TextInputBuilder()
+              .setCustomId(InputId.Resolution)
+              .setStyle(TextInputStyle.Paragraph)
+              .setPlaceholder(
+                "Provide a reason to why you are closing this ticket.",
+              )
+              .setRequired(true),
+          ),
       );
     await interaction.showModal(closeModal);
   }

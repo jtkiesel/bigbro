@@ -7,7 +7,7 @@ import { ticketModal } from "../lib/ticket.js";
 const error = (interaction: ChatInputCommandInteraction, content: string) => {
   return interaction.followUp({
     embeds: [new EmbedBuilder().setColor(Color.Red).setDescription(content)],
-    ephemeral: true,
+    flags: "Ephemeral",
   });
 };
 

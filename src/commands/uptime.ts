@@ -15,7 +15,7 @@ export class UptimeCommand extends Command {
           .setColor(Color.Blue)
           .setDescription(`🕒 Uptime: ${duration(interaction.client.uptime)}`),
       ],
-      ephemeral: true,
+      flags: "Ephemeral",
     });
   }
 

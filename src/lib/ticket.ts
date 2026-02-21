@@ -1,5 +1,5 @@
 import {
-  ActionRowBuilder,
+  LabelBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -24,25 +24,27 @@ export enum InputId {
 export const ticketModal = new ModalBuilder()
   .setCustomId(ModalId.Ticket)
   .setTitle("Enter your information for verification")
-  .setComponents(
-    new ActionRowBuilder<TextInputBuilder>().setComponents(
-      new TextInputBuilder()
-        .setCustomId(InputId.Title)
-        .setLabel("Title")
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder("Do not provide sensitive information here.")
-        .setMinLength(1)
-        .setMaxLength(25)
-        .setRequired(true),
-    ),
-    new ActionRowBuilder<TextInputBuilder>().setComponents(
-      new TextInputBuilder()
-        .setCustomId(InputId.Explanation)
-        .setLabel("Description")
-        .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder(
-          "Provide an explanation of why you are making your ticket.",
-        )
-        .setRequired(true),
-    ),
+  .setLabelComponents(
+    new LabelBuilder()
+      .setLabel("Title")
+      .setTextInputComponent(
+        new TextInputBuilder()
+          .setCustomId(InputId.Title)
+          .setStyle(TextInputStyle.Short)
+          .setPlaceholder("Do not provide sensitive information here.")
+          .setMinLength(1)
+          .setMaxLength(25)
+          .setRequired(true),
+      ),
+    new LabelBuilder()
+      .setLabel("Description")
+      .setTextInputComponent(
+        new TextInputBuilder()
+          .setCustomId(InputId.Explanation)
+          .setStyle(TextInputStyle.Paragraph)
+          .setPlaceholder(
+            "Provide an explanation of why you are making your ticket.",
+          )
+          .setRequired(true),
+      ),
   );

@@ -9,9 +9,9 @@ import {
   type MessageCount,
 } from "./lib/leaderboard.js";
 import { MessageLogger } from "./lib/logging.js";
+import type { ModerationLog } from "./lib/moderation.js";
 import { SettingsManager, type GuildSettings } from "./lib/settings.js";
 import type { VerifiedMember } from "./lib/verification.js";
-import type { ModerationLog } from './lib/moderation.js';
 
 const mongoClient = new MongoClient(mongoUrl);
 const database = mongoClient.db();
@@ -20,7 +20,7 @@ const channelMessages = database.collection<ChannelMessages>("channels");
 const guildSettings = database.collection<GuildSettings>("settings");
 export const messageCounts = database.collection<MessageCount>("messages");
 export const verifiedMembers = database.collection<VerifiedMember>("members");
-export const moderationLogs = database.collection<ModerationLog>('moderation');
+export const moderationLogs = database.collection<ModerationLog>("moderation");
 
 export const messageCounter = new MessageCounter(
   channelMessages,

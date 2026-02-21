@@ -1,16 +1,16 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { Command, CommandOptionsRunTypeEnum } from "@sapphire/framework";
 import {
-  PermissionFlagsBits,
   EmbedBuilder,
+  PermissionFlagsBits,
   time,
   TimestampStyles,
   type ChatInputCommandInteraction,
 } from "discord.js";
-import { Color } from '../lib/embeds.js';
 import { messageLogger, moderationLogs } from "../index.js";
 import { DurationUnit } from "../lib/duration.js";
-import type { TimeoutLog } from '../lib/moderation.js';
+import { Color } from "../lib/embeds.js";
+import type { TimeoutLog } from "../lib/moderation.js";
 
 @ApplyOptions<Command.Options>({
   description: "Timeout user",
@@ -35,7 +35,7 @@ export class TimeoutCommand extends Command {
     if (!member) {
       await interaction.reply({
         content: `Error: ${user} is not a member of this server`,
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       return;
     }
@@ -44,7 +44,7 @@ export class TimeoutCommand extends Command {
     if (!durationUnit) {
       await interaction.reply({
         content: `Error: ${unit} is not a valid duration unit (${DurationUnit.values().join(", ")})`,
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       return;
     }
@@ -54,24 +54,24 @@ export class TimeoutCommand extends Command {
     if (durationMilliseconds > TimeoutCommand.MaxTimeoutMilliseconds) {
       await interaction.reply({
         content: `Error: ${readableDuration} is greater than the maximum timeout duration (28 days)`,
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       return;
     }
 
-    const filter = { '_id.guild': interaction.guildId, '_id.user': member.id };
+    const filter = { "_id.guild": interaction.guildId, "_id.user": member.id };
 
     const userTimeout: TimeoutLog = {
       date: new Date(),
       duration: readableDuration,
       user: interaction.user.id,
-      reason: reason
+      reason: reason,
     };
 
     const update = {
       $push: {
-        timeouts: { $each: [userTimeout], $position: 0 }
-      }
+        timeouts: { $each: [userTimeout], $position: 0 },
+      },
     };
 
     const options = { upsert: true };
@@ -79,17 +79,19 @@ export class TimeoutCommand extends Command {
     moderationLogs.findOneAndUpdate(filter, update, options);
 
     await member.timeout(durationMilliseconds, reason ?? undefined);
-    const expiration = new Date(interaction.createdTimestamp + durationMilliseconds);
+    const expiration = new Date(
+      interaction.createdTimestamp + durationMilliseconds,
+    );
 
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
-      .setTitle('You Have Been Timed Out')
+      .setTitle("You Have Been Timed Out")
       .addFields(
-        { name: 'Server', value: guild.name },
-        { name: 'Reason', value: reason },
-        { name: 'Duration', value: readableDuration },
+        { name: "Server", value: guild.name },
+        { name: "Reason", value: reason },
+        { name: "Duration", value: readableDuration },
         {
-          name: 'Expiration',
+          name: "Expiration",
           value: time(expiration, TimestampStyles.RelativeTime),
           inline: true,
         },
@@ -104,7 +106,7 @@ export class TimeoutCommand extends Command {
 
     await interaction.reply({
       embeds: [ephemeralEmbed],
-      ephemeral: true,
+      flags: "Ephemeral",
     });
 
     await messageLogger.logMemberTimeout(

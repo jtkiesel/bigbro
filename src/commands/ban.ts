@@ -1,16 +1,16 @@
-import { ApplyOptions } from '@sapphire/decorators';
-import { Command, CommandOptionsRunTypeEnum } from '@sapphire/framework';
+import { ApplyOptions } from "@sapphire/decorators";
+import { Command, CommandOptionsRunTypeEnum } from "@sapphire/framework";
 import {
   EmbedBuilder,
   PermissionFlagsBits,
   type ChatInputCommandInteraction,
-} from 'discord.js';
-import { Color } from '../lib/embeds.js';
-import { messageLogger, moderationLogs } from '../index.js';
-import type { BanLog } from '../lib/moderation.js';
+} from "discord.js";
+import { messageLogger, moderationLogs } from "../index.js";
+import { Color } from "../lib/embeds.js";
+import type { BanLog } from "../lib/moderation.js";
 
 @ApplyOptions<Command.Options>({
-  description: 'Ban user',
+  description: "Ban user",
   requiredClientPermissions: [PermissionFlagsBits.BanMembers],
   requiredUserPermissions: [PermissionFlagsBits.BanMembers],
 
@@ -32,24 +32,24 @@ export class BanCommand extends Command {
     if (!member) {
       await interaction.reply({
         content: `Error: ${user} is not a member of this server`,
-        ephemeral: true,
+        flags: "Ephemeral",
       });
       return;
     }
-    const purgeTime = (!purge) ? 0 : BanCommand.MaxPurgeDuration;
+    const purgeTime = !purge ? 0 : BanCommand.MaxPurgeDuration;
 
-    const filter = { '_id.guild': interaction.guildId, '_id.user': member.id };
+    const filter = { "_id.guild": interaction.guildId, "_id.user": member.id };
 
     const userBan: BanLog = {
       date: new Date(),
       user: interaction.user.id,
-      reason: reason
+      reason: reason,
     };
 
     const update = {
       $push: {
-        bans: { $each: [userBan], $position: 0 }
-      }
+        bans: { $each: [userBan], $position: 0 },
+      },
     };
 
     const options = { upsert: true };
@@ -58,64 +58,64 @@ export class BanCommand extends Command {
 
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
-      .setTitle('You Have Been Banned')
+      .setTitle("You Have Been Banned")
       .addFields(
-        { name: 'Server', value: guild.name },
-        { name: 'Reason', value: reason },
+        { name: "Server", value: guild.name },
+        { name: "Reason", value: reason },
       )
       .setTimestamp(interaction.createdTimestamp);
 
     await member.send({ embeds: [embed] });
 
-    await member.ban({ deleteMessageSeconds: purgeTime, reason: reason })
+    await member.ban({ deleteMessageSeconds: purgeTime, reason: reason });
 
     const ephemeralEmbed = new EmbedBuilder()
       .setColor(Color.Red)
-      .setDescription(`${user.tag} banned`)
+      .setDescription(`${user.tag} banned`);
 
     await interaction.reply({
       embeds: [ephemeralEmbed],
-      ephemeral: true,
+      flags: "Ephemeral",
     });
 
     await messageLogger.logMemberBan(
       member,
       interaction.user,
       reason,
-      interaction.createdTimestamp
+      interaction.createdTimestamp,
     );
   }
 
   public override registerApplicationCommands(registry: Command.Registry) {
     registry.registerChatInputCommand(
-      command =>
+      (command) =>
         command
           .setName(this.name)
           .setDescription(this.description)
-          .addUserOption(user =>
+          .addUserOption((user) =>
             user
               .setName(Option.User)
-              .setDescription('The user to ban')
-              .setRequired(true)
+              .setDescription("The user to ban")
+              .setRequired(true),
           )
-          .addStringOption(reason =>
+          .addStringOption((reason) =>
             reason
               .setName(Option.Reason)
-              .setDescription('The reason for banning them')
-              .setRequired(true)
+              .setDescription("The reason for banning them")
+              .setRequired(true),
           )
-          .addBooleanOption(purge =>
+          .addBooleanOption((purge) =>
             purge
               .setName(Option.Purge)
-              .setDescription('Purge their messages from the last 7 days?')
+              .setDescription("Purge their messages from the last 7 days?"),
           ),
-      { idHints: [] }
+      { idHints: [] },
     );
   }
 }
 
 enum Option {
-  User = 'user',
-  Reason = 'reason',
-  Purge = 'purge',
+  User = "user",
+  Reason = "reason",
+  Purge = "purge",
 }

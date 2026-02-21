@@ -1,11 +1,11 @@
 # dependencies
-/node_modules
+/node_modules/
 
 # production
-/dist
+/dist/
 
 # environment variables
 /.env
 
 # IDE
-/.vscode
+/.vscode/

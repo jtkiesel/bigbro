@@ -26,7 +26,7 @@ export class InteractionCreateListener extends Listener<
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: "Ephemeral" });
 
     const resolution = interaction.fields
       .getTextInputValue(InputId.Resolution)
