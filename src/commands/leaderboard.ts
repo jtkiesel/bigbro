@@ -5,14 +5,15 @@ import {
   bold,
   ButtonBuilder,
   ButtonStyle,
+  DiscordAPIError,
   EmbedBuilder,
   hyperlink,
   inlineCode,
   userMention,
   type BaseMessageOptions,
   type ChatInputCommandInteraction,
-  type Collection,
   type GuildMember,
+  type GuildMemberManager,
 } from "discord.js";
 import type { AbstractCursor } from "mongodb";
 import { messageCounts } from "../index.js";
@@ -56,12 +57,7 @@ export class LeaderboardCommand extends Command {
           .setColor(Color.Green)
           .setTitle("Message Count Leaderboard")
           .setDescription(
-            await this.page(
-              page,
-              leaderboardUsers,
-              await guild.members.fetch(),
-              cachedPages,
-            ),
+            await this.page(page, leaderboardUsers, guild.members, cachedPages),
           ),
       ],
       components: [
@@ -104,33 +100,39 @@ export class LeaderboardCommand extends Command {
   private async page(
     index: number,
     leaderboardUsers: AbstractCursor<LeaderboardUser>,
-    members: Collection<string, GuildMember>,
+    members: GuildMemberManager,
     cache: string[],
   ) {
     if (index < cache.length) {
       return cache[index];
     }
-    const users = new Array<LeaderboardUser>();
+    const start = index * LeaderboardCommand.PageSize;
+    const rows = new Array<string>();
     for (let i = 0; i < LeaderboardCommand.PageSize; ) {
       const user = await leaderboardUsers.next();
       if (!user) {
         break;
       }
-      if (!members.has(user._id)) {
-        continue;
+      let member;
+      try {
+        member = await members.fetch(user._id);
+      } catch (error) {
+        if (error instanceof DiscordAPIError && error.status === 404) {
+          continue;
+        } else {
+          throw error;
+        }
       }
-      users.push(user);
+      rows.push(
+        [
+          this.formatRank(start + rows.length),
+          this.formatUser(member),
+          inlineCode(`${user.count} messages`),
+        ].join(" "),
+      );
       i++;
     }
-    const start = index * LeaderboardCommand.PageSize;
-    const page = users
-      .map(({ _id, count }, i) => [
-        this.formatRank(start + i),
-        this.formatUser(members, _id),
-        inlineCode(`${count} messages`),
-      ])
-      .map((columns) => columns.join(" "))
-      .join("\n");
+    const page = rows.join("\n");
     cache.push(page);
     return page;
   }
@@ -145,14 +147,10 @@ export class LeaderboardCommand extends Command {
       : bold(inlineCode(`#${String(index + 1).padEnd(3)}`));
   }
 
-  private formatUser(
-    members: Collection<string, GuildMember>,
-    userId: string,
-  ): string {
-    const member = members.get(userId);
+  private formatUser(member: GuildMember): string {
     return hyperlink(
-      member?.nickname ?? member?.user.username ?? userId,
-      userUrl(userId),
+      member.nickname ?? member.user.username,
+      userUrl(member.user.id),
     );
   }
 
