@@ -18,7 +18,7 @@ export class MessageCreateListener extends Listener<
             const user = message.author;
             const guild = await message.client.guilds.fetch(message.guildId!);
             const member = await guild.members.fetch(user);
-            if (member.moderatable) {
+            if (member.moderatable || !honeypotTimeouts.has(member.id)) {
                 const expiration = new Date(message.createdTimestamp + 60_000);
                 try {
                     await member.send({
