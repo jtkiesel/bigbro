@@ -13,7 +13,7 @@ export class MessageCreateListener extends Listener<
     public override async run(message: Message) {
         const settings = await settingsManager.get(message.guildId!);
         const honeypotChannelId = settings?.honeypotChannel;
-        if (message.channelId === honeypotChannelId) {
+        if (message.channelId === honeypotChannelId && message.author.id !== message.client.user.id) {
             await message.delete();
             const user = message.author;
             const guild = await message.client.guilds.fetch(message.guildId!);
