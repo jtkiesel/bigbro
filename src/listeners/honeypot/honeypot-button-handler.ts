@@ -20,6 +20,8 @@ export class InteractionCreateListener extends Listener<
             return;
         }
 
+        honeypotTimeouts.delete(interaction.user.id);
+
         await interaction.reply({
             embeds: [
                 new EmbedBuilder()

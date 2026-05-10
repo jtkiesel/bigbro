@@ -389,8 +389,6 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
             PermissionsBitField.Flags.ViewChannel,
             PermissionsBitField.Flags.SendMessages,
             PermissionsBitField.Flags.EmbedLinks,
-            PermissionsBitField.Flags.AttachFiles,
-            PermissionsBitField.Flags.ManageChannels,
           ]);
         if (missingChannelPermissions.length) {
           await error(
@@ -415,13 +413,12 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
           ],
         });
 
-        await interaction.followUp({
+        await interaction.editReply({
           embeds: [
             new EmbedBuilder()
               .setColor(Color.Green)
               .setDescription(`Honeypot channel setup in ${honeypotChannel}`),
           ],
-          flags: "Ephemeral",
         });
       },
     },

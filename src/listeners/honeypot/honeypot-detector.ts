@@ -1,10 +1,10 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { Events, Listener } from "@sapphire/framework";
-import type { Message } from "discord.js";
+import type { Guild, GuildMember, Message } from "discord.js";
 import { settingsManager } from "../../index.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, time, TimestampStyles } from "discord.js";
 import { Color } from "../../lib/embeds.js";
-import { removeMember, HPotButtonId, honeypotTimeouts } from "../../lib/honeypot.js";
+import { HPotButtonId, honeypotTimeouts } from "../../lib/honeypot.js";
 
 @ApplyOptions<Listener.Options>({ event: Events.MessageCreate })
 export class MessageCreateListener extends Listener<
@@ -18,7 +18,7 @@ export class MessageCreateListener extends Listener<
             const user = message.author;
             const guild = await message.client.guilds.fetch(message.guildId!);
             const member = await guild.members.fetch(user);
-            if (member.moderatable || !honeypotTimeouts.has(member.id)) {
+            if (member.moderatable && !honeypotTimeouts.has(member.id)) {
                 const expiration = new Date(message.createdTimestamp + 60_000);
                 try {
                     await member.send({
@@ -46,19 +46,28 @@ export class MessageCreateListener extends Listener<
                     })
                     honeypotTimeouts.set(member.id, setTimeout(async () => {
                         if (honeypotTimeouts.has(member.id)) {
-                            await removeMember(member, guild);
+                            await this.removeMember(member, guild);
                         }
                         honeypotTimeouts.delete(member.id);
-                    }, 60000));
+                    }, 60_000));
 
 
 
                 }
                 catch (error) {
                     this.container.logger.error(`Failed to DM user ${user.id}:`, error);
-                    await removeMember(member, guild);
+                    await this.removeMember(member, guild);
                 }
             }
         }
     }
+
+    private async removeMember(member: GuildMember, guild: Guild) {
+        await member.ban({
+            deleteMessageSeconds: 86_400,
+            reason: "Sent a message in the honeypot channel.",
+        });
+        await guild.bans.remove(member.id);
+    }
 }
+
