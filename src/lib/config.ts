@@ -71,5 +71,5 @@ export const mongoUrl = Config.string("MONGO_URL").orElse(
   "mongodb://localhost:27017/bigbro",
 );
 export const nodeEnv = Config.string("NODE_ENV").orElse("development");
-export const robotEventsToken =
-  Config.string("ROBOT_EVENTS_TOKEN").orElseThrow();
+export const vexEventsToken =
+  Config.string("VEX_EVENTS_TOKEN").orElseThrow();
