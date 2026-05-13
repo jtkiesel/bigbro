@@ -15,7 +15,7 @@ import {
 } from "discord.js";
 import restrictedTeamNumbers from "../../config/restricted-team-numbers.json" with { type: "json" };
 import { settingsManager } from "../../index.js";
-import { robotEventsToken } from "../../lib/config.js";
+import { vexEventsToken } from "../../lib/config.js";
 import { Color } from "../../lib/embeds.js";
 import { Program } from "../../lib/robotics-program.js";
 import type { Team } from "../../lib/team.js";
@@ -92,8 +92,8 @@ export class InteractionCreateListener extends Listener<
         parameters.append("program[]", id.toString()),
       );
       const response = await fetch(
-        `https://www.robotevents.com/api/v2/teams?${parameters}`,
-        { headers: { Authorization: `Bearer ${robotEventsToken}` } },
+        `https://events.vex.com/api/v2/teams?${parameters}`,
+        { headers: { Authorization: `Bearer ${vexEventsToken}` } },
       );
       if (!response.ok) {
         await this.sendError(
