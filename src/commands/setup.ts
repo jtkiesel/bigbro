@@ -19,6 +19,7 @@ enum SubcommandName {
   Logging = "logging",
   Verification = "verification",
   Ticket = "ticket",
+  Honeypot = "honeypot",
 }
 
 const error = (interaction: ChatInputCommandInteraction, content: string) => {
@@ -336,6 +337,91 @@ const error = (interaction: ChatInputCommandInteraction, content: string) => {
         });
       },
     },
+    {
+      name: SubcommandName.Honeypot,
+      chatInputRun: async (interaction: ChatInputCommandInteraction) => {
+        await interaction.deferReply({ flags: "Ephemeral" });
+
+        if (!interaction.inGuild()) {
+          await error(interaction, "Command only available in servers");
+          return;
+        }
+
+        const guild = await interaction.client.guilds.fetch(
+          interaction.guildId,
+        );
+        if (!guild.members.me) {
+          await error(interaction, "I am not a member of this server");
+          return;
+        }
+
+        const missingPermissions = guild.members.me.permissions.missing([
+          PermissionsBitField.Flags.ManageMessages,
+          PermissionsBitField.Flags.BanMembers,
+        ]);
+        if (missingPermissions.length) {
+          await error(
+            interaction,
+            `I am missing the following permissions: ${missingPermissions}`,
+          );
+          return;
+        }
+
+        const honeypotChannel = await guild.channels.fetch(
+          interaction.options.getChannel(HoneypotOption.Channel, true).id,
+        );
+
+        if (!honeypotChannel) {
+          await error(
+            interaction,
+            `Could not find ${honeypotChannel} in this server`,
+          );
+          return;
+        }
+        if (!honeypotChannel.isTextBased()) {
+          await error(interaction, `${honeypotChannel} is not a text channel`);
+          return;
+        }
+
+        const missingChannelPermissions = guild.members.me
+          .permissionsIn(honeypotChannel)
+          .missing([
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages,
+            PermissionsBitField.Flags.EmbedLinks,
+          ]);
+        if (missingChannelPermissions.length) {
+          await error(
+            interaction,
+            `I am missing the following permissions in ${honeypotChannel}: ${missingChannelPermissions}`,
+          );
+          return;
+        }
+
+        await settingsManager.set(guild.id, {
+          honeypotChannel: honeypotChannel.id,
+        });
+
+        await honeypotChannel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(Color.Red)
+              .setTitle("Honeypot Channel")
+              .setDescription(
+                "This channel is being monitored for hacked accounts and spam bots.\n\nIf you are reading this, please do not send messages in this channel or **you will be banned**.",
+              ),
+          ],
+        });
+
+        await interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(Color.Green)
+              .setDescription(`Honeypot channel setup in ${honeypotChannel}`),
+          ],
+        });
+      },
+    },
   ],
 })
 export class SetupCommand extends Subcommand {
@@ -397,6 +483,19 @@ export class SetupCommand extends Subcommand {
                   )
                   .setRequired(true),
               ),
+          )
+          .addSubcommand((honeypot) =>
+            honeypot
+              .setName(SubcommandName.Honeypot)
+              .setDescription("Setup honeypot channel for this server")
+              .addChannelOption((honeypotChannel) =>
+                honeypotChannel
+                  .setName(HoneypotOption.Channel)
+                  .setDescription(
+                    "The text channel in which will be monitored for spam and raids.",
+                  )
+                  .setRequired(true),
+              ),
           ),
       { idHints: ["988533666722488380", "985249852550168646"] },
     );
@@ -414,5 +513,9 @@ enum VerificationOption {
 }
 
 enum TicketOption {
+  Channel = "channel",
+}
+
+enum HoneypotOption {
   Channel = "channel",
 }

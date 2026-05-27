@@ -8,7 +8,7 @@ export class SettingsManager {
       (await this.collection.findOne({ _id: guildId })) ?? undefined,
   });
 
-  public constructor(private readonly collection: Collection<GuildSettings>) {}
+  public constructor(private readonly collection: Collection<GuildSettings>) { }
 
   public async get(guildId: string) {
     return this.settingsByGuildId.fetch(guildId);
@@ -49,4 +49,5 @@ export interface GuildSettings {
   verifiedChannel?: string;
   ticketChannel?: string;
   lastTicketNumber?: number;
+  honeypotChannel?: string;
 }
