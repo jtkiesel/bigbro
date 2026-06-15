@@ -77,7 +77,11 @@ export class WarnCommand extends Command {
       )
       .setTimestamp(interaction.createdTimestamp);
 
+    try {
     await member.send({ embeds: [embed] });
+      } catch (error) {
+        throw error;
+      }
 
     await messageLogger.logMemberWarning(
       member,

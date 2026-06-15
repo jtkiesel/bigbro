@@ -65,7 +65,11 @@ export class BanCommand extends Command {
       )
       .setTimestamp(interaction.createdTimestamp);
 
+    try {
     await member.send({ embeds: [embed] });
+      } catch (error) {
+        throw error;
+      }
 
     await member.ban({ deleteMessageSeconds: purgeTime, reason: reason });
 

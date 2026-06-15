@@ -98,7 +98,11 @@ export class TimeoutCommand extends Command {
       )
       .setTimestamp(interaction.createdTimestamp);
 
+    try {
     await member.send({ embeds: [embed] });
+      } catch (error) {
+        throw error;
+      }
 
     const ephemeralEmbed = new EmbedBuilder()
       .setColor(Color.Red)
