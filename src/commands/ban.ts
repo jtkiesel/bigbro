@@ -66,10 +66,13 @@ export class BanCommand extends Command {
       .setTimestamp(interaction.createdTimestamp);
 
     try {
-    await member.send({ embeds: [embed] });
-      } catch (error) {
-        throw error;
-      }
+      await member.send({ embeds: [embed] });
+    } catch (error) {
+      this.container.logger.warn(
+        "Failed to send direct message notifying user that they were banned",
+        error,
+      );
+    }
 
     await member.ban({ deleteMessageSeconds: purgeTime, reason: reason });
 

@@ -98,15 +98,18 @@ export class TimeoutCommand extends Command {
       )
       .setTimestamp(interaction.createdTimestamp);
 
-    try {
-    await member.send({ embeds: [embed] });
-      } catch (error) {
-        throw error;
-      }
-
     const ephemeralEmbed = new EmbedBuilder()
       .setColor(Color.Red)
       .setDescription(`${user.tag} timed out for ${readableDuration}`);
+
+    try {
+      await member.send({ embeds: [embed] });
+    } catch (error) {
+      ephemeralEmbed.addFields({
+        name: "Notice",
+        value: "Failed to send direct message to user",
+      });
+    }
 
     await interaction.reply({
       embeds: [ephemeralEmbed],

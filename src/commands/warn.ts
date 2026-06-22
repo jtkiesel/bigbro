@@ -59,15 +59,6 @@ export class WarnCommand extends Command {
 
     moderationLogs.findOneAndUpdate(filter, update, options);
 
-    const ephemeralEmbed = new EmbedBuilder()
-      .setColor(Color.Red)
-      .setDescription(`${user.tag} warned`);
-
-    await interaction.reply({
-      embeds: [ephemeralEmbed],
-      flags: "Ephemeral",
-    });
-
     const embed = new EmbedBuilder()
       .setColor(Color.Red)
       .setTitle("You Have Been Warned")
@@ -77,11 +68,23 @@ export class WarnCommand extends Command {
       )
       .setTimestamp(interaction.createdTimestamp);
 
+    const ephemeralEmbed = new EmbedBuilder()
+      .setColor(Color.Red)
+      .setDescription(`${user.tag} warned`);
+
     try {
-    await member.send({ embeds: [embed] });
-      } catch (error) {
-        throw error;
-      }
+      await member.send({ embeds: [embed] });
+    } catch (error) {
+      ephemeralEmbed.addFields({
+        name: "Notice",
+        value: "Failed to send direct message to user",
+      });
+    }
+
+    await interaction.reply({
+      embeds: [ephemeralEmbed],
+      flags: "Ephemeral",
+    });
 
     await messageLogger.logMemberWarning(
       member,
