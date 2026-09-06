@@ -1,8 +1,9 @@
-export interface VerifiedMember {
+export interface FormerMember {
   user: string;
   guild: string;
   nickname: string;
   roles: string[];
+  leftAt: Date;
 }
 
 export enum ButtonId {
