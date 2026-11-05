@@ -19,6 +19,9 @@ export class WarnCommand extends Command {
     if (!interaction.inGuild()) {
       return;
     }
+
+    await interaction.deferReply({ flags: "Ephemeral" });
+
     const user = interaction.options.getUser(Option.User, true);
     const reason = interaction.options.getString(Option.Reason, true);
 
@@ -26,17 +29,15 @@ export class WarnCommand extends Command {
     const member = await guild.members.fetch(user);
 
     if (!member) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `Error: ${user} is not a member of this server`,
-        flags: "Ephemeral",
       });
       return;
     }
 
     if (!reason) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `Error: Warnings require a reason.`,
-        flags: "Ephemeral",
       });
       return;
     }
@@ -81,9 +82,8 @@ export class WarnCommand extends Command {
       });
     }
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [ephemeralEmbed],
-      flags: "Ephemeral",
     });
 
     await messageLogger.logMemberWarning(

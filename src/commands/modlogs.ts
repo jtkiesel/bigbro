@@ -26,14 +26,15 @@ export class ModLogsCommand extends Command {
       return;
     }
 
+    await interaction.deferReply({ flags: "Ephemeral" });
+
     const user = interaction.options.getUser(Logs.User, true);
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const member = await guild.members.fetch(user);
 
     if (!member) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `Error: ${user} is not a member of this server`,
-        flags: "Ephemeral",
       });
       return;
     }
@@ -44,14 +45,11 @@ export class ModLogsCommand extends Command {
     });
 
     if (!userLog) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `No moderation history found for ${user}`,
-        flags: "Ephemeral",
       });
       return;
     }
-
-    await interaction.deferReply({ flags: "Ephemeral" });
 
     const cachedPages: CachedPages = {
       user: [],
