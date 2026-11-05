@@ -40,8 +40,8 @@ export class Program {
     description: "FIRST Robotics Competition",
     role: "263900951738318849",
     emoji: "810644445192126525",
-    teamRegExp: /^\d{1,4}$/,
-    teamExamples: ["1", "1234"],
+    teamRegExp: /^\d{1,5}$/,
+    teamExamples: ["1", "12345"],
   });
   public static readonly Ftc = new Program({
     name: "FTC",
