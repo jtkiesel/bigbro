@@ -23,6 +23,7 @@ export class BanCommand extends Command {
     if (!interaction.inGuild()) {
       return;
     }
+    await interaction.deferReply({ flags: "Ephemeral" });
     const user = interaction.options.getUser(Option.User, true);
     const reason = interaction.options.getString(Option.Reason, true);
     const purge = interaction.options.getBoolean(Option.Purge);
@@ -30,9 +31,8 @@ export class BanCommand extends Command {
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const member = await guild.members.fetch(user);
     if (!member) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `Error: ${user} is not a member of this server`,
-        flags: "Ephemeral",
       });
       return;
     }
@@ -80,9 +80,8 @@ export class BanCommand extends Command {
       .setColor(Color.Red)
       .setDescription(`${user.tag} banned`);
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [ephemeralEmbed],
-      flags: "Ephemeral",
     });
 
     await messageLogger.logMemberBan(
