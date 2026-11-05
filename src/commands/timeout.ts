@@ -25,6 +25,9 @@ export class TimeoutCommand extends Command {
     if (!interaction.inGuild()) {
       return;
     }
+
+    await interaction.deferReply({ flags: "Ephemeral" });
+
     const user = interaction.options.getUser(Option.User, true);
     const duration = interaction.options.getNumber(Option.Duration, true);
     const unit = interaction.options.getString(Option.Unit, true);
@@ -33,18 +36,16 @@ export class TimeoutCommand extends Command {
     const guild = await interaction.client.guilds.fetch(interaction.guildId);
     const member = await guild.members.fetch(user);
     if (!member) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `Error: ${user} is not a member of this server`,
-        flags: "Ephemeral",
       });
       return;
     }
 
     const durationUnit = DurationUnit.fromName(unit);
     if (!durationUnit) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `Error: ${unit} is not a valid duration unit (${DurationUnit.values().join(", ")})`,
-        flags: "Ephemeral",
       });
       return;
     }
@@ -52,9 +53,8 @@ export class TimeoutCommand extends Command {
     const durationMilliseconds = durationUnit.millisFromCount(duration);
     const readableDuration = `${duration} ${unit}${duration !== 1 ? "s" : ""}`;
     if (durationMilliseconds > TimeoutCommand.MaxTimeoutMilliseconds) {
-      await interaction.reply({
+      await interaction.editReply({
         content: `Error: ${readableDuration} is greater than the maximum timeout duration (28 days)`,
-        flags: "Ephemeral",
       });
       return;
     }
@@ -111,9 +111,8 @@ export class TimeoutCommand extends Command {
       });
     }
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [ephemeralEmbed],
-      flags: "Ephemeral",
     });
 
     await messageLogger.logMemberTimeout(
