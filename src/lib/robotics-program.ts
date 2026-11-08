@@ -35,6 +35,14 @@ export class Program {
     teamExamples: ["1", "12345A"],
     ids: [41],
   });
+  public static readonly Achieve = new Program({
+    name: "ACHIEVE",
+    description: "RECF ACHIEVE Robotics",
+    role: "1542032461155012698",
+    emoji: "1542032461155012698",
+    teamRegExp: /^\d{1,5}[A-Z]?$/i,
+    teamExamples: ["1", "12345A"],
+  });
   public static readonly Frc = new Program({
     name: "FRC",
     description: "FIRST Robotics Competition",
@@ -53,6 +61,7 @@ export class Program {
   });
   public static readonly None = new Program({
     name: "None",
+    description: "Other robotics competition program or not a competitor",
     role: "197817210729791489",
     emoji: "❓",
   });
@@ -64,6 +73,7 @@ export class Program {
     this.Viqrc,
     this.Frc,
     this.Ftc,
+    this.Achieve,
     this.None,
   ];
 
