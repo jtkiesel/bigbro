@@ -13,7 +13,6 @@ import {
   type ModalSubmitInteraction,
   type ThreadChannel,
 } from "discord.js";
-import restrictedTeamNumbers from "../../config/restricted-team-numbers.json" with { type: "json" };
 import { settingsManager } from "../../index.js";
 import { vexEventsToken } from "../../lib/config.js";
 import { Color } from "../../lib/embeds.js";
@@ -155,9 +154,7 @@ export class InteractionCreateListener extends Listener<
     const ageConfirmation = interaction.fields.getCheckbox(
       InputId.AgeConfirmation,
     );
-    const illegalTeamNumberCheck = restrictedTeamNumbers.includes(
-      teamNumber.replace(/[A-Z]$/, ""),
-    );
+    const illegalTeamNumberCheck = program.teamExamples.includes(teamNumber);
     if (
       program === Program.None ||
       illegalTeamNumberCheck ||
