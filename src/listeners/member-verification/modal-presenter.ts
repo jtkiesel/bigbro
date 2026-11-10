@@ -52,10 +52,11 @@ export class InteractionCreateListener extends Listener<
             new StringSelectMenuBuilder()
               .setCustomId(InputId.Program)
               .setOptions(
-                Program.values().map(({ name, description }) => ({
+                Program.values().map(({ name, description, emoji }) => ({
                   label: name,
                   value: name,
-                  description: description,
+                  description,
+                  emoji,
                 })),
               )
               .setRequired(true),
