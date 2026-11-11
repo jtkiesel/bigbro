@@ -13,7 +13,6 @@ import {
   type ModalSubmitInteraction,
   type ThreadChannel,
 } from "discord.js";
-import restrictedTeamNumbers from "../../config/restricted-team-numbers.json" with { type: "json" };
 import { settingsManager } from "../../index.js";
 import { vexEventsToken } from "../../lib/config.js";
 import { Color } from "../../lib/embeds.js";
@@ -56,9 +55,9 @@ export class InteractionCreateListener extends Listener<
       );
     }
 
-    const programName = interaction.fields
-      .getTextInputValue(InputId.Program)
-      .trim();
+    const programName = interaction.fields.getStringSelectValues(
+      InputId.Program,
+    )[0];
     const program = Program.values().find(
       ({ name }) => name.toLowerCase() === programName.toLowerCase(),
     );
@@ -152,21 +151,25 @@ export class InteractionCreateListener extends Listener<
       }
     }
 
-    const illegalTeamNumberCheck = restrictedTeamNumbers.includes(teamNumber);
+    const ageConfirmation = interaction.fields.getCheckbox(
+      InputId.AgeConfirmation,
+    );
+    const illegalTeamNumberCheck = program.teamExamples.includes(teamNumber);
     if (
-      [Program.None, Program.Viqrc].includes(program) ||
-      illegalTeamNumberCheck
+      program === Program.None ||
+      illegalTeamNumberCheck ||
+      !ageConfirmation
     ) {
-      const explanation = interaction.fields
+      let explanation = interaction.fields
         .getTextInputValue(InputId.Explanation)
         .trim();
-      if (!explanation) {
-        let sendErrorMessage = `By entering a robotics competition program of ${inlineCode(program.name)}, you must provide an explanation`;
-        if (illegalTeamNumberCheck) {
-          sendErrorMessage = `By entering a team number of ${inlineCode(teamNumber)}, you must provide an explanation`;
-        }
-        return this.sendError(interaction, sendErrorMessage);
+      if (!explanation && program === Program.None) {
+        return this.sendError(
+          interaction,
+          `By entering a robotics competition program of ${inlineCode(program.name)}, you must provide an explanation`,
+        );
       }
+      explanation ||= "No explanation provided.";
 
       const verificationChannelId = guildSettings?.verificationChannel;
       if (!verificationChannelId) {
@@ -212,6 +215,10 @@ export class InteractionCreateListener extends Listener<
         { name: FieldName.UserId, value: interaction.user.id },
         { name: FieldName.Program, value: program.name },
         { name: FieldName.Team, value: teamNumber },
+        {
+          name: FieldName.AgeConfirmation,
+          value: ageConfirmation ? "✅" : "❎",
+        },
       ];
 
       const verificationRequest = await thread.send({

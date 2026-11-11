@@ -1,8 +1,10 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { Events, Listener } from "@sapphire/framework";
 import {
+  CheckboxBuilder,
   LabelBuilder,
   ModalBuilder,
+  StringSelectMenuBuilder,
   TextInputBuilder,
   TextInputStyle,
   type Interaction,
@@ -46,17 +48,17 @@ export class InteractionCreateListener extends Listener<
           ),
         new LabelBuilder()
           .setLabel("Primary robotics competition program")
-          .setTextInputComponent(
-            new TextInputBuilder()
+          .setStringSelectMenuComponent(
+            new StringSelectMenuBuilder()
               .setCustomId(InputId.Program)
-              .setStyle(TextInputStyle.Short)
-              .setPlaceholder(
-                Program.values()
-                  .map(({ name }) => name)
-                  .join(", "),
+              .setOptions(
+                Program.values().map(({ name, description, emoji }) => ({
+                  label: name,
+                  value: name,
+                  description,
+                  emoji,
+                })),
               )
-              .setMinLength(3)
-              .setMaxLength(5)
               .setRequired(true),
           ),
         new LabelBuilder()
@@ -79,6 +81,11 @@ export class InteractionCreateListener extends Listener<
                 "If program is None, explain how you are involved with VEX Robotics or why you joined the server",
               )
               .setRequired(false),
+          ),
+        new LabelBuilder()
+          .setLabel("I am 13 years of age or older")
+          .setCheckboxComponent(
+            new CheckboxBuilder().setCustomId(InputId.AgeConfirmation),
           ),
       );
     await interaction.showModal(modal);

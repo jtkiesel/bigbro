@@ -17,6 +17,7 @@ export enum FieldName {
   UserId = "User ID",
   Program = "Program",
   Team = "Team Number",
+  AgeConfirmation = "13+ Confirmation",
 }
 
 export enum ModalId {
@@ -28,4 +29,5 @@ export enum InputId {
   Program = "program",
   Team = "team",
   Explanation = "explanation",
+  AgeConfirmation = "age-confirmation",
 }
